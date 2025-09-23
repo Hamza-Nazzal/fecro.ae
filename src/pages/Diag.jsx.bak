@@ -1,0 +1,88 @@
+// mayber we dont need this file for long, it is currently part of DB test
+/*1	Diagnostic page to test Supabase setup, show env info, and seed demo RFQs.
+	2	Renders OK/Error checks and sample values. Dev-only utilities like UUID/publicId generators.
+  */
+
+import React, { useEffect, useState } from "react";
+import { supabase, SB_PROJECT_URL } from "../services/backends/supabase";
+//import { SB_PROJECT_URL } from "../services/backends/supabase";
+
+import { seedDemoRFQs } from "../services/backends/supabase";
+
+function Row({ label, value, ok, error }) {
+  return (
+    <div className="flex items-center gap-3 border-b py-2">
+      <div className="w-48 text-gray-600">{label}</div>
+      <div className="flex-1 font-mono break-all">{value}</div>
+      {ok !== undefined && (
+        <div className={ok ? "text-green-600" : "text-red-600"}>
+          {ok ? "OK" : error || "Error"}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function Diag() {
+  const [state, setState] = useState({
+    urlHost: "",
+    rfqs: { ok: false, error: "" },
+    products: { ok: false, error: "" },
+    events: { ok: false, error: "" },
+    lastSeed: "",
+    loading: true,
+  });
+
+  useEffect(() => {
+    (async () => {
+      // derive host from the exported constant (works for CRA)
+     let urlHost = "";
+      try { urlHost = SB_PROJECT_URL ? new URL(SB_PROJECT_URL).host : ""; } catch {}
+
+      const r1 = await supabase.from("rfqs").select("id").limit(1);
+      const r2 = await supabase.from("products").select("id").limit(1);
+      const r3 = await supabase.from("rfq_events").select("id").limit(1);
+
+      setState({
+        urlHost,
+        rfqs: { ok: !r1.error, error: r1.error?.message || "" },
+        products: { ok: !r2.error, error: r2.error?.message || "" },
+        events: { ok: !r3.error, error: r3.error?.message || "" },
+        lastSeed: "",
+        loading: false,
+      });
+    })();
+  }, []);
+
+
+  async function seed() {
+    try {
+      // optional: import from the same module if you export it there,
+      // or call your createRFQ twice, etc.
+      const { data, error } = await supabase.from("rfqs").insert([
+        { publicId: "RFQ-DIAG1", company: "Diag Seed Co.", title: "Diag Seed 1", description: "…" },
+{ publicId: "RFQ-DIAG2", company: "Diag Seed Co.", title: "Diag Seed 2", description: "…" },
+      ]).select();
+      if (error) throw error;
+      setState((s) => ({ ...s, lastSeed: `Seeded ${data?.length || 0} RFQs` }));
+    } catch (e) {
+      setState((s) => ({ ...s, lastSeed: "Seed failed: " + (e?.message || e) }));
+    }
+  }
+
+  return (
+    <div className="p-6 space-y-4 max-w-3xl">
+      <h1 className="text-2xl font-bold">Supabase Diagnostics</h1>
+      <Row label="REST host" value={state.urlHost || "(missing)"} />
+      <Row label="RFQs read" value="select * from rfqs limit 1" ok={state.rfqs.ok} error={state.rfqs.error} />
+      <Row label="Products read" value="select * from products limit 1" ok={state.products.ok} error={state.products.error} />
+      <Row label="Events read" value="select * from rfq_events limit 1" ok={state.events.ok} error={state.events.error} />
+      <div className="flex items-center gap-3 pt-3">
+        <button className="border rounded px-3 py-2" onClick={seed}>Seed 2 demo RFQs</button>
+        <div className="text-sm text-gray-600">{state.lastSeed}</div>
+      </div>
+      {state.loading && <div className="text-gray-500">Checking…</div>}
+    </div>
+  );
+}
+

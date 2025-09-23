@@ -1,0 +1,20 @@
+// src/utils/mappers/quotation.js
+export const QUOTATION_SCHEMA = {
+  id: "id",
+  rfqId: "rfq_id",
+  sellerId: "seller_id",
+  sellerCompany: "seller_company",
+  totalPrice: "total_price",
+  currency: "currency",
+  lineItems: "line_items",
+  deliveryTimelineDays: "delivery_timeline_days",
+  paymentTerms: "payment_terms",
+  shippingTerms: "shipping_terms",
+  validityDays: "validity_days",
+  notes: "notes",
+  status: "status",
+  createdAt: "created_at",
+  updatedAt: "updated_at",
+  submittedAt: "submitted_at",
+  expiresAt: "expires_at",
+};

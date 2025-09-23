@@ -1,3 +1,5 @@
+
+
 .App {
   text-align: center;
 }
@@ -36,3 +38,90 @@
     transform: rotate(360deg);
   }
 }
+/* ---- RFQ UI Tokens & Utilities ---------------------------------------- */
+:root{
+  --bg:#F8FAFC;
+  --card:#FFFFFF;
+  --border:#E5E7EB;
+  --text:#0F172A;
+  --muted:#475569;
+  --hint:#94A3B8;
+  --accent:#2563EB;
+  --accent-weak:#EFF6FF;
+  --ring:#93C5FD;
+}
+/* Optional dark; switch with a .dark class or media query */
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0B1220;
+    --card:#0F172A;
+    --border:#1F2937;
+    --text:#E5E7EB;
+    --muted:#CBD5E1;
+    --hint:#94A3B8;
+    --accent:#60A5FA;
+    --accent-weak:#0B2A55;
+    --ring:#1D4ED8;
+  }
+}
+
+/* Card look & states */
+.rfq-card{
+  position: relative;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  transition:border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+.rfq-card:hover{
+  border-color:#CBD5E1;
+  box-shadow:0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+}
+.rfq-card--selected{ /* use when you want “selected” emphasis */
+  border:2px solid var(--accent);
+  background:var(--accent-weak);
+}
+.rfq-focusable:focus-visible{
+  outline:2px solid var(--ring);
+  outline-offset:2px;
+}
+
+/* Typography helpers */
+.rfq-title{ color:var(--text); font-weight:700; font-size:1.0625rem; } /* 17px */
+.rfq-meta{ color:var(--hint); font-size:.8125rem; } /* 13px */
+.rfq-breadcrumb{
+  color:var(--muted);
+  font-size: .8125rem;
+  white-space:nowrap; 
+  overflow:hidden; 
+  text-overflow:ellipsis;
+}
+.rfq-breadcrumb .last{ color:var(--accent); }
+
+/* Status pills */
+.pill{
+  display:inline-flex; align-items:center; gap:.375rem;
+  border:1px solid transparent; border-radius:9999px;
+  padding:.125rem .5rem; font-size:.75rem; font-weight:600;
+}
+.pill.open{ color:#166534; background:#ECFDF5; border-color:#86EFAC; }        /* Open */
+.pill.closing{ color:#92400E; background:#FEF3C7; border-color:#FCD34D; }     /* Closing soon */
+.pill.closed{ color:#334155; background:#F1F5F9; border-color:#CBD5E1; }      /* Closed / neutral */
+.pill.awarded{ color:#6D28D9; background:#F3E8FF; border-color:#E9D5FF; }     /* Awarded */
+
+
+/* optional left new/unread strip */
+.rfq-left-strip{
+  position:absolute; left:0; top:0; bottom:0; width:4px;
+  background:var(--accent); opacity:.4;
+  border-top-left-radius:12px; border-bottom-left-radius:12px;
+}
+
+
+
+/* blue-50 @ 60% opacity */
+:root { --card-collapsed: rgba(235, 248, 255, 0.6); } /* = #EBF8FF99 */
+.rfq-card--tinted { background: var(--card-collapsed); }
+
+/* Tiny counter text */
+.rfq-counter{ color:var(--muted); font-size:.8125rem; }
