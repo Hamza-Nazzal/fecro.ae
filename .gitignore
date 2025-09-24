@@ -29,3 +29,6 @@ yarn-error.log*
 # macOS
 .DS_Store
 
+
+# local safety patches
+safety.patch
