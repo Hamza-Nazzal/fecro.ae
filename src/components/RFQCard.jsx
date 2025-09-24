@@ -50,7 +50,7 @@ function ItemRow({ item }) {
 
 /**
  * Works with your current view:
- * title, publicId, postedAt, status, qtyTotal, categoryPath (first_category_path)
+ * title, sellerIdDisplay, postedAt, status, qtyTotal, categoryPath (first_category_path)
  * Optional: items[], views, quotationsCount, deadline
  */
 export default function RFQCard({
@@ -98,7 +98,7 @@ export default function RFQCard({
 
           {/* Meta chips (match look even if values are 0/—) */}
           <div className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-slate-600">
-            {rfq?.publicId && <Chip icon={Hash} title="RFQ ID">{rfq.publicId}</Chip>}
+            {rfq?.sellerIdDisplay && (<Chip icon={Hash} title="RFQ ID">{rfq.sellerIdDisplay}</Chip>)}
             <Chip icon={Eye} title="Views">{rfq?.views ?? 0} views</Chip>
             <Chip icon={MessageSquareText} title="Quotations">
               {rfq?.quotationsCount ?? 0} quotes
