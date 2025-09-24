@@ -1,3 +1,4 @@
+// src/pages/admin/AdminDashboard.jsx
 import React, { useState } from 'react';
 
 const AdminDashboard = () => {

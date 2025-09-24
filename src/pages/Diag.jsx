@@ -1,3 +1,4 @@
+// src/pages/Diag.jsx
 
 import React, { useEffect, useState } from "react";
 import { supabase, SB_PROJECT_URL } from "../services/backends/supabase";

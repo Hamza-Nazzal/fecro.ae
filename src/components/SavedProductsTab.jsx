@@ -1,3 +1,4 @@
+// src/components/SavedProductsTab.jsx
 //src/components/SavedProductsTab.jsx
 /*
 1	UI list for saved products with search, status filter, and add/edit/delete.
@@ -38,16 +39,6 @@ export default function SavedProductsTab({
 
 
   const isEmpty = !loading && items.length === 0;
-
-  //debug2
-  const handleAddClick = () => {
-    console.log('Add button clicked! onAddClick is:', typeof onAddClick);
-    if (onAddClick) {
-      onAddClick();
-    } else {
-      console.warn('onAddClick is not defined!');
-    }
-  };
 
   if (isEmpty) {
     return (

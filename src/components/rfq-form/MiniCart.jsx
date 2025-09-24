@@ -1,3 +1,4 @@
+// src/components/rfq-form/MiniCart.jsx
 //src/components/rfq-form/MiniCart.jsx
 import React, { useState } from "react";
 import { Copy, Edit, Trash2, ChevronDown, ChevronUp } from "lucide-react";

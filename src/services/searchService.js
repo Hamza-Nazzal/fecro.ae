@@ -1,3 +1,4 @@
+// src/services/searchService.js
 //src/services/searchService.js
 
 import { supabase } from "./backends/supabase";

@@ -1,8 +1,7 @@
 // src/services/backends/supabase/rfqs/index.js
-import { mapRowsToJs, rowToJs, listRFQRows, fetchRFQRow, insertRFQ, patchRFQ, removeRFQ } from "./base";
-import { fetchItems, upsertItem, upsertItemSpecs, deleteSpecsNotIn, cascadeDeleteItems } from "./items";
+import { mapRowsToJs, listRFQRows, insertRFQ, patchRFQ, removeRFQ } from "./base";
+import { upsertItem, upsertItemSpecs, deleteSpecsNotIn, cascadeDeleteItems } from "./items";
 import { getRFQHydrated } from "./hydrate";
-import { rfqDbToJs } from "../../../../utils/mappers";
 
 /** List top-level RFQs (no hydration) */
 export async function listRFQs(opts = {}) {

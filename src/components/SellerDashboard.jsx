@@ -1,3 +1,4 @@
+// src/components/SellerDashboard.jsx
 //src/components/SellerDashboard.jsx
 import React from "react";
 import SellerRFQsInline from "./SellerRFQsInline.jsx";

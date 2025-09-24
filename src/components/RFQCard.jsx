@@ -50,7 +50,7 @@ function ItemRow({ item }) {
 
 /**
  * Works with your current view:
- * title, publicId, postedAt, status, qtyTotal, categoryPath (first_category_path)
+ * title, sellerIdDisplay, postedAt, status, qtyTotal, categoryPath (first_category_path)
  * Optional: items[], views, quotationsCount, deadline
  */
 export default function RFQCard({
@@ -66,6 +66,7 @@ export default function RFQCard({
   const buttonLabel = ctaLabel || (role === "buyer" ? "View / Manage" : "Send Quote");
 
   const statusKey = String(rfq?.status || "active").toLowerCase();
+  const sellerIdDisplay = rfq?.sellerIdDisplay || null;
 
   const categoryLabel = useMemo(() => {
     const raw = rfq?.categoryPath || "";
@@ -83,7 +84,7 @@ export default function RFQCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="truncate text-[15px] font-semibold text-slate-900">
+            <h3 className="truncate text-[18px] font-semibold text-slate-900">
               {rfq?.title || "Untitled RFQ"}
             </h3>
             <span
@@ -98,7 +99,9 @@ export default function RFQCard({
 
           {/* Meta chips (match look even if values are 0/—) */}
           <div className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-slate-600">
-            {rfq?.publicId && <Chip icon={Hash} title="RFQ ID">{rfq.publicId}</Chip>}
+            {sellerIdDisplay ? (
+              <Chip icon={Hash} title="RFQ ID">{sellerIdDisplay}</Chip>
+            ) : null}
             <Chip icon={Eye} title="Views">{rfq?.views ?? 0} views</Chip>
             <Chip icon={MessageSquareText} title="Quotations">
               {rfq?.quotationsCount ?? 0} quotes

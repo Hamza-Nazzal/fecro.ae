@@ -1,3 +1,4 @@
+// src/components/RFQListForSeller.jsx
 
 // src/components/RFQListForSeller.jsx
 
@@ -28,7 +29,7 @@ export default function RFQListForSeller({ rfqs, seller }) {
           <RequestCard
             key={r.id}
             title={r.title || ""}
-            rfqId={r.publicId || "—"}
+            rfqId={r.sellerIdDisplay || "—"}
             qty={parseInt(r.quantity) || undefined}
             unit=""
             categoryPath={categoryPath(r)}

@@ -1,3 +1,4 @@
+// src/pages/SellerHome.js
 /* See CODEGEN.md for architecture & conventions */
 /*
 1	Placeholder Seller dashboard.

@@ -1,3 +1,4 @@
+// src/services/rfqService/mapping.js
 import { rfqDbToJs } from "../../utils/mappers";
 
 /** Convert rfq_item_specs[] → { key_norm: "value unit?" } */

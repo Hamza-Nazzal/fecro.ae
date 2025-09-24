@@ -1,6 +1,7 @@
+// src/components/QuotationViewer.jsx
 //src/components/QuotationViewer.jsx
 import React from "react";
-import { X, Calendar, Package, DollarSign, Truck, FileText, Clock } from "lucide-react";
+import { X, Calendar, Package, Truck, FileText } from "lucide-react";
 
 export default function QuotationViewer({ quotation, onClose }) {
   if (!quotation) return null;
@@ -38,7 +39,7 @@ export default function QuotationViewer({ quotation, onClose }) {
           <div>
             <h2 className="text-xl font-bold text-gray-900">Quotation Details</h2>
             <p className="text-sm text-gray-600 mt-1">
-              {quotation.rfq?.publicId || "—"}
+              {quotation.rfq?.sellerIdDisplay || "—"}
             </p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">

@@ -1,3 +1,4 @@
+// src/components/rfq-form/ReviewPanel.jsx
 //src/components/rfq-form/ReviewPanel.jsx
 import React from "react";
 import { ChevronDown, ChevronUp, Edit } from "lucide-react";

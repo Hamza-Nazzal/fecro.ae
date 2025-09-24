@@ -1,3 +1,4 @@
+// src/components/BuyerRFQDetail.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import {

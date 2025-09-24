@@ -1,3 +1,4 @@
+// src/components/rfq-form/SuccessScreen.jsx
 //src/components/rfq-form/SuccessScreen.jsx
 import React from "react";
 import { CheckCircle, Copy, Package } from "lucide-react";

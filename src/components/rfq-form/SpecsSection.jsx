@@ -1,6 +1,6 @@
+// src/components/rfq-form/SpecsSection.jsx
 import React from "react";
 import { Check, ChevronDown, ChevronUp, Package, Plus, X } from "lucide-react";
-import SpecEditor from "./SpecEditor";
 export default function SpecsSection({
   currentItem,
   updateCurrentItem,
