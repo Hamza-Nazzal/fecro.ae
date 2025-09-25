@@ -1,9 +1,6 @@
 // src/components/RFQCard.jsx
 import React from "react";
-import { Hash, Eye, MessageCircle } from "lucide-react"; // used as icons in Chip
-import Chip from "./Chip"; // existing local Chip component
-import Button from "./Button"; // if you have a Button component; otherwise adjust to <button>
-import classNames from "classnames";
+import { Hash } from "lucide-react";
 
 /**
  * RFQCard
@@ -13,10 +10,8 @@ import classNames from "classnames";
  *  - onSendQuote: function(rfq)
  */
 export default function RFQCard({ rfq = null, dense = false, onSendQuote = () => {} }) {
-  // safety: if rfq is null/undefined, provide safe defaults (prevents no-undef and runtime crashes)
   const safeRfq = rfq || {};
 
-  // quotationsCount: prefer explicit numeric value, fall back to arrays or 0
   const quotationsCount =
     typeof safeRfq.quotationsCount === "number"
       ? safeRfq.quotationsCount
@@ -26,8 +21,6 @@ export default function RFQCard({ rfq = null, dense = false, onSendQuote = () =>
       ? safeRfq.quotes_count
       : 0;
 
-  // itemsPreview: prefer itemsPreview, fall back to items, or [].
-  // Normalise to array of simple strings (name or title).
   const rawPreview = Array.isArray(safeRfq.itemsPreview)
     ? safeRfq.itemsPreview
     : Array.isArray(safeRfq.items)
@@ -44,32 +37,31 @@ export default function RFQCard({ rfq = null, dense = false, onSendQuote = () =>
   const overflowCount = Math.max(0, previewCount - preview.length);
 
   const sellerIdDisplay = safeRfq.sellerIdDisplay || null;
+  const views = Number(safeRfq.views || 0);
 
-  // event handler for send quote
   const handleSendQuote = (e) => {
     e?.preventDefault();
-    if (!safeRfq) return;
     try {
       onSendQuote(safeRfq);
     } catch (err) {
-      // swallow errors to avoid breaking UI — caller should handle navigation
       // eslint-disable-next-line no-console
       console.error("onSendQuote failed", err);
     }
   };
 
+  const containerClasses = [
+    "bg-white border rounded-md flex items-center justify-between",
+    dense ? "py-2 px-3" : "py-4 px-5",
+  ].join(" ");
+
   return (
     <article
-      className={classNames(
-        "rfq-card",
-        "bg-white border rounded-md p-4 flex items-center justify-between",
-        dense ? "py-2 px-3" : "py-4 px-5"
-      )}
-      aria-labelledby={`rfq-title-${safeRfq.id ?? (safeRfq.sellerIdDisplay || "unknown")}`}
+      className={containerClasses}
+      aria-labelledby={`rfq-title-${safeRfq.id ?? (sellerIdDisplay || "unknown")}`}
     >
-      <div className="rfq-card__body flex-1 min-w-0">
+      <div className="flex-1 min-w-0">
         <h3
-          id={`rfq-title-${safeRfq.id ?? (safeRfq.sellerIdDisplay || "unknown")}`}
+          id={`rfq-title-${safeRfq.id ?? (sellerIdDisplay || "unknown")}`}
           className="text-lg font-semibold truncate"
         >
           {safeRfq.title || "—"}
@@ -77,23 +69,21 @@ export default function RFQCard({ rfq = null, dense = false, onSendQuote = () =>
 
         <div className="mt-2 flex items-center flex-wrap gap-3 text-sm text-slate-600">
           {sellerIdDisplay ? (
-            <Chip icon={Hash} title="RFQ ID">
+            <span
+              className="inline-flex items-center gap-1 border rounded px-2 py-1 text-xs bg-slate-50"
+              title="RFQ ID"
+            >
+              <Hash className="w-3.5 h-3.5" />
               {sellerIdDisplay}
-            </Chip>
+            </span>
           ) : null}
 
-          <span className="inline-flex items-center gap-2">
-            <Chip icon={Eye} title="Views">{`${safeRfq.views ?? 0} views`}</Chip>
-          </span>
-
-          <span className="inline-flex items-center gap-2">
-            <Chip icon={MessageCircle} title="Quotes">
-              {`${quotationsCount} ${quotationsCount === 1 ? "quote" : "quotes"}`}
-            </Chip>
+          <span className="inline-flex items-center gap-1 text-xs">{views} views</span>
+          <span className="inline-flex items-center gap-1 text-xs">
+            {quotationsCount} {quotationsCount === 1 ? "quote" : "quotes"}
           </span>
         </div>
 
-        {/* Items preview row */}
         {preview.length > 0 ? (
           <div className="mt-3 text-sm text-slate-700 flex items-center gap-2 overflow-hidden">
             <div className="flex items-center gap-2 flex-wrap">
@@ -107,15 +97,16 @@ export default function RFQCard({ rfq = null, dense = false, onSendQuote = () =>
                 </span>
               ))}
               {overflowCount > 0 ? (
-                <span className="inline-block px-2 py-1 text-xs text-slate-500">+{overflowCount} more</span>
+                <span className="inline-block px-2 py-1 text-xs text-slate-500">
+                  +{overflowCount} more
+                </span>
               ) : null}
             </div>
           </div>
         ) : null}
       </div>
 
-      <div className="rfq-card__actions ml-4 flex-shrink-0">
-        {/* Using a simple button so it works even if you don't have a Button component */}
+      <div className="ml-4 flex-shrink-0">
         <button
           onClick={handleSendQuote}
           aria-label={`Send quote for ${safeRfq.title || sellerIdDisplay || "RFQ"}`}
