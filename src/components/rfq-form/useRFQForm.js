@@ -1,7 +1,6 @@
 // src/components/rfq-form/useRFQForm.js
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createRFQ, updateRFQ } from "../../services/rfqService"
-
+import { createRFQ, updateRFQ } from "../../services/rfqService";
 
 const uid = () =>
   (typeof crypto !== "undefined" && crypto.randomUUID)
@@ -18,6 +17,7 @@ const BLANK_ITEM = {
   quantity: "",
   purchaseType: "one-time",
 };
+
 const BLANK_ORDER = {
   deliveryTimeline: "standard",
   customDate: "",
@@ -26,8 +26,6 @@ const BLANK_ORDER = {
   quoteDeadline: "",
   internalRef: "",
 };
-
-
 
 const defaultRecommended = (category = "") => {
   const c = category.toLowerCase();
@@ -82,6 +80,25 @@ export default function useRFQForm() {
     }));
   }, []);
 
+  // --- VALIDATORS (define first so guards can reference them) ---
+  const isBasicsValid = useCallback(() => {
+    // Name now allows 2+ chars (e.g., "A4")
+    const nameOk = currentItem.productName.trim().length >= 2;
+    const catOk = currentItem.categoryCommitted && currentItem.category.trim().length > 0;
+    return nameOk && catOk;
+  }, [currentItem.productName, currentItem.category, currentItem.categoryCommitted]);
+
+  // --- GUARDS (depend on validators) ---
+  const canSaveItem = useCallback(() => {
+    const qty = Number(currentItem.quantity);
+    return isBasicsValid() && Number.isFinite(qty) && qty > 0;
+  }, [isBasicsValid, currentItem.quantity]);
+
+  const canProceedStep1 = useCallback(() => {
+    return items.length > 0 || canSaveItem();
+  }, [items.length, canSaveItem]);
+
+  // actions continued
   const addOrUpdateItem = useCallback(() => {
     if (!canSaveItem()) return false;
     const qtyNum = Number(currentItem.quantity);
@@ -134,78 +151,56 @@ export default function useRFQForm() {
     setOrderDetails((prev) => ({ ...prev, ...patch }));
   }, []);
 
-  // validators
-  const isBasicsValid = useCallback(() => {
-    // Name now allows 2+ chars (e.g., "A4")
+  // auto-expand Specs when basics are valid
+  useEffect(() => {
+    if (currentStep !== 1) return;
+    if (didAutoExpand.current) return;
+
     const nameOk = currentItem.productName.trim().length >= 2;
-    const catOk = currentItem.categoryCommitted && currentItem.category.trim().length > 0;
-    return nameOk && catOk;
-  }, [currentItem.productName, currentItem.category, currentItem.categoryCommitted]);
+    const catOk = !!currentItem.categoryCommitted;
 
-useEffect(() => {
-  if (currentStep !== 1) return;
-  if (didAutoExpand.current) return;
+    if (basicsExpanded && nameOk && catOk) {
+      didAutoExpand.current = true;
+      setBasicsExpanded(false);
+      setSpecsExpanded(true);
+    }
+  }, [
+    currentStep,
+    basicsExpanded,
+    currentItem.productName,
+    currentItem.categoryCommitted,
+  ]);
 
-  const nameOk = currentItem.productName.trim().length >= 2;
-  const catOk  = !!currentItem.categoryCommitted;
-
-  if (basicsExpanded && nameOk && catOk) {
-    didAutoExpand.current = true;
-    setBasicsExpanded(false);
-    setSpecsExpanded(true);
-  }
-}, [
-  currentStep,
-  basicsExpanded,
-  currentItem.productName,
-  currentItem.categoryCommitted,
-]);
-
-
-  const canSaveItem = useCallback(() => {
-    const qty = Number(currentItem.quantity);
-    return isBasicsValid() && Number.isFinite(qty) && qty > 0;
-  }, [isBasicsValid, currentItem.quantity]);
-
-  const canProceedStep1 = useCallback(() => {
-    return items.length > 0 || canSaveItem();
-  }, [items.length, canSaveItem]);
-
-  //const canProceedStep2 = useCallback(() => items.length > 0, [items.length]);
+  // step 2 guard
   const canProceedStep2 = useCallback(
-  () => items.length > 0 && !!(orderDetails?.quoteDeadline),
-  [items.length, orderDetails?.quoteDeadline]
-);
+    () => items.length > 0 && !!(orderDetails?.quoteDeadline),
+    [items.length, orderDetails?.quoteDeadline]
+  );
 
+  // submit
+  const submitRFQ = useCallback(async () => {
+    if (submitting) return;
+    setSubmitError(null);
+    setSubmitting(true);
+    try {
+      const titleVal =
+        (orderDetails?.title && orderDetails.title.trim()) ||
+        (items?.[0]?.productName || items?.[0]?.name) ||
+        "RFQ";
 
-
-
-const submitRFQ = useCallback(async () => {
-
-  if (submitting) return;
-  setSubmitError(null);
-  setSubmitting(true);
-  try {
-    const titleVal =
-      (orderDetails?.title && orderDetails.title.trim()) ||
-      (items?.[0]?.productName || items?.[0]?.name) ||
-      "RFQ";
-
-    const rfqInput = { title: titleVal, orderDetails, items };
-    const saved = rfqId ? await updateRFQ(rfqId, rfqInput) : await createRFQ(rfqInput);
-    setRfqId(saved.id);
-    setSubmitted(true);
+      const rfqInput = { title: titleVal, orderDetails, items };
+      const saved = rfqId ? await updateRFQ(rfqId, rfqInput) : await createRFQ(rfqInput);
+      setRfqId(saved.id);
+      setSubmitted(true);
     } catch (e) {
-    console.error("Error submitting RFQ:", e);
-    setSubmitError(e?.message || "Failed to submit RFQ");
-  } finally {
-    setSubmitting(false);
-  }
-}, [orderDetails, items, rfqId, submitting]);
+      console.error("Error submitting RFQ:", e);
+      setSubmitError(e?.message || "Failed to submit RFQ");
+    } finally {
+      setSubmitting(false);
+    }
+  }, [orderDetails, items, rfqId, submitting]);
 
-
-
-
+  // misc
   const recommendedFor = useCallback((category) => defaultRecommended(category), []);
 
   return {
@@ -222,7 +217,7 @@ const submitRFQ = useCallback(async () => {
     // actions
     updateCurrentItem, commitCategory, addOrUpdateItem, editItem, duplicateItem, removeItem,
     updateOrderDetails,
-    // validators
+    // validators & guards
     isBasicsValid, canSaveItem, canProceedStep1, canProceedStep2,
     // submission
     submitRFQ, submitting, submitError,
