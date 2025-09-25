@@ -99,24 +99,14 @@ export default function RFQCard({
 
           {/* Meta chips (match look even if values are 0/—) */}
           <div className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-slate-600">
-            {sellerIdDisplay ? (
-              <Chip icon={Hash} title="RFQ ID">{sellerIdDisplay}</Chip>
-            ) : null}
-            <Chip icon={Eye} title="Views">{rfq?.views ?? 0} views</Chip>
-            <Chip icon={MessageSquareText} title="Quotations">
-              {rfq?.quotationsCount ?? 0} quotes
-            </Chip>
-            {rfq?.postedAt && (
-              <Chip icon={CalendarClock} title="Posted">
-                Posted {new Date(rfq.postedAt).toLocaleDateString()}
+              {sellerIdDisplay ? (
+                <Chip icon={Hash} title="RFQ ID">{sellerIdDisplay}</Chip>
+              ) : null}
+              <Chip icon={Eye} title="Views">{rfq?.views ?? 0} views</Chip>
+              <Chip icon={MessageSquareText} title="Quotations">
+                {rfq?.quotationsCount ?? 0} quotes
               </Chip>
-            )}
-            {rfq?.deadline && (
-              <Chip icon={CalendarClock} title="Due">
-                Due {new Date(rfq.deadline).toLocaleDateString()}
-              </Chip>
-            )}
-          </div>
+            </div>
         </div>
 
         <div className="flex items-center gap-2">
