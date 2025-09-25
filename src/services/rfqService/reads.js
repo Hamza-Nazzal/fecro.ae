@@ -33,17 +33,42 @@ export function rfqCardDbToJs(row) {
     buyerId: row?.buyer_id ?? null,
     buyer: row?.buyer_id ? { id: row.buyer_id } : null,
     views: 0,                                       // not in your view
-    quotationsCount: 0,                             // not in your view
+    //quotationsCount: 0,                             // not in your view
     items: [],                                      // not in your view
     categoryPath: row?.first_category_path ?? "",   // your view uses first_category_path
     notes: null,                                    // not in your view
     qtyTotal: row?.qty_total ?? null,               // optional for chips
+    quotationsCount: quotationsCountFromRow(row),  // NEW:
+    itemsPreview: itemsPreviewFromRow(row),  // NEW:
   };
 }
 
 /**
  * Server-side list with filters/search/sort/paging (aligned to your view).
  */
+
+
+
+function quotationsCountFromRow(row) {
+  // prefer explicit count if present; else fallback to array length; else 0
+  if (typeof row.quotations_count === "number") return row.quotations_count;
+  if (Array.isArray(row.quotations)) return row.quotations.length;
+  if (typeof row.quotationsCount === "number") return row.quotationsCount;
+  return 0;
+}
+
+function itemsPreviewFromRow(row, limit = 3) {
+  const items = Array.isArray(row.items) ? row.items : [];
+  return items.slice(0, limit).map((it) => ({
+    // keep it tiny for the card
+    id: it.id ?? null,
+    name: it.name ?? it.title ?? "",
+    qty: it.qty ?? it.quantity ?? null,
+    unit: it.unit ?? null,
+  }));
+}
+
+
 export async function listRFQsForCards({
   page = 1,
   pageSize = 20,
