@@ -1,7 +1,7 @@
 // src/components/RFQCard.jsx
 import React, { useMemo, useState } from "react";
 import {
-  Hash, CalendarClock, Eye, MessageSquareText, Tag, Package,
+  Hash, Eye, MessageSquareText, Tag, Package,
   EllipsisVertical, ChevronRight, ChevronDown,
 } from "lucide-react";
 

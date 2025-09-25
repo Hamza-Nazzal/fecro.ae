@@ -107,7 +107,7 @@ export default function useRFQForm() {
     setBasicsExpanded(true);
     setSpecsExpanded(false);
     return true;
-  }, [currentItem]);
+  }, [currentItem, canSaveItem]);
 
   const editItem = useCallback((id) => {
     const it = items.find((x) => x.id === id);
