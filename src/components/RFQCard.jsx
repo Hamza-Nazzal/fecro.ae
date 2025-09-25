@@ -47,6 +47,23 @@ function ItemRow({ item }) {
     </div>
   );
 }
+// near other derived fields
+const quotationsCount = rfq?.quotationsCount ?? (Array.isArray(rfq?.quotations) ? rfq.quotations.length : 0);
+const preview = Array.isArray(rfq?.itemsPreview) ? rfq.itemsPreview
+              : Array.isArray(rfq?.items) ? rfq.items.slice(0, 3).map(it => ({
+                  id: it.id ?? null,
+                  name: it.name ?? it.title ?? "",
+                  qty: it.qty ?? it.quantity ?? null,
+                  unit: it.unit ?? null,
+                }))
+              : [];
+
+const totalItems = Array.isArray(rfq?.items) ? rfq.items.length
+                  : Array.isArray(rfq?.itemsPreview) ? rfq.itemsPreview.length
+                  : preview.length;
+
+const extraCount = Math.max(0, totalItems - preview.length);
+
 
 /**
  * Works with your current view:
@@ -104,10 +121,25 @@ export default function RFQCard({
               ) : null}
               <Chip icon={Eye} title="Views">{rfq?.views ?? 0} views</Chip>
               <Chip icon={MessageSquareText} title="Quotations">
-                {rfq?.quotationsCount ?? 0} quotes
+               {quotationsCount} {quotationsCount === 1 ? "quote" : "quotes"}
               </Chip>
             </div>
         </div>
+              {/* Items preview row */}
+              {preview.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2 text-[12px] text-slate-700">
+                  {preview.map((it, idx) => (
+                    <span key={it.id ?? idx} className="rounded bg-slate-100 px-2 py-1">
+                      {it.name}{it.qty ? ` × ${it.qty}${it.unit ? ` ${it.unit}` : ""}` : ""}
+                    </span>
+                  ))}
+                  {extraCount > 0 && (
+                    <span className="rounded bg-slate-100 px-2 py-1" title={`${extraCount} more item(s)`}>
+                      +{extraCount}
+                    </span>
+                  )}
+                </div>
+              )}
 
         <div className="flex items-center gap-2">
           {showCTA && (
