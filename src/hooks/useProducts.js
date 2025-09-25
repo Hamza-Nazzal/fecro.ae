@@ -1,3 +1,4 @@
+// src/hooks/useProducts.js
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {

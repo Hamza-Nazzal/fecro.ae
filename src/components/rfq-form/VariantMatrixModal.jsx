@@ -1,3 +1,4 @@
+// src/components/rfq-form/VariantMatrixModal.jsx
 //src/components/rfq-form/VariantMatrixModal.jsx
 import React from "react";
 import { X } from "lucide-react";

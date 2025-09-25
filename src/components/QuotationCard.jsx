@@ -1,3 +1,4 @@
+// src/components/QuotationCard.jsx
 //src/components/QuotationCard.jsx
 import { useState } from 'react';
 import { Check, X, Eye, Edit, Trash2, Clock, AlertTriangle } from 'lucide-react';
@@ -69,7 +70,7 @@ export default function QuotationCard({
           
           {rfqData && (
             <p className="text-sm text-gray-600">
-              for <span className="font-medium">{rfqData.publicId || rfqData.title}</span>
+              for <span className="font-medium">{rfqData.sellerIdDisplay || rfqData.title}</span>
             </p>
           )}
         </div>

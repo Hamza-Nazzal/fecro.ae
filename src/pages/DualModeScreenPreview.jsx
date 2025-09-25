@@ -1,19 +1,19 @@
-// src/pages/DualModeScreen.jsx
-//src/pages/DualModeScreen.jsx
+// src/pages/DualModeScreenPreview.jsx
+//src/pages/DualModeScreenPreview.jsx
 
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import {
-  Package, ShoppingCart, Building2, Star, Menu
+  Package, ShoppingCart, Building2, Star, Menu, Eye
 } from "lucide-react";
 import useRFQ from "../hooks/useRFQ";
 import BuyerQuotationsViewer from "../components/BuyerQuotationsViewer";
 import SavedProductsContainer from "../containers/SavedProductsContainer";
 
-// Imported new components
+// Imported components
 import SideMenu from "../components/SideMenu.jsx";
 import BuyerDashboard from "../components/BuyerDashboard.jsx";
-import SellerDashboard from "../components/SellerDashboard.jsx";
+import SellerDashboardPreview from "../components/SellerDashboardPreview.jsx"; // Preview version
 import RequestForm from "../components/RequestForm.jsx";
 import QuotationModal from "../components/QuotationModal.jsx";
 
@@ -35,7 +35,7 @@ const INITIAL_NEW_REQUEST = {
   installation: null,
 };
 
-export default function DualModeScreen({ initialMode = "buy", locked = false }) {
+export default function DualModeScreenPreview({ initialMode = "buy", locked = false }) {
   const { user, logout } = useAuth();               // pulled from AuthContext; router should protect this screen
   const [mode, setMode] = useState(initialMode);    // lockable
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -101,6 +101,11 @@ export default function DualModeScreen({ initialMode = "buy", locked = false }) 
               </button>
               <Building2 className="h-6 w-6 text-blue-600 mr-2" />
               <h1 className="text-lg font-bold text-gray-900">Fecro</h1>
+              {/* Preview Badge */}
+              <div className="ml-2 flex items-center bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded-full">
+                <Eye className="h-3 w-3 mr-1" />
+                Preview
+              </div>
             </div>
             <div className="flex items-center space-x-3">
               <div className="flex items-center">
@@ -136,9 +141,9 @@ export default function DualModeScreen({ initialMode = "buy", locked = false }) 
         </div>
       </header>
 
-      {/* Welcome Banner */}
+      {/* Welcome Banner with Preview Notice */}
       <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white px-4 py-3">
-        <p className="text-sm">Welcome, {userDisplayName}</p>
+        <p className="text-sm">Welcome, {userDisplayName} - UI Preview Mode</p>
       </div>
 
       <div className="px-4 py-4">
@@ -223,9 +228,9 @@ export default function DualModeScreen({ initialMode = "buy", locked = false }) 
           </>
         )}
 
-        {/* Sell Mode Content */}
+        {/* Sell Mode Content - Using Preview Dashboard */}
         {mode === "sell" && (
-          <SellerDashboard activeTab={activeTab} />
+          <SellerDashboardPreview activeTab={activeTab} />
         )}
 
         {/* SavedProducts Tab */}

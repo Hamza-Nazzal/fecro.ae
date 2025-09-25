@@ -1,3 +1,4 @@
+// src/components/rfq-form/BasicsSection.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown, ChevronUp, Search } from "lucide-react";
 
@@ -73,6 +74,7 @@ export default function BasicsSection({
       !basicsExpanded ? "rfq-card--tinted" : ""
     }`}
     aria-label="Edit product basics"
+    aria-expanded={false}
   >
       {!basicsReady && <span className="rfq-left-strip" />}
 
@@ -157,7 +159,6 @@ export default function BasicsSection({
                 onFocus={() => setOpenList(true)}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={onKeyDown}
-                aria-expanded={openList}
                 aria-haspopup="listbox"
               />
               <Search className="absolute right-3 top-3 h-5 w-5 text-gray-400" />
@@ -169,17 +170,21 @@ export default function BasicsSection({
                 role="listbox"
                 className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-sm max-h-56 overflow-auto"
               >
-                {options.map((opt) => (
-                  <button
-                    type="button"
-                    key={opt}
-                    onClick={() => pickCategory(opt)}
-                    className="w-full text-left px-3 py-2 hover:bg-blue-50"
-                    role="option"
-                  >
-                    {opt}
-                  </button>
-                ))}
+                {options.map((opt) => {
+                  const isSelected = currentItem.category === opt;
+                  return (
+                    <button
+                      type="button"
+                      key={opt}
+                      onClick={() => pickCategory(opt)}
+                      className="w-full text-left px-3 py-2 hover:bg-blue-50"
+                      role="option"
+                      aria-selected={isSelected}
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
                 <div className="px-3 py-2 text-xs text-gray-500 border-t">
                   Select a category from the list to continue.
                 </div>

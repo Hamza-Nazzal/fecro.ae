@@ -150,13 +150,11 @@ export default function SellerRFQsInline() {
       ) : display.length ? (
         <>
           <div className={dense ? "grid gap-2" : "grid gap-3"}>
-            {display.map((rfq) => (
-              <RFQCard
-                key={rfq.id || rfq.publicId}
+            {display.map((rfq, index) => (
+             <RFQCard
+                key={rfq.id || rfq.sellerIdDisplay || `seller-rfq-${index}`}
                 rfq={rfq}
-                onSendQuote={(r) =>
-                  navigate(`/seller/quote/${encodeURIComponent(r.id || r.publicId)}`)
-                }
+                onSendQuote={(r) => navigate(`/seller/quote/${encodeURIComponent(r.id ?? "")}`)}
               />
             ))}
           </div>

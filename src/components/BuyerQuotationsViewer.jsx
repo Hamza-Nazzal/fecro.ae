@@ -1,3 +1,4 @@
+// src/components/BuyerQuotationsViewer.jsx
 //src/components/BuyerQuotationsViewer.jsx
 import React, { useState } from "react";
 import { useOnceEffect } from "../hooks/useOnceEffect";

@@ -1,3 +1,4 @@
+// src/components/Header.jsx
 import { useAuth } from "../contexts/AuthContext";
 import { Link } from "react-router-dom";
 

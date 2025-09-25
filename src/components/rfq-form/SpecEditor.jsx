@@ -1,3 +1,4 @@
+// src/components/rfq-form/SpecEditor.jsx
 import React, { useMemo, useState } from "react"
 import { Plus, Trash2 } from "lucide-react"
 import {

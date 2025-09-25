@@ -1,3 +1,4 @@
+// src/pages/RoleChooser.jsx
 /* See CODEGEN.md for architecture & conventions 
 1	Page for multi-role users to choose Buyer or Seller.
 	2	Calls switchRole then navigates to the right dashboard. Minimal glue page

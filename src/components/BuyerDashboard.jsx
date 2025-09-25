@@ -1,3 +1,4 @@
+// src/components/BuyerDashboard.jsx
 import React from "react";
 import BuyerRFQsInline from "./BuyerRFQsInline";
 

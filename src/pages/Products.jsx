@@ -1,3 +1,4 @@
+// src/pages/Products.jsx
 import React, { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useProducts from "../hooks/useProducts";
@@ -21,13 +22,13 @@ export default function Products() {
 
   const {
     // data
-    items, count, page, totalPages, loading, error,
+    items, page, totalPages, loading, error,
     // filters
     q, setQ, status, setStatus, setPage,
     // form
     form, setForm, editingId, startEdit, resetForm,
     // actions
-    submit, remove, load,
+    submit, remove,
   } = useProducts();
 
   useEffect(() => {

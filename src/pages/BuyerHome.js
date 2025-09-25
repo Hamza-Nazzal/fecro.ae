@@ -1,3 +1,4 @@
+// src/pages/BuyerHome.js
 /* See CODEGEN.md for architecture & conventions */
 /*
 1	Placeholder Buyer dashboard.

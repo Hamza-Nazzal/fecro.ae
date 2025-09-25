@@ -1,4 +1,4 @@
-// src/utils/quotationUtils.js
+// src/services/quotationHelpers.js
 
 // ===== STATUS LABELS & COLORS =====
 export const QUOTATION_STATUS_LABELS = {

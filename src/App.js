@@ -1,10 +1,13 @@
+// src/App.js
 import React from "react";
 import "./App.css";
 
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { PreviewProvider } from "./contexts/PreviewContext";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import DualModeScreen from "./pages/DualModeScreen.jsx";
+import DualModeScreenPreview from "./pages/DualModeScreenPreview.jsx";
 import LoginPage from "./pages/LoginPage";
 import Products from "./pages/Products.jsx";
 import Diag from "./pages/Diag.jsx";
@@ -14,11 +17,16 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 
 // NEW
 import ToastProvider from "./components/Toasts.jsx";
+import PreviewToggle from "./components/PreviewToggle.jsx";
 
 // These routes were added earlier
 import BuyerDashboard from "./components/BuyerDashboard.jsx";
 import BuyerRFQDetail from "./components/BuyerRFQDetail.jsx";
 import SellerQuoteComposer from "./components/SellerQuoteComposer.jsx";
+
+
+console.log(process.env.REACT_APP_SELLER_HYDRATE_ENABLED); // should log "true"
+
 
 function AfterLoginRedirect() {
   const { user } = useAuth();
@@ -58,8 +66,9 @@ export default function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <ToastProvider>
-          <BrowserRouter>
+        <PreviewProvider>
+          <ToastProvider>
+            <BrowserRouter>
             <Routes>
               <Route path="/" element={<Navigate to="/start" replace />} />
               <Route path="/login" element={<LoginPage />} />
@@ -101,6 +110,24 @@ export default function App() {
                 }
               />
 
+              {/* Preview routes for UI redesign */}
+              <Route
+                path="/preview/buyer"
+                element={
+                  <RequireAuth>
+                    <DualModeScreenPreview initialMode="buy" locked />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/preview/seller"
+                element={
+                  <RequireAuth>
+                    <DualModeScreenPreview initialMode="sell" locked />
+                  </RequireAuth>
+                }
+              />
+
               {/* NEW routes kept from earlier steps */}
               <Route path="/buyer/rfqs" element={<RequireAuth><BuyerDashboard /></RequireAuth>} />
               <Route path="/buyer/rfq/:rfqId" element={<RequireAuth><BuyerRFQDetail /></RequireAuth>} />
@@ -117,9 +144,11 @@ export default function App() {
 
               <Route path="*" element={<Navigate to="/start" replace />} />
             </Routes>
+            <PreviewToggle />
           </BrowserRouter>
         </ToastProvider>
-      </AuthProvider>
+      </PreviewProvider>
+    </AuthProvider>
     </ErrorBoundary>
   );
 }
