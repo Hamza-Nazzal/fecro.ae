@@ -9,15 +9,6 @@ function __keyFor(params) {
   try { return JSON.stringify(params || {}); } catch { return 'default'; }
 }
 
-function isMissingRelationError(error, relationName) {
-  const msg = String(error?.message || "").toLowerCase();
-  if (!relationName) return false;
-  const rel = relationName.toLowerCase();
-  return (
-    (msg.includes("does not exist") || msg.includes("unknown table") || msg.includes("undefined table")) &&
-    msg.includes(rel)
-  );
-}
 
 // Map DB row → UI shape (matches your view columns)
 
