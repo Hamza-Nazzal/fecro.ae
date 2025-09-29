@@ -39,7 +39,7 @@ export default function QuotationViewer({ quotation, onClose }) {
           <div>
             <h2 className="text-xl font-bold text-gray-900">Quotation Details</h2>
             <p className="text-sm text-gray-600 mt-1">
-              {quotation.rfq?.sellerIdDisplay || "—"}
+              {quotation.rfq?.sellerRfqId || "—"}
             </p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">

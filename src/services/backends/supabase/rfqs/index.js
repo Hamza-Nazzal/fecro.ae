@@ -1,6 +1,7 @@
 // src/services/backends/supabase/rfqs/index.js
 import { mapRowsToJs, listRFQRows, insertRFQ, patchRFQ, removeRFQ } from "./base";
-import { upsertItem, upsertItemSpecs, deleteSpecsNotIn, cascadeDeleteItems } from "./items";
+import { upsertItem, upsertItemSpecs, deleteSpecsNotIn, cascadeDeleteItems, bulkInsertItemSpecs } from "./items";
+import { normalizeSpecsInput } from "../../../../utils/rfqSpecs";
 import { getRFQHydrated } from "./hydrate";
 
 /** List top-level RFQs (no hydration) */
@@ -26,12 +27,22 @@ export async function createRFQ(rfqJs) {
   const rfqRow = await insertRFQ(rfqJs);
 
   if (Array.isArray(rfqJs.items) && rfqJs.items.length) {
+    const itemSpecsMap = {};
+    
+    // First, insert all items and collect specs for bulk insert
     for (const it of rfqJs.items) {
       const itemId = await upsertItem(it, rfqRow.id, now);
-      // If specs object is present, upsert all and do not delete anything (new item)
-      if (it.specifications && typeof it.specifications === "object") {
-        await upsertItemSpecs(itemId, it.specifications, now);
+      
+      // Collect specifications for bulk insert if they exist and are an array
+      const normalizedSpecs = normalizeSpecsInput(it.specifications);
+      if (normalizedSpecs.length > 0) {
+        itemSpecsMap[itemId] = normalizedSpecs;
       }
+    }
+    
+    // Bulk insert all specs at once
+    if (Object.keys(itemSpecsMap).length > 0) {
+      await bulkInsertItemSpecs(itemSpecsMap);
     }
   }
   return await getRFQHydrated(rfqRow.id);
@@ -52,7 +63,7 @@ export async function updateRFQ(id, updatesJs) {
     for (const it of updatesJs.items) {
       const itemId = await upsertItem(it, id, now);
       if (Object.prototype.hasOwnProperty.call(it, "specifications")) {
-        const incoming = await upsertItemSpecs(itemId, it.specifications || {}, now);
+        const incoming = await upsertItemSpecs(itemId, it.specifications ?? null, now);
         // Delete removed keys (parity with previous implementation)
         await deleteSpecsNotIn(itemId, incoming);
       }

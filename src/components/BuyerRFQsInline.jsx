@@ -115,9 +115,8 @@ export default function BuyerRFQsInline() {
               <RFQCard
                 key={rfq.id || rfq.publicId}
                 rfq={rfq}
-                role="buyer"
-                ctaLabel="View / Manage"
-                onPrimary={(r) =>
+                audience="buyer"
+                onSendQuote={(r) =>
                   navigate(`/buyer/rfq/${encodeURIComponent(r.id || r.publicId)}`)
                 }
               />

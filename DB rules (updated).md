@@ -722,5 +722,128 @@ Fix: follow the sanitization rules in §15.
 ****************************************************************
 
 
+RFQ Database & Security Notes
+
+Part 1 — Products & Categories
+	1.	Data we keep
+
+	•	categories table
+	•	Columns:
+	•	id uuid (PK)
+	•	parent_id uuid | null (self-FK; root has null)
+	•	name text
+	•	path_text text (derived breadcrumb like Electronics > Cables > HDMI)
+	•	depth int (derived; root = 0)
+	•	status enum('active','deprecated')
+	•	products and rfqs reference categories by category_id only.
+
+	2.	DB is the single source of truth
+
+	•	App never writes path_text or depth.
+	•	On insert/update of name/parent_id, the database derives:
+	•	path_text = parent.path_text || ' > ' || name.
+	•	depth = parent.depth + 1.
+	•	Triggers block cycles (no parenting under own subtree).
+	•	Renames/moves update the whole subtree so breadcrumbs stay correct.
+
+	3.	Uniqueness rules
+
+	•	At root: no two roots with the same name.
+	•	At each level: siblings cannot share the same name.
+
+⸻
+
+Part 2 — RLS & Security Invoker
+	•	Policies defined to ensure row-level security on all critical tables (rfqs, rfq_items, rfq_item_specs).
+	•	Only owners can update their RFQs.
+	•	Buyers cannot see other companies’ drafts.
+	•	Sellers can only view published/active RFQs.
+	•	Supabase functions (RPC calls) use SECURITY INVOKER so checks apply per-user, not bypassed by function execution.
+
+⸻
+
+Progress & Updates
+
+This section records the main steps we took after the first version of this document, showing how the RFQ specifications workflow matured.
+
+Step 1 — Introduced rfq_upsert_items_and_specs function
+	•	Built a plpgsql helper to allow inserting RFQ items and their specifications in one call.
+	•	Input arguments:
+	•	_rfq_id uuid → parent RFQ.
+	•	_items jsonb → array of item objects, each with optional specifications.
+	•	Behavior:
+	•	Inserts into rfq_items.
+	•	Expands specifications if present:
+	•	Array form → jsonb_to_recordset ([{key_norm, key_label, value, unit}]).
+	•	Object form → jsonb_each_text ({"Color":"Red"} → row).
+	•	Ignores empty values and only inserts meaningful specs.
+
+⸻
+
+Step 2 — Verified rfq_item_specs persistence
+	•	Confirmed that specs now insert and appear in the DB correctly.
+	•	Example row after fix:
+key_norm: weight
+key_label: Weight
+value: 1
+unit: 00
+
+Verified with Supabase UI + SQL queries.
+
+⸻
+
+Step 3 — Added protective triggers
+	•	trg_block_insert_specs and trg_block_update_specs
+	•	Both call prevent_edit_specs_if_item_locked().
+	•	Rule: if parent rfq_items.locked_at is not null → block with error:
+“RFQ item specs are locked (quoted); create an amendment instead.”
+	•	trg_rfq_item_specs_updated_at and trg_touch_updated_at
+	•	Keep updated_at automatically refreshed.
+
+⸻
+
+Step 4 — Security alignment
+	•	No changes to RLS policies themselves.
+	•	These triggers enforce business rules inside schema.
+	•	RLS + triggers together ensure:
+	•	Only authorized access.
+	•	Locked specs cannot be modified.
+
+⸻
+
+✅ Current Status:
+	•	Items + specs insertion is stable.
+	•	Specs are visible and persist correctly.
+	•	Business rules (locking after quote) are enforced at DB level.
+	•	Frontend can now rely on consistent spec rows.
+
+⸻
+****************************************************************
+
+Updates since last version
+
+Seller RFQ Identifier Migration
+	•	Old column removed: seller_public_id was deprecated and fully removed from the rfqs table.
+	•	New column added: seller_rfq_id (text, NOT NULL, unique) now serves as the canonical seller-side reference for RFQs.
+	•	Trigger logic updated: New trigger trg_rfqs_set_seller_rfq_id calls rfq_set_seller_rfq_id() on insert to auto-generate IDs in the format SRF-XXXXXXXXXX (10-character uppercase hex).
+	•	Views adjusted: All views (v_rfqs_admin, v_rfqs_card, etc.) were cleaned up to reference seller_rfq_id consistently. No aliasing back to seller_public_id remains.
+	•	Constraints: rfqs_seller_rfq_id_uniq enforces uniqueness. Optional format check (~ '^SRF-[0-9A-F]{10}$') may be enabled later if stricter validation is desired.
+	•	Cleanup complete: Indexes, triggers, and views depending on seller_public_id were either migrated or dropped. Verification queries confirmed zero residual references.
+
+Result: Database is now consistent: RFQs have two clear identifiers:
+	•	public_id → Buyer-facing reference (RFQ-#### style).
+	•	seller_rfq_id → Seller-facing reference (SRF-########## style).
+
+
+  ****************************************************************
+
+
+
+
+
+
+
+
+
 
  */

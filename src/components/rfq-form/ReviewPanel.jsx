@@ -28,13 +28,19 @@ export default function ReviewPanel({
                 </p>
                 <div className="flex space-x-2 mt-2">
                   {Object.entries(item.specifications || {})
-                    .filter(([, v]) => v)
+                    .filter(([, spec]) => (spec?.value ?? "").toString().trim())
                     .slice(0, 3)
-                    .map(([k, v]) => (
-                      <span key={k} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                        {k}: {v}
-                      </span>
-                    ))}
+                    .map(([keyNorm, spec]) => {
+                      const label = spec?.key_label || keyNorm;
+                      const value = (spec?.value ?? "").toString().trim();
+                      const unit = (spec?.unit ?? "").toString().trim();
+                      const display = unit ? `${value} ${unit}`.trim() : value;
+                      return (
+                        <span key={keyNorm} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                          {label}: {display}
+                        </span>
+                      );
+                    })}
                 </div>
               </div>
               <button onClick={() => onEditItem(item.id)} className="text-blue-600 hover:text-blue-800" title="Edit">

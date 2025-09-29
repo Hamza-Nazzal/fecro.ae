@@ -93,3 +93,61 @@ export function keyUsuallyHasUnit(keyNorm) {
   const k = normalizeKey(keyNorm)
   return Boolean(COMMON_UNITS[k])
 }
+
+/**
+ * Normalize a specs payload (array or object) into
+ * [{ key_norm, key_label, value, unit }] and drop empty values.
+ */
+export function normalizeSpecsInput(specs) {
+  if (!specs) return []
+
+  const normalized = new Map()
+
+  const push = (maybeSpec) => {
+    if (!maybeSpec || typeof maybeSpec !== "object") return
+
+    const keyNormRaw = maybeSpec.key_norm ?? maybeSpec.keyNorm ?? ""
+    const keyLabelRaw = maybeSpec.key_label ?? maybeSpec.key ?? maybeSpec.label ?? ""
+
+    const pair = (() => {
+      const labelStr = String(keyLabelRaw ?? "").trim()
+      const normFromRaw = normalizeKey(keyNormRaw || labelStr)
+      if (!normFromRaw) return null
+      const key_label = labelStr || formatKey(normFromRaw)
+      return { key_norm: normFromRaw, key_label }
+    })()
+
+    if (!pair) return
+
+    const valueStr = String(maybeSpec.value ?? maybeSpec.val ?? maybeSpec.display ?? "").trim()
+    if (!valueStr) return
+
+    const unitCandidate = maybeSpec.unit ?? maybeSpec.units ?? null
+    const unitStr = unitCandidate == null ? null : String(unitCandidate).trim() || null
+
+    normalized.set(pair.key_norm, {
+      key_norm: pair.key_norm,
+      key_label: pair.key_label,
+      value: valueStr,
+      unit: unitStr,
+    })
+  }
+
+  if (Array.isArray(specs)) {
+    for (const spec of specs) push(spec)
+  } else if (typeof specs === "object") {
+    for (const [rawLabel, rawValue] of Object.entries(specs || {})) {
+      if (rawValue && typeof rawValue === "object" && !Array.isArray(rawValue)) {
+        push({ key_label: rawLabel, ...rawValue })
+        continue
+      }
+
+      const { value, unit } = splitValueUnit(rawValue)
+      const { key_norm, key_label } = makeKeyPair(rawLabel)
+      if (!key_norm || !value) continue
+      normalized.set(key_norm, { key_norm, key_label, value, unit })
+    }
+  }
+
+  return Array.from(normalized.values())
+}
