@@ -1,7 +1,7 @@
 // src/services/backends/supabase/rfqs/index.js
 import { mapRowsToJs, listRFQRows, insertRFQ, patchRFQ, removeRFQ } from "./base";
 import { upsertItem, upsertItemSpecs, deleteSpecsNotIn, cascadeDeleteItems, bulkInsertItemSpecs } from "./items";
-import { normalizeSpecsInput } from "../../../../utils/rfqSpecs";
+import { normalizeSpecsInput } from "../../../../utils/rfq/rfqSpecs";
 import { getRFQHydrated } from "./hydrate";
 
 /** List top-level RFQs (no hydration) */

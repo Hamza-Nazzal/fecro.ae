@@ -9,7 +9,7 @@ import {
   COMMON_UNITS,
   formatKey,
   makeKeyPair,
-} from "../../utils/rfqSpecs"
+} from "../../utils/rfq/rfqSpecs"
 
 /**
  * Props:

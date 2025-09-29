@@ -1,6 +1,19 @@
 // src/services/rfqService/reads.js
 import { supabase } from "../backends/supabase";
-import { normalizeSpecsInput } from "../../utils/rfqSpecs";
+import { normalizeSpecsInput } from "../../utils/rfq/rfqSpecs";
+
+import {
+  sanitizeItemsPreview,
+  sanitizeItemsSummary,
+  sanitizeQuotationsCount,
+  getSellerRfqId,
+  specRowsToEntries,
+  toSpecEntries,
+  buildSpecRecord,
+  makeItemPreview,
+  buildSummaryEntry,
+} from '../../utils/rfq/sanitizers';
+
 
 // Coalesce identical concurrent calls by params signature
 const __inflight = new Map(); // key -> Promise
@@ -393,7 +406,6 @@ export function rfqCardDbToJs(row) {
     id: row?.id,
     publicId: row?.public_id ?? row?.id,
     sellerRfqId: sellerRfqId,
-    sellerIdDisplay: sellerRfqId, // Temporary alias for backward compatibility
     title: row?.title ?? "Untitled RFQ",
     status: row?.status ?? "active",               // your data uses 'active'
     postedAt: row?.created_at ?? null,

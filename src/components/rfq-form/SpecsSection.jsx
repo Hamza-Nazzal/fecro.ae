@@ -1,7 +1,7 @@
 // src/components/rfq-form/SpecsSection.jsx
 import React from "react";
 import { Check, ChevronDown, ChevronUp, Package, Plus, X } from "lucide-react";
-import { joinValueUnit, splitValueUnit, makeKeyPair, normalizeKey } from "../../utils/rfqSpecs";
+import { joinValueUnit, splitValueUnit, makeKeyPair, normalizeKey } from "../../utils/rfq/rfqSpecs";
 export default function SpecsSection({
   currentItem,
   updateCurrentItem,

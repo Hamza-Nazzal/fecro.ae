@@ -13,7 +13,6 @@ export function mapSellerHydrate(dto, rfqId) {
     id: safe.id ?? rfqId,
     publicId: safe.publicId ?? null,
     sellerRfqId: sellerRfqId,
-    sellerIdDisplay: sellerRfqId, // Temporary alias for backward compatibility
     title: safe.title ?? null,
     status: safe.status ?? null,
     createdAt: safe.createdAt ?? null,
