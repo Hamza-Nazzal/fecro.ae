@@ -1,18 +1,17 @@
 // src/services/rfqService/reads.js
 import { supabase } from "../backends/supabase";
-import { normalizeSpecsInput } from "../../utils/rfq/rfqSpecs";
 
 import {
   sanitizeItemsPreview,
   sanitizeItemsSummary,
   sanitizeQuotationsCount,
   getSellerRfqId,
-  specRowsToEntries,
   toSpecEntries,
-  buildSpecRecord,
   makeItemPreview,
   buildSummaryEntry,
 } from '../../utils/rfq/sanitizers';
+import { rfqCardDbToJs } from './mapping';
+
 
 
 // Coalesce identical concurrent calls by params signature
@@ -261,45 +260,7 @@ async function enrichRfqCardRows(rows = []) {
 }
 
 // Map DB row → UI shape (matches your view columns)
-export function rfqCardDbToJs(row) {
-  const sellerRfqId = getSellerRfqId(row);
-  
-  return {
-    id: row?.id,
-    publicId: row?.public_id ?? row?.id,
-    sellerRfqId: sellerRfqId,
-    title: row?.title ?? "Untitled RFQ",
-    status: row?.status ?? "active",               // your data uses 'active'
-    postedAt: row?.created_at ?? null,
-    deadline: null,                                 // not in your view
-    buyerId: row?.buyer_id ?? null,
-    buyer: row?.buyer_id ? { id: row.buyer_id } : null,
-    views: 0,                                       // not in your view
-    quotationsCount: sanitizeQuotationsCount(
-      typeof row?.quotations_count === "number"
-        ? row.quotations_count
-        : typeof row?.quotes_count === "number"
-        ? row.quotes_count
-        : row?.quotationsCount
-    ),
-    items: [],                                      // not in your view
-    itemsPreview: sanitizeItemsPreview(
-      Array.isArray(row?.items_preview) ? row.items_preview : row?.itemsPreview
-    ),
-    itemsSummary: sanitizeItemsSummary(
-      Array.isArray(row?.items_summary) ? row.items_summary : row?.itemsSummary,
-      row?.first_category_path ??
-        row?.category_path ??
-        row?.categoryPath ??
-        row?.category ??
-        row?.categories?.path_text ??
-        ""
-    ),
-    categoryPath: row?.first_category_path ?? "",
-    notes: null,
-    qtyTotal: row?.qty_total ?? null,
-  };
-}
+
 
 export async function listRFQsForCards({
   page = 1,
