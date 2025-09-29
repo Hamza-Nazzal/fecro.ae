@@ -1,250 +1,189 @@
 // src/utils/rfq/sanitizers.js
 
-/**
- * Pure, stateless helpers for shaping RFQ card data.
- * No imports. No I/O. Deterministic transforms only.
- *
- * Conventions (based on current UI usage):
- * - items_preview: string[] (max 5)
- * - items_summary: { name, quantity, specifications?, categoryPath? }[] (max 5)
- * - specifications: { key_norm?, key_label?, value?, unit? }[] (max 2)
- * - quotations_count: number >= 0
- */
-
-const ITEM_PREVIEW_LIMIT = 5;
-const SPECS_PER_ITEM_LIMIT = 2;
-
-/** Clamp a number to [min,max] */
-function clamp(n, min, max) {
-  const x = Number.isFinite(+n) ? +n : min;
-  return Math.max(min, Math.min(max, x));
+// ---- getSellerRfqId (exact) ----
+export function getSellerRfqId(row) {
+  return row?.seller_rfq_id || null;
 }
 
-/** Safe string trim */
-function s(x) {
-  return typeof x === "string" ? x.trim() : "";
-}
-
-/** True if a value is a non-empty string after trim */
-function hasText(x) {
-  return s(x).length > 0;
-}
-
-/** True if value is a finite number or numeric string */
-function isNum(x) {
-  return Number.isFinite(+x);
-}
-
-/** Build "label: value unit" for preview lines (short) */
-function specToInlineText(spec) {
-  const label = s(spec?.key_label) || s(spec?.label) || s(spec?.key_norm);
-  const val = s(spec?.value);
-  const unit = s(spec?.unit);
-  if (!label && !val) return "";
-  return [label && `${label}:`, val, unit].filter(Boolean).join(" ").trim();
-}
-
-/** Normalize 1 spec row/object into canonical { key_norm, key_label, value, unit } */
-function normalizeSpec(spec) {
-  const key_norm = s(spec?.key_norm) || s(spec?.keyNorm) || s(spec?.key);
-  const key_label = s(spec?.key_label) || s(spec?.keyLabel) || s(spec?.label) || key_norm || "";
-  const value = s(spec?.value);
-  const unit = s(spec?.unit);
-  // drop completely empty specs
-  if (!key_norm && !key_label && !value && !unit) return null;
-  return { key_norm, key_label, value, unit };
-}
-
-/**
- * Convert rfq_item_specs[] rows into a compact array of normalized specs.
- * Accepts: array of DB rows or already-shaped spec objects.
- * Returns: normalized spec objects (no duplicates by (key_norm||key_label,value,unit))
- */
-export function specRowsToEntries(rows) {
-  const out = [];
+// ---- sanitizeItemsPreview (exact) ----
+// Input: array-like; Output: unique trimmed strings (keeps order)
+export function sanitizeItemsPreview(values) {
+  if (!Array.isArray(values)) return [];
   const seen = new Set();
-  (Array.isArray(rows) ? rows : []).forEach((r) => {
-    const n = normalizeSpec(r);
-    if (!n) return;
-    const sig = [n.key_norm || n.key_label || "", n.value || "", n.unit || ""].join("¦");
-    if (seen.has(sig)) return;
-    seen.add(sig);
-    out.push(n);
-  });
+  const out = [];
+  for (const value of values) {
+    if (value == null) continue;
+    const str = typeof value === "string" ? value.trim() : String(value).trim();
+    if (!str || seen.has(str)) continue;
+    seen.add(str);
+    out.push(str);
+  }
   return out;
 }
 
-/**
- * Accepts many shapes and returns normalized specs:
- * - array of spec rows/objects
- * - object with `specs` or `specifications`
- */
-export function toSpecEntries(source) {
-  if (!source) return [];
-  if (Array.isArray(source)) return specRowsToEntries(source);
-  if (Array.isArray(source?.specs)) return specRowsToEntries(source.specs);
-  if (Array.isArray(source?.specifications)) return specRowsToEntries(source.specifications);
-  return [];
-}
+// ---- sanitizeItemsSummary (exact) ----
+// Input: array of entries; Output: array of summaries with:
+// { name, qty?, categoryPath: string, specifications: { [label]: display } }
+// - name fallback: entry.name/title/productName/item → "Item"
+// - qty: numeric > 0 only
+// - categoryPath: entry.categoryPath/category_path/category OR fallback param
+// - specifications: object map of up to 2 normalized specs (label → "value unit?")
+export function sanitizeItemsSummary(entries, fallbackCategoryPath = "") {
+  if (!Array.isArray(entries)) return [];
+  const out = [];
+  const fallback =
+    typeof fallbackCategoryPath === "string"
+      ? fallbackCategoryPath.trim()
+      : String(fallbackCategoryPath ?? "").trim();
 
-/**
- * Return up to `limit` normalized specs.
- * Keeps order; filters empties.
- */
-export function buildSpecRecord(entries, limit = SPECS_PER_ITEM_LIMIT) {
-  const arr = specRowsToEntries(entries).slice(0, clamp(limit, 0, 50));
-  return arr;
-}
+  for (const entry of entries) {
+    if (!entry || out.length >= 5) break;
 
-/**
- * Build a single preview line for an item.
- * Prefers: "<name> — spec1; spec2"
- * Falls back: "<name>" or "Item"
- */
-export function makeItemPreview(itemRow = {}, specEntries = []) {
-  const name =
-    s(itemRow?.name) ||
-    s(itemRow?.product_name) ||
-    s(itemRow?.title) ||
-    "Item";
+    const nameCandidates = [entry?.name, entry?.title, entry?.productName, entry?.item];
+    let name = nameCandidates
+      .map((candidate) =>
+        typeof candidate === "string" ? candidate.trim() : String(candidate ?? "").trim()
+      )
+      .find(Boolean);
+    if (!name) name = "Item";
 
-  const specs = buildSpecRecord(
-    specEntries.length ? specEntries : toSpecEntries(itemRow),
-    SPECS_PER_ITEM_LIMIT
-  );
+    const summary = { name };
 
-  const parts = specs
-    .map(specToInlineText)
-    .filter(hasText)
-    .slice(0, SPECS_PER_ITEM_LIMIT);
+    const qty = Number(entry?.qty ?? entry?.quantity);
+    if (Number.isFinite(qty) && qty > 0) summary.qty = qty;
 
-  return parts.length ? `${name} — ${parts.join("; ")}` : name;
-}
+    const categoryRaw = entry?.categoryPath ?? entry?.category_path ?? entry?.category;
+    const category =
+      typeof categoryRaw === "string" ? categoryRaw.trim() : String(categoryRaw ?? "").trim();
+    const normalizedCategory = category || fallback;
+    summary.categoryPath = normalizedCategory || "";
 
-/**
- * Build one summary entry the card understands.
- * Shape: { name, quantity, specifications[], categoryPath? }
- */
-export function buildSummaryEntry(itemRow = {}, specEntries = [], opts = {}) {
-  const name =
-    s(itemRow?.name) ||
-    s(itemRow?.product_name) ||
-    s(itemRow?.title) ||
-    "Item";
+    const specsList = normalizeSpecsInput(entry?.specifications);
+    const normalizedSpecs = {};
+    for (const spec of specsList.slice(0, 2)) {
+      const label = (spec.key_label ?? spec.key_norm ?? "").toString().trim();
+      const value = (spec.value ?? "").toString().trim();
+      if (!label || !value) continue;
+      const display = spec.unit ? `${value} ${spec.unit}`.trim() : value;
+      if (!display) continue;
+      normalizedSpecs[label] = display;
+    }
+    summary.specifications = normalizedSpecs;
 
-  // quantities in your data are sometimes numeric, sometimes strings
-  const quantityRaw = itemRow?.quantity ?? itemRow?.qty ?? itemRow?.qty_total;
-  const quantity = isNum(quantityRaw) ? +quantityRaw : quantityRaw ?? null;
-
-  const specifications = buildSpecRecord(
-    specEntries.length ? specEntries : toSpecEntries(itemRow),
-    SPECS_PER_ITEM_LIMIT
-  );
-
-  const fallbackCategoryPath =
-    s(itemRow?.categoryPath) ||
-    s(itemRow?.first_category_path) ||
-    s(opts?.fallbackCategoryPath);
-
-  const entry = { name, quantity: quantity ?? null };
-  if (specifications.length) entry.specifications = specifications;
-  if (fallbackCategoryPath) entry.categoryPath = fallbackCategoryPath;
-
-  return entry;
-}
-
-/**
- * items_preview sanitizer.
- * Accepts:
- *   - string[]
- *   - array of item rows (will render to lines with makeItemPreview)
- *   - { items: [...] }
- * Returns: string[] (max 5)
- */
-export function sanitizeItemsPreview(source) {
-  let items = [];
-  if (Array.isArray(source)) {
-    items = source;
-  } else if (Array.isArray(source?.items)) {
-    items = source.items;
-  } else if (!source) {
-    return [];
-  } else {
-    // Unknown shape → best effort: wrap single object
-    items = [source];
+    out.push(summary);
   }
-
-  // If already string[], trim + filter empties
-  const allStrings = items.every((x) => typeof x === "string");
-  if (allStrings) {
-    return items
-      .map((t) => s(t))
-      .filter(hasText)
-      .slice(0, ITEM_PREVIEW_LIMIT);
-  }
-
-  // Otherwise, treat as item rows
-  const lines = items.map((it) => {
-    const specs = toSpecEntries(it);
-    return makeItemPreview(it, specs);
-  });
-
-  return lines.filter(hasText).slice(0, ITEM_PREVIEW_LIMIT);
+  return out;
 }
 
-/**
- * items_summary sanitizer.
- * Accepts:
- *   - array of already-shaped summary entries
- *   - array of item rows ({ name/product_name, quantity, specs/specifications[] })
- *   - { items: [...] }
- * Returns: normalized summary entries[] (max 5)
- */
-export function sanitizeItemsSummary(source, fallbackCategoryPath = "") {
-  let items = [];
-  if (Array.isArray(source)) {
-    items = source;
-  } else if (Array.isArray(source?.items)) {
-    items = source.items;
-  } else if (!source) {
-    return [];
-  } else {
-    items = [source];
-  }
-
-  // If entries already look like summaries, lightly normalize them
-  const lookLikeSummaries = items.every(
-    (x) =>
-      x &&
-      (typeof x === "object") &&
-      ("name" in x || "product_name" in x || "title" in x)
-  );
-
-  const entries = items.map((it) => {
-    const specs = toSpecEntries(it);
-    return buildSummaryEntry(it, specs, { fallbackCategoryPath });
-  });
-
-  return entries.slice(0, ITEM_PREVIEW_LIMIT);
+// Helper used by sanitizeItemsSummary (exact semantics)
+function normalizeSpecsInput(specsMaybeArray) {
+  const arr = Array.isArray(specsMaybeArray) ? specsMaybeArray : [];
+  return arr.filter(Boolean);
 }
 
-/**
- * quotations_count sanitizer: coerce to >= 0 integer, default 0.
- */
+// ---- sanitizeQuotationsCount (exact) ----
 export function sanitizeQuotationsCount(value) {
-  if (!Number.isFinite(+value)) return 0;
-  const n = Math.floor(+value);
-  return n < 0 ? 0 : n;
+  const num = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(num) && num >= 0 ? num : 0;
 }
 
-/**
- * seller RFQ ID extractor with tolerant fallbacks.
- * Returns null if not present.
- */
-export function getSellerRfqId(row) {
-  return (
-    s(row?.seller_rfq_id) ||
-    s(row?.sellerRfqId) ||
-    null
-  ) || null;
+// ---- specRowsToEntries (exact) ----
+// Input: rfq_item_specs[] rows
+// Output: array of { label, value, display } where display="label: value" or "value" (+unit)
+export function specRowsToEntries(specRows = []) {
+  const entries = [];
+  for (const row of specRows) {
+    if (!row) continue;
+
+    const rawValue = row.value ?? "";
+    let value =
+      typeof rawValue === "string" ? rawValue.trim() : String(rawValue ?? "").trim();
+    if (!value) continue;
+
+    const unit = (row.unit ?? "").toString().trim();
+    if (unit) value = `${value} ${unit}`;
+
+    const label = (row.key_label ?? row.key_norm ?? "").toString().trim();
+    const display = label ? `${label}: ${value}` : value;
+
+    entries.push({ label, value, display });
+  }
+  return entries;
+}
+
+// ---- toSpecEntries (exact) ----
+// Pass-through if already has "display"; else derive via specRowsToEntries
+export function toSpecEntries(source = []) {
+  if (!Array.isArray(source)) return [];
+  if (
+    source.length &&
+    typeof source[0] === "object" &&
+    Object.prototype.hasOwnProperty.call(source[0], "display")
+  ) {
+    return source;
+  }
+  return specRowsToEntries(source);
+}
+
+// ---- buildSpecRecord (exact) ----
+// Takes entries (or rows), returns object map of up to 2 specs: { label: value }
+export function buildSpecRecord(entries = [], limit = 2) {
+  const record = {};
+  let count = 0;
+  for (const entry of toSpecEntries(entries)) {
+    if (count >= limit) break;
+    const key = entry.label || `Spec ${count + 1}`;
+    const label =
+      typeof key === "string" ? key.trim() : String(key ?? "").trim();
+    const value =
+      typeof entry.value === "string" ? entry.value.trim() : String(entry.value ?? "").trim();
+    if (!label || !value) continue;
+    record[label] = value;
+    count += 1;
+  }
+  return record;
+}
+
+// ---- makeItemPreview (exact) ----
+// Prefers: "product_name — firstSpec"; else name; else first spec; else "Qty N"; else purchase_type; else null
+export function makeItemPreview(itemRow = {}, specSource = []) {
+  const entries = toSpecEntries(specSource);
+  const specStrings = entries.map((entry) => entry.display).filter(Boolean);
+
+  const name = (itemRow.product_name ?? "").toString().trim();
+  if (name && specStrings.length) return `${name} — ${specStrings[0]}`;
+  if (name) return name;
+
+  if (specStrings.length) return specStrings[0];
+
+  const quantity = Number(itemRow.quantity);
+  if (Number.isFinite(quantity) && quantity > 0) return `Qty ${quantity}`;
+
+  const purchaseType = (itemRow.purchase_type ?? "").toString().trim();
+  if (purchaseType) return purchaseType;
+
+  return null;
+}
+
+// ---- buildSummaryEntry (exact) ----
+// Output: { name, categoryPath, qty?, specifications: {label:value} }
+export function buildSummaryEntry(itemRow = {}, specSource = []) {
+  const entries = toSpecEntries(specSource);
+  const specDisplays = entries.map((entry) => entry.display).filter(Boolean);
+
+  const productName = (itemRow.product_name ?? "").toString().trim();
+  const name = productName || specDisplays[0] || "Item";
+
+  const summary = {
+    name,
+    categoryPath: (itemRow.category_path ?? itemRow.categoryPath ?? "").toString().trim(),
+  };
+
+  const qty = Number(itemRow.quantity);
+  if (Number.isFinite(qty) && qty > 0) summary.qty = qty;
+
+  const specsRecord = buildSpecRecord(entries);
+  summary.specifications = specsRecord;
+
+  return summary;
 }
