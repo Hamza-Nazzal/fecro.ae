@@ -2,6 +2,7 @@
 import { supabase } from "../backends/supabase";
 import { getCurrentUserCached } from "../backends/supabase/auth";
 import { rfqJsToDb } from "../../utils/mappers";
+import { normalizeSpecsInput } from "../../utils/rfqSpecs";
 import { getRFQ } from "./reads";
 
 /** Normalize one UI item payload for RPC upsert */
@@ -11,33 +12,9 @@ function normalizeItemForRPC(it, { rfqId, allowId = false } = {}) {
   const quantity = it.quantity ?? it.qty ?? 1;
   const purchaseType = it.purchaseType ?? it.orderType ?? "one-time";
   const barcode = it.barcode ?? null;
-  const rawSpecs = it.specifications ?? it.specs ?? null;
-
-  // helper to normalize spec keys
-    const normKey = (s) =>
-      String(s ?? "")
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "_")
-        .replace(/^_+|_+$/g, "");
-      let specifications = null;
-        if (Array.isArray(rawSpecs)) {
-          // tolerate various shapes
-          specifications = rawSpecs.map((s = {}) => ({
-            key_label: s.key_label ?? s.key ?? "",
-            key_norm: s.key_norm ?? normKey(s.key_label ?? s.key ?? ""),
-            value: s.value ?? String(s.val ?? ""),
-            unit: s.unit ?? null,
-          }));
-        } else if (rawSpecs && typeof rawSpecs === "object") {
-          // object map -> array of rows
-          specifications = Object.entries(rawSpecs).map(([k, v]) => ({
-            key_label: k,
-            key_norm: normKey(k),
-            value: String(v),
-            unit: null,
-          }));
-        }
+  const specsInput = it.specifications ?? null;
+  const normalizedSpecs = normalizeSpecsInput(specsInput);
+  const specifications = normalizedSpecs.length ? normalizedSpecs : null;
 
   const out = {
     product_name: name,

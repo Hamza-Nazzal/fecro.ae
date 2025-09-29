@@ -95,7 +95,7 @@ export default function useSellerRFQs({
     const s = search.toLowerCase();
     return rfqs.filter((r) =>
       [
-        r.sellerIdDisplay,
+        r.sellerRfqId,
         r.title,
         r.company,
         r.description,

@@ -42,7 +42,9 @@ export default function MiniCart({ items, onEdit, onDuplicate, onRemove }) {
                   </div>
                   <p className="text-xs text-gray-600">
                     Qty {item.quantity || "—"} •{" "}
-                    {Object.entries(item.specifications || {}).filter(([, v]) => v).length} specs
+                    {Object.values(item.specifications || {}).filter(
+                      (spec) => (spec?.value ?? "").toString().trim()
+                    ).length} specs
                   </p>
                 </div>
 
@@ -77,12 +79,18 @@ export default function MiniCart({ items, onEdit, onDuplicate, onRemove }) {
                 {item.barcode && <div className="mb-1"><span className="text-gray-500">Barcode:</span> {item.barcode}</div>}
                 <div className="flex flex-wrap gap-1 mt-1">
                   {Object.entries(item.specifications || {})
-                    .filter(([, v]) => v)
-                    .map(([k, v]) => (
-                      <span key={k} className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
-                        {k}: {v}
-                      </span>
-                    ))}
+                    .filter(([, spec]) => (spec?.value ?? "").toString().trim())
+                    .map(([keyNorm, spec]) => {
+                      const label = spec?.key_label || keyNorm;
+                      const value = (spec?.value ?? "").toString().trim();
+                      const unit = (spec?.unit ?? "").toString().trim();
+                      const display = unit ? `${value} ${unit}`.trim() : value;
+                      return (
+                        <span key={keyNorm} className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                          {label}: {display}
+                        </span>
+                      );
+                    })}
                   {Object.keys(item.specifications || {}).length === 0 && (
                     <span className="text-gray-500">No specs added</span>
                   )}

@@ -2,6 +2,7 @@
 import { supabase } from "../../supabase.js";
 import { makeUUID } from "../../../ids";
 import { specsRowsToObject } from "../../../../utils/mappers";
+import { normalizeSpecsInput } from "../../../../utils/rfqSpecs";
 
 /** Read items for an RFQ (raw DB rows) */
 export async function fetchItems(rfqId) {
@@ -41,10 +42,11 @@ export async function upsertItem(it, rfqId, nowISO) {
 }
 
 /** Upsert all specs for an item; returns Set of incoming key_norm values */
-export async function upsertItemSpecs(itemId, specsObject = {}, nowISO) {
+export async function upsertItemSpecs(itemId, specsInput = null, nowISO) {
   const incoming = new Set();
-  for (const [key_norm, payload] of Object.entries(specsObject || {})) {
-    const value = (payload?.value ?? "").toString().trim();
+  const specs = normalizeSpecsInput(specsInput);
+  for (const spec of specs) {
+    const { key_norm, key_label, value, unit } = spec;
     if (!key_norm || !value) continue;
     incoming.add(key_norm);
 
@@ -60,9 +62,9 @@ export async function upsertItemSpecs(itemId, specsObject = {}, nowISO) {
       id,
       rfq_item_id: itemId,
       key_norm,
-      key_label: payload?.key_label ?? key_norm,
+      key_label: key_label || key_norm,
       value,
-      unit: payload?.unit ?? null,
+      unit: unit || null,
       created_at: existing?.created_at || nowISO,
       updated_at: nowISO,
     });
@@ -84,6 +86,48 @@ export async function deleteSpecsNotIn(itemId, incomingSet) {
       .delete()
       .in("id", toDelete.map((r) => r.id));
     if (error) throw new Error(error.message);
+  }
+}
+
+/** Bulk insert specs for multiple items (used during RFQ creation) */
+export async function bulkInsertItemSpecs(itemSpecsMap) {
+  const rows = [];
+  for (const [itemId, rawSpecs] of Object.entries(itemSpecsMap)) {
+    const specs = normalizeSpecsInput(rawSpecs);
+    if (!specs.length) continue;
+
+    for (const spec of specs) {
+      rows.push({
+        rfq_item_id: itemId,
+        key_norm: spec.key_norm,
+        key_label: spec.key_label || spec.key_norm,
+        value: spec.value,
+        unit: spec.unit ?? null,
+      });
+    }
+  }
+
+  if (rows.length === 0) return;
+
+  try {
+    const { error } = await supabase
+      .from('rfq_item_specs')
+      .insert(rows, { returning: 'minimal' });
+    
+    if (error) {
+      if (error.code === 'PGRST301' || error.code === 'PGRST116' || 
+          error.message?.includes('401') || error.message?.includes('403')) {
+        console.warn('rfq_item_specs insert blocked (RLS?):', error.message);
+        return; // Don't throw, let RFQ creation continue
+      }
+      throw error;
+    }
+  } catch (error) {
+    if (error.message?.includes('401') || error.message?.includes('403')) {
+      console.warn('rfq_item_specs insert blocked (RLS?):', error.message);
+      return; // Don't throw, let RFQ creation continue
+    }
+    throw error;
   }
 }
 

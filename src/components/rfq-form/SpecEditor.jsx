@@ -8,18 +8,19 @@ import {
   keyUsuallyHasUnit,
   COMMON_UNITS,
   formatKey,
+  makeKeyPair,
 } from "../../utils/rfqSpecs"
 
 /**
  * Props:
- *  - specs: Record<string,string>
- *  - onChange: (nextSpecs: Record<string,string>) => void
+ *  - specs: Record<string,{ key_norm, key_label, value, unit }>
+ *  - onChange: (nextSpecs: Record<string,{ key_norm, key_label, value, unit }>) => void
  *
  * Keeps UI ergonomic:
  *  - For keys that typically have a unit, shows (number + unit) inputs
  *  - For others, shows a single text input
  *  - Prevents dup keys (case-insensitive via normalizeKey)
- *  - Stores back to a plain object (value OR "value unit")
+ *  - Stores back to normalized spec objects
  */
 export default function SpecEditor({ specs = {}, onChange }) {
   const [newKey, setNewKey] = useState("")
@@ -28,16 +29,25 @@ export default function SpecEditor({ specs = {}, onChange }) {
 
   const normalizedSet = useMemo(() => {
     const s = new Set()
-    Object.keys(specs || {}).forEach((k) => s.add(normalizeKey(k)))
+    Object.keys(specs || {}).forEach((keyNorm) => {
+      if (keyNorm) s.add(keyNorm)
+    })
     return s
   }, [specs])
 
-  function setSpec(label, composite) {
+  function setSpecValue(keyNorm, composite, labelFallback) {
     const next = { ...(specs || {}) }
     if (!composite || !String(composite).trim()) {
-      delete next[label]
+      delete next[keyNorm]
     } else {
-      next[label] = composite
+      const { value, unit } = splitValueUnit(composite)
+      const existing = next[keyNorm] || {}
+      next[keyNorm] = {
+        key_norm: keyNorm,
+        key_label: existing.key_label || labelFallback || formatKey(keyNorm),
+        value,
+        unit,
+      }
     }
     onChange?.(next)
   }
@@ -46,19 +56,27 @@ export default function SpecEditor({ specs = {}, onChange }) {
     e?.preventDefault?.()
     const label = newKey.trim()
     const value = newVal.trim()
-    const nkey = normalizeKey(label)
-    if (!label || !value) return
-    if (normalizedSet.has(nkey)) return
-    const composite = joinValueUnit(value, newUnit.trim() || null)
-    onChange?.({ ...(specs || {}), [label]: composite })
+    const { key_norm, key_label } = makeKeyPair(label)
+    if (!key_norm || !value) return
+    if (normalizedSet.has(key_norm)) return
+    const unit = keyUsuallyHasUnit(key_norm) ? (newUnit.trim() || null) : null
+    onChange?.({
+      ...(specs || {}),
+      [key_norm]: {
+        key_norm,
+        key_label,
+        value,
+        unit,
+      },
+    })
     setNewKey("")
     setNewVal("")
     setNewUnit("")
   }
 
-  function removeKey(label) {
+  function removeKey(keyNorm) {
     const next = { ...(specs || {}) }
-    delete next[label]
+    delete next[keyNorm]
     onChange?.(next)
   }
 
@@ -69,21 +87,23 @@ export default function SpecEditor({ specs = {}, onChange }) {
       {/* Existing specs */}
       {entries.length > 0 ? (
         <div className="space-y-3">
-          {entries.map(([label, composite]) => {
-            const keyNorm = normalizeKey(label)
-            const { value, unit } = splitValueUnit(composite)
-            const showUnit = keyUsuallyHasUnit(keyNorm)
-            const unitOptions = COMMON_UNITS[keyNorm] || []
+          {entries.map(([keyNorm, spec]) => {
+            const keyNormSafe = keyNorm || normalizeKey(spec?.key_label)
+            const keyLabel = spec?.key_label || formatKey(keyNormSafe)
+            const value = (spec?.value ?? "").toString()
+            const unit = (spec?.unit ?? "").toString()
+            const showUnit = keyUsuallyHasUnit(keyNormSafe)
+            const unitOptions = COMMON_UNITS[keyNormSafe] || []
 
             return (
               <div
-                key={label}
+                key={keyNormSafe || keyLabel}
                 className="grid grid-cols-12 gap-2 items-center rounded-xl border p-3"
               >
                 <div className="col-span-3">
                   <div className="text-xs text-gray-500 mb-1">Attribute</div>
-                  <div className="font-medium truncate" title={label}>
-                    {label || formatKey(keyNorm)}
+                  <div className="font-medium truncate" title={keyLabel}>
+                    {keyLabel}
                   </div>
                 </div>
 
@@ -98,7 +118,7 @@ export default function SpecEditor({ specs = {}, onChange }) {
                         className="w-full rounded-lg border px-3 py-2 outline-none focus:ring"
                         value={value || ""}
                         onChange={(e) =>
-                          setSpec(label, joinValueUnit(e.target.value, unit || null))
+                          setSpecValue(keyNormSafe, joinValueUnit(e.target.value, unit || null), keyLabel)
                         }
                         placeholder="e.g. 180"
                       />
@@ -106,7 +126,7 @@ export default function SpecEditor({ specs = {}, onChange }) {
                         className="min-w-[96px] rounded-lg border px-3 py-2 outline-none focus:ring"
                         value={unit || ""}
                         onChange={(e) =>
-                          setSpec(label, joinValueUnit(value || "", e.target.value || null))
+                          setSpecValue(keyNormSafe, joinValueUnit(value || "", e.target.value || null), keyLabel)
                         }
                       >
                         <option value="">(unit)</option>
@@ -126,7 +146,7 @@ export default function SpecEditor({ specs = {}, onChange }) {
                       type="text"
                       className="w-full rounded-lg border px-3 py-2 outline-none focus:ring"
                       value={value || ""}
-                      onChange={(e) => setSpec(label, joinValueUnit(e.target.value, null))}
+                      onChange={(e) => setSpecValue(keyNormSafe, joinValueUnit(e.target.value, null), keyLabel)}
                       placeholder="e.g. Blue"
                     />
                   )}
@@ -135,9 +155,9 @@ export default function SpecEditor({ specs = {}, onChange }) {
                 <div className="col-span-2 flex justify-end">
                   <button
                     type="button"
-                    onClick={() => removeKey(label)}
+                    onClick={() => removeKey(keyNormSafe)}
                     className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-red-600 hover:bg-red-50"
-                    aria-label={`Remove ${label}`}
+                    aria-label={`Remove ${keyLabel}`}
                   >
                     <Trash2 size={16} />
                     Remove

@@ -44,19 +44,31 @@ db.version(2)
 
         const specs = (it.specifications && typeof it.specifications === "object") ? it.specifications : {};
         for (const [rawKey, rawVal] of Object.entries(specs)) {
-          const key_label = String(rawKey || "").trim();
-          const key_norm = _normalizeKey(key_label);                // ← use shared normalizer
+          const rawSpec = rawVal && typeof rawVal === "object" ? rawVal : null;
+          const key_label_input = rawSpec?.key_label ?? rawKey;
+          const key_norm_input = rawSpec?.key_norm ?? key_label_input;
+          const key_norm = _normalizeKey(key_norm_input);
           if (!key_norm) continue;
 
-          const valStr = (rawVal ?? "").toString().trim();
+          const key_label = String(key_label_input ?? "").trim() || key_norm;
+          const baseValue = rawSpec?.value ?? rawVal;
+          const baseUnit = rawSpec?.unit ?? null;
+          let valStr = (baseValue ?? "").toString().trim();
+          let unit = baseUnit == null ? null : baseUnit.toString().trim() || null;
+
+          if (!valStr) {
+            const parsed = _splitValueUnit(rawVal);
+            valStr = parsed.value;
+            unit = unit || parsed.unit;
+          }
           if (!valStr) continue;
 
-          const { value, unit } = _splitValueUnit(valStr);          // ← reuse the same splitter
+          const value = valStr;
           await tx.table("rfq_item_specs").put({
             id: makeUUID(),
             rfq_item_id: itemId,
             key_norm,
-            key_label: key_label || key_norm,
+            key_label,
             value,
             unit,
           });

@@ -4,11 +4,17 @@
 export function specsRowsToObject(rows = []) {
   const obj = {};
   for (const r of rows || []) {
-    if (!r || !r.key_norm) continue;
-    obj[r.key_norm] = {
-      key_label: r.key_label ?? r.key_norm,
-      value: r.value ?? "",
-      unit: r.unit ?? null,
+    if (!r) continue;
+    const key_norm = (r.key_norm ?? "").toString().trim();
+    const value = (r.value ?? "").toString().trim();
+    if (!key_norm || !value) continue;
+    const unit = (r.unit ?? "").toString().trim() || null;
+    const key_label = (r.key_label ?? r.key_norm ?? "").toString().trim() || key_norm;
+    obj[key_norm] = {
+      key_norm,
+      key_label,
+      value,
+      unit,
     };
   }
   return obj;

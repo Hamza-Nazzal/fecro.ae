@@ -106,8 +106,8 @@ export default function useRFQForm() {
       ...currentItem,
       id: currentItem.id || uid(),
       quantity: Number.isFinite(qtyNum) && qtyNum > 0 ? qtyNum : 0,
-      specCount: Object.entries(currentItem.specifications || {}).filter(
-        ([, v]) => String(v || "").trim().length > 0
+      specCount: Object.values(currentItem.specifications || {}).filter(
+        (spec) => (spec?.value ?? "").toString().trim().length > 0
       ).length,
     };
     setItems((prev) => {

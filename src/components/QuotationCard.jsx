@@ -70,7 +70,7 @@ export default function QuotationCard({
           
           {rfqData && (
             <p className="text-sm text-gray-600">
-              for <span className="font-medium">{rfqData.sellerIdDisplay || rfqData.title}</span>
+              for <span className="font-medium">{rfqData.sellerRfqId || rfqData.title}</span>
             </p>
           )}
         </div>

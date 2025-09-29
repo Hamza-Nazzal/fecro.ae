@@ -1,16 +1,22 @@
 // src/services/rfqService/mapping.js
 import { rfqDbToJs } from "../../utils/mappers";
 
-/** Convert rfq_item_specs[] → { key_norm: "value unit?" } */
+/** Convert rfq_item_specs[] → { key_norm: { key_norm, key_label, value, unit } } */
 function specRowsToObject(rows = []) {
   const out = {};
   for (const r of rows || []) {
     if (!r) continue;
-    const k = (r.key_norm || "").trim();
-    const val = (r.value ?? "").toString().trim();
-    if (!k || !val) continue;
-    const unit = (r.unit ?? "").toString().trim();
-    out[k] = unit ? `${val} ${unit}` : val;
+    const key_norm = (r.key_norm || "").toString().trim();
+    const value = (r.value ?? "").toString().trim();
+    if (!key_norm || !value) continue;
+    const unit = (r.unit ?? "").toString().trim() || null;
+    const key_label = (r.key_label ?? r.key_norm ?? "").toString().trim() || key_norm;
+    out[key_norm] = {
+      key_norm,
+      key_label,
+      value,
+      unit,
+    };
   }
   return out;
 }
@@ -36,6 +42,7 @@ function mapItemRow(row = {}) {
 export function mapRFQRow(row = {}) {
   const base = rfqDbToJs(row);
   base.items = Array.isArray(row.rfq_items) ? row.rfq_items.map(mapItemRow) : [];
+  base.itemsSummary = Array.isArray(row.items_summary) ? row.items_summary : [];
 
 
   const first = base.items?.[0] || {};

@@ -40,11 +40,11 @@ export default function SellerQuoteComposer() {
         const res = await listRFQsForCards({ rfqId, page: 1, pageSize: 1 });
         const data = Array.isArray(res) ? res : res?.data;
         const first = Array.isArray(data) ? data[0] : data?.[0];
-        if (alive) setRfq(first || { id: rfqId, title: "", sellerIdDisplay: null });
+        if (alive) setRfq(first || { id: rfqId, title: "", sellerRfqId: null });
       } catch (e) {
         if (alive) {
           setError(e?.message || String(e));
-          setRfq({ id: rfqId, title: "", sellerIdDisplay: null }); // safe fallback
+          setRfq({ id: rfqId, title: "", sellerRfqId: null }); // safe fallback
         }
       } finally {
         if (alive) setLoading(false);
@@ -83,7 +83,7 @@ export default function SellerQuoteComposer() {
 
   // Choose items from hydrated payload (if present) else card payload
   const items = hydrated?.items?.length ? hydrated.items : (rfq?.items ?? []);
-  const sellerIdDisplay = hydrated?.sellerIdDisplay ?? rfq?.sellerIdDisplay ?? null;
+  const sellerRfqId = hydrated?.sellerRfqId ?? rfq?.sellerRfqId ?? null;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -139,8 +139,8 @@ export default function SellerQuoteComposer() {
       {/* Title + seller-facing ID (prefer hydrated) */}
       <div className="font-semibold">
         {hydrated?.title || rfq?.title || "Untitled RFQ"}
-        {sellerIdDisplay && (
-          <span className="ml-2 text-xs text-slate-600">({sellerIdDisplay})</span>
+        {sellerRfqId && (
+          <span className="ml-2 text-xs text-slate-600">({sellerRfqId})</span>
         )}
       </div>
 

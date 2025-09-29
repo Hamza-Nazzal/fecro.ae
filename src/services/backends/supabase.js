@@ -18,8 +18,20 @@ export const SB_ANON_KEY =
   process.env.SUPABASE_ANON_KEY ||
   "";
 
-// Single client
-export const supabase = createClient(SB_PROJECT_URL, SB_ANON_KEY);
+// De-dup in-flight GETs by URL
+const inFlight = new Map(); // key: URL string -> Promise<Response>
+const dedupingFetch = (url, opts = {}) => {
+  const method = (opts.method || 'GET').toUpperCase();
+  if (method !== 'GET') return window.fetch(url, opts);
+  const key = typeof url === 'string' ? url : url.toString();
+  if (inFlight.has(key)) return inFlight.get(key);
+  const p = window.fetch(url, opts).finally(() => inFlight.delete(key));
+  inFlight.set(key, p);
+  return p;
+};
+
+// Single client with deduplication
+export const supabase = createClient(SB_PROJECT_URL, SB_ANON_KEY, { global: { fetch: dedupingFetch } });
 export default supabase;
 
 // Re-export domain modules (keep AFTER client init)

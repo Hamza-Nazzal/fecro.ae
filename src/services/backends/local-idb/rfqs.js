@@ -18,8 +18,13 @@ async function _hydrateRFQ(rfqRow) {
     // Prefer key_label when present, else key_norm.
     const specifications = {};
     for (const s of specs) {
-      const k = s.key_label || s.key_norm;
-      specifications[k] = s.unit ? `${s.value} ${s.unit}` : `${s.value}`;
+      if (!s?.key_norm) continue;
+      const key_norm = s.key_norm;
+      const key_label = s.key_label || s.key_norm;
+      const value = (s.value ?? "").toString().trim();
+      if (!value) continue;
+      const unit = (s.unit ?? "").toString().trim() || null;
+      specifications[key_norm] = { key_norm, key_label, value, unit };
     }
 
     outItems.push({
@@ -79,10 +84,20 @@ export async function createRFQ(rfq) {
 
         const entries = Object.entries(it.specifications || {});
         for (const [rawKey, rawVal] of entries) {
-          const { key_norm, key_label } = _normKeyPair(rawKey);
-          const { value, unit } = _splitValueUnit(rawVal);
-          const v = (value ?? "").toString().trim();
-          if (!key_norm || !v) continue;
+          const rawSpec = rawVal && typeof rawVal === "object" ? rawVal : null;
+          const { key_norm, key_label } = _normKeyPair(rawSpec?.key_label ?? rawKey);
+          const valueCandidate = rawSpec?.value ?? rawVal;
+          const unitCandidate = rawSpec?.unit ?? null;
+          let valueStr = (valueCandidate ?? "").toString().trim();
+          let unit = unitCandidate == null ? null : unitCandidate.toString().trim() || null;
+
+          if (!valueStr) {
+            const parsed = _splitValueUnit(rawVal);
+            valueStr = parsed.value;
+            unit = unit || parsed.unit;
+          }
+
+          if (!key_norm || !valueStr) continue;
 
           // Enforce (rfq_item_id, key_norm) uniqueness in code
           const existing = await db.rfq_item_specs
@@ -96,8 +111,8 @@ export async function createRFQ(rfq) {
             rfq_item_id: itemId,
             key_norm,
             key_label,
-            value: v,
-            unit: unit || null,
+            value: valueStr,
+            unit,
             created_at: existing?.created_at || now,
             updated_at: now,
           });
@@ -156,10 +171,20 @@ export async function updateRFQ(id, updates) {
           const incomingKeys = new Set();
           const entries = Object.entries(it.specifications || {});
           for (const [rawKey, rawVal] of entries) {
-            const { key_norm, key_label } = _normKeyPair(rawKey);
-            const { value, unit } = _splitValueUnit(rawVal);
-            const v = (value ?? "").toString().trim();
-            if (!key_norm || !v) continue;
+            const rawSpec = rawVal && typeof rawVal === "object" ? rawVal : null;
+            const { key_norm, key_label } = _normKeyPair(rawSpec?.key_label ?? rawKey);
+            const valueCandidate = rawSpec?.value ?? rawVal;
+            const unitCandidate = rawSpec?.unit ?? null;
+            let valueStr = (valueCandidate ?? "").toString().trim();
+            let unit = unitCandidate == null ? null : unitCandidate.toString().trim() || null;
+
+            if (!valueStr) {
+              const parsed = _splitValueUnit(rawVal);
+              valueStr = parsed.value;
+              unit = unit || parsed.unit;
+            }
+
+            if (!key_norm || !valueStr) continue;
             incomingKeys.add(key_norm);
 
             const existing = await db.rfq_item_specs
@@ -173,8 +198,8 @@ export async function updateRFQ(id, updates) {
               rfq_item_id: itemId,
               key_norm,
               key_label,
-              value: v,
-              unit: unit || null,
+              value: valueStr,
+              unit,
               created_at: existing?.created_at || now,
               updated_at: now,
             });

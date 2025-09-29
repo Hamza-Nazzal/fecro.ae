@@ -1,6 +1,7 @@
 // src/components/rfq-form/SpecsSection.jsx
 import React from "react";
 import { Check, ChevronDown, ChevronUp, Package, Plus, X } from "lucide-react";
+import { joinValueUnit, splitValueUnit, makeKeyPair, normalizeKey } from "../../utils/rfqSpecs";
 export default function SpecsSection({
   currentItem,
   updateCurrentItem,
@@ -13,14 +14,19 @@ export default function SpecsSection({
 }) {
   const specs = currentItem.specifications || {};
 
-  const addSpecKey = (key) => {
-    const k = key.toLowerCase();
-    if (specs[k] !== undefined) return;
-    updateCurrentItem({ specifications: { ...specs, [k]: "" } });
+  const addSpecKey = (label) => {
+    const { key_norm, key_label } = makeKeyPair(label);
+    if (!key_norm || specs[key_norm]) return;
+    updateCurrentItem({
+      specifications: {
+        ...specs,
+        [key_norm]: { key_norm, key_label, value: "", unit: null },
+      },
+    });
   };
-  const removeSpecKey = (key) => {
+  const removeSpecKey = (keyNorm) => {
     const next = { ...specs };
-    delete next[key];
+    delete next[keyNorm];
     updateCurrentItem({ specifications: next });
   };
 
@@ -49,7 +55,7 @@ export default function SpecsSection({
             {!specsExpanded && (
               <p className="text-sm text-gray-600">
                 Qty: {currentItem.quantity || "—"} •{" "}
-                {Object.entries(specs).filter(([, v]) => v).length} specs
+                {Object.values(specs).filter((spec) => (spec?.value ?? "").toString().trim()).length} specs
               </p>
             )}
           </div>
@@ -135,25 +141,40 @@ export default function SpecsSection({
                     <p className="text-xs">Click attributes on the right to add them.</p>
                   </div>
                 )}
-                {Object.keys(specs).map((k) => (
-                  <div key={k} className="flex items-center space-x-2 p-3 bg-white border border-gray-200 rounded-lg">
-                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium capitalize">
-                      {k}
-                    </span>
-                    <input
-                      type="text"
-                      className="flex-1 p-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter value"
-                      value={specs[k]}
-                      onChange={(e) =>
-                        updateCurrentItem({ specifications: { ...specs, [k]: e.target.value } })
-                      }
-                    />
-                    <button className="text-red-500 hover:text-red-700" onClick={() => removeSpecKey(k)} title="Remove">
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
+                {Object.entries(specs).map(([keyNorm, spec]) => {
+                  const label = spec?.key_label || keyNorm;
+                  const composite = joinValueUnit(spec?.value ?? "", spec?.unit ?? null);
+                  return (
+                    <div key={keyNorm} className="flex items-center space-x-2 p-3 bg-white border border-gray-200 rounded-lg">
+                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium capitalize">
+                        {label}
+                      </span>
+                      <input
+                        type="text"
+                        className="flex-1 p-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter value"
+                        value={composite}
+                        onChange={(e) => {
+                          const { value, unit } = splitValueUnit(e.target.value);
+                          updateCurrentItem({
+                            specifications: {
+                              ...specs,
+                              [keyNorm]: {
+                                key_norm: keyNorm,
+                                key_label: label,
+                                value,
+                                unit,
+                              },
+                            },
+                          });
+                        }}
+                      />
+                      <button className="text-red-500 hover:text-red-700" onClick={() => removeSpecKey(keyNorm)} title="Remove">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -161,7 +182,7 @@ export default function SpecsSection({
               <h4 className="text-sm font-medium text-gray-700 mb-3">Recommended Attributes</h4>
               <div className="space-y-2">
                 {recommended
-                  .filter((s) => !specs[s.toLowerCase()])
+                  .filter((s) => !specs[normalizeKey(s)])
                   .map((s) => (
                     <button
                       key={s}
@@ -172,7 +193,7 @@ export default function SpecsSection({
                       {s}
                     </button>
                   ))}
-                {recommended.filter((s) => !specs[s.toLowerCase()]).length === 0 && (
+                {recommended.filter((s) => !specs[normalizeKey(s)]).length === 0 && (
                   <div className="text-sm text-gray-500 text-center py-8 border-2 border-dashed border-gray-200 rounded-lg">
                     <Check className="h-4 w-4 inline mr-2 text-green-600" />
                     All recommended attributes added!

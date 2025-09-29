@@ -29,7 +29,7 @@ export default function RFQListForSeller({ rfqs, seller }) {
           <RequestCard
             key={r.id}
             title={r.title || ""}
-            rfqId={r.sellerIdDisplay || "—"}
+            rfqId={r.sellerRfqId || "—"}
             qty={parseInt(r.quantity) || undefined}
             unit=""
             categoryPath={categoryPath(r)}
