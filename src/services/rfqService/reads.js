@@ -3,14 +3,11 @@ import { supabase } from "../backends/supabase";
 import { rfqCardDbToJs } from "./mapping";
 import { enrichRfqCardRows } from "./enrichment";
 
-
-
 // Coalesce identical concurrent calls by params signature
 const __inflight = new Map(); // key -> Promise
 function __keyFor(params) {
   try { return JSON.stringify(params || {}); } catch { return 'default'; }
 }
-
 
 function isMissingRelationError(error, relationName) {
   const msg = String(error?.message || "").toLowerCase();
@@ -21,13 +18,6 @@ function isMissingRelationError(error, relationName) {
     msg.includes(rel)
   );
 }
-
-
-
-
-
-
-
 
 // Map DB row → UI shape (matches your view columns)
 

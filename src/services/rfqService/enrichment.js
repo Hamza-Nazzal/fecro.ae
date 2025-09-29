@@ -1,3 +1,5 @@
+//src/services/rfqService/enrichment.js
+
 import { supabase } from "../backends/supabase";
 import { isMissingRelationError } from './errors';
 
