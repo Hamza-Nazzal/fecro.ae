@@ -1,7 +1,7 @@
 // src/components/RFQCard.jsx
 import React from "react";
 import { CheckCircle, Clock, XCircle, Eye } from "lucide-react";
-import { normalizeSpecsInput } from "../utils/rfqSpecs";
+import { normalizeSpecsInput } from "../utils/rfq/rfqSpecs";
 
 // REGIONS:
 // [SHARED]: used by both buyer and seller cards.

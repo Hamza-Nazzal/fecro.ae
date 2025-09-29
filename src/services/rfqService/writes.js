@@ -2,7 +2,7 @@
 import { supabase } from "../backends/supabase";
 import { getCurrentUserCached } from "../backends/supabase/auth";
 import { rfqJsToDb } from "../../utils/mappers";
-import { normalizeSpecsInput } from "../../utils/rfqSpecs";
+import { normalizeSpecsInput } from "../../utils/rfq/rfqSpecs";
 import { getRFQ } from "./reads";
 
 /** Normalize one UI item payload for RPC upsert */

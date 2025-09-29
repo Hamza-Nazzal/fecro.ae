@@ -838,9 +838,22 @@ Result: Database is now consistent: RFQs have two clear identifiers:
   ****************************************************************
 
 
+	Canonical seller identifier finalized: rfqs.seller_rfq_id (unique, non-null).
+	•	Trigger in place: trg_rfqs_set_seller_rfq_id → rfq_set_seller_rfq_id() auto-generates SRF-XXXXXXXXXX.
+	•	Legacy cleaned: seller_public_id dropped; dependent index/view/trigger references removed or migrated.
+	•	Views:
+	•	v_rfqs_card unchanged (lightweight list view: id, public_id, title, created_at, status, buyer_id, qty_total, first_category_path).
+	•	v_rfqs_admin now exposes seller_rfq_id (no aliasing back to legacy).
+	•	Constraints:
+	•	rfqs_seller_rfq_id_uniq (enforced).
+	•	rfqs_seller_rfq_id_format_chk enabled to guard ^SRF-[0-9A-F]{10}$ (keep if you want strict format).
+	•	RPC: rfq_upsert_items_and_specs accepts items[].specifications:
+	•	Array of { key_norm?, key_label?, value, unit? }, or
+	•	Object map { "Color": "Red", "GSM": "80" }.
+	•	Ignores legacy items[].specs array.
+	•	RLS: unchanged from prior snapshot (owner and active-read policies still apply).
 
-
-
+****************************************************************
 
 
 

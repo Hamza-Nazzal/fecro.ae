@@ -2,7 +2,7 @@
 import { supabase } from "../../supabase.js";
 import { makeUUID } from "../../../ids";
 import { specsRowsToObject } from "../../../../utils/mappers";
-import { normalizeSpecsInput } from "../../../../utils/rfqSpecs";
+import { normalizeSpecsInput } from "../../../../utils/rfq/rfqSpecs";
 
 /** Read items for an RFQ (raw DB rows) */
 export async function fetchItems(rfqId) {

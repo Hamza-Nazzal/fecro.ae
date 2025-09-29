@@ -1,4 +1,4 @@
-// src/utils/rfqSpecs.js
+// src/utils/rfq/rfqSpecs.js
 // Centralized helpers for RFQ item specifications.
 // Use these in the UI (e.g., SpecsSection) and services (Supabase/IndexedDB).
 
