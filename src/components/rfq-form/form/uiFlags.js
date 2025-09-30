@@ -1,3 +1,5 @@
+//src/components/rfq-form/form/uiFlags.js
+
 import { useEffect, useState, useRef } from 'react';
 
 export const useRFQUIFlags = ({ currentStep, currentItem }) => {

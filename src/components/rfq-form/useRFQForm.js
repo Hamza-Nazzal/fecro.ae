@@ -1,6 +1,8 @@
+//src/components/rfq-form/useRFQForm.js
+
 import { useCallback, useState } from "react";
 import {
-  uid, BLANK_ITEM, BLANK_ORDER, defaultRecommended,
+  BLANK_ITEM, BLANK_ORDER, defaultRecommended,
   isBasicsValid as _isBasicsValid, canSaveItem as _canSaveItem, canProceedStep2 as _canProceedStep2,
   makeAddOrUpdateItem, makeEditItem, makeDuplicateItem, makeRemoveItem,
   makeUpdateOrderDetails,

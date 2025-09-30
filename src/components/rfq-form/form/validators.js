@@ -1,3 +1,5 @@
+//src/components/rfq-form/form/validators.js
+
 export const isBasicsValid = (item) =>
   (item?.productName || "").trim().length >= 2 &&
   !!item?.categoryCommitted &&

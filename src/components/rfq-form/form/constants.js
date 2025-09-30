@@ -1,3 +1,5 @@
+//src/components/rfq-form/form/constants.js
+
 export const uid = () =>
   (typeof crypto !== "undefined" && crypto.randomUUID)
     ? crypto.randomUUID()

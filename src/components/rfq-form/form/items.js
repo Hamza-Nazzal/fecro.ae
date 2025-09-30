@@ -1,3 +1,5 @@
+//src/components/rfq-form/form/items.js
+
 import { uid, BLANK_ITEM } from './constants.js';
 import { canSaveItem as _canSaveItem } from './validators.js';
 

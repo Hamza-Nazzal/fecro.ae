@@ -1,3 +1,5 @@
+//src/components/rfq-form/form/navigation.js
+
 export const useRFQNavigation = ({ canProceedStep1, canProceedStep2, currentStep, setCurrentStep }) => {
   const goNext = () => setCurrentStep((s) => Math.min(3, s + 1));
   const goBack = () => setCurrentStep((s) => Math.max(1, s - 1));
