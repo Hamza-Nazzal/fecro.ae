@@ -10,6 +10,7 @@ import {
   formatKey,
   makeKeyPair,
 } from "../../utils/rfq/rfqSpecs"
+import { hasText, normalizeSpec, specToInlineText, isDupe } from './logic';
 
 /**
  * Props:
