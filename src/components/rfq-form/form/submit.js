@@ -1,4 +1,4 @@
-import { createRFQ, updateRFQ } from "../../services/rfqService";
+import { createRFQ, updateRFQ } from "../../../services/rfqService/writes";
 
 export const makeSubmitRFQ = ({ getState, setSubmitting, setSubmitError, setRfqId, setSubmitted }) => async () => {
   const { submitting, orderDetails, items, rfqId } = getState();
