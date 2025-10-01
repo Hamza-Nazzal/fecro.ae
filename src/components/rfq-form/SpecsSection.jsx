@@ -2,6 +2,7 @@
 import React from "react";
 import { Check, ChevronDown, ChevronUp, Package, Plus, X } from "lucide-react";
 import { joinValueUnit, splitValueUnit, makeKeyPair, normalizeKey } from "../../utils/rfq/rfqSpecs";
+import { FieldError } from "./form/RequiredBits";
 export default function SpecsSection({
   currentItem,
   updateCurrentItem,
@@ -13,6 +14,19 @@ export default function SpecsSection({
   onOpenVariantMatrix,
 }) {
   const specs = currentItem.specifications || {};
+  
+  // Compute filledCount for specs validation
+  const filledCount = Object.values(specs).filter((spec) => 
+    String(spec?.value ?? "").trim().length > 0
+  ).length;
+
+  // Quantity validation
+  const qtyMissing = !currentItem.quantity;
+  const qtyInvalid = currentItem.quantity && Number(currentItem.quantity) <= 0;
+  const qtyError = currentItem._touchedQuantity && (qtyMissing || qtyInvalid) 
+    ? (qtyMissing ? "Quantity is required" : "Quantity must be greater than 0")
+    : null;
+  const shouldBlinkQty = qtyError && currentItem._touchedQuantity;
 
   const addSpecKey = (label) => {
     const { key_norm, key_label } = makeKeyPair(label);
@@ -67,7 +81,7 @@ export default function SpecsSection({
         <div className="mt-4 space-y-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Quantity *</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Quantity <span className="text-red-600">*</span></label>
               <div className="flex items-stretch">
                 <button
                   type="button"
@@ -82,12 +96,17 @@ export default function SpecsSection({
                   min={1}
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  className={`w-full p-3 border-t border-b border-gray-300 focus:ring-2 focus:ring-blue-500 text-base ${
-                    currentItem.quantity ? "bg-green-50" : ""
+                  className={`w-full p-3 border-t border-b border-gray-300 focus:ring-2 focus:ring-blue-500 text-sm ${
+                    qtyError
+                      ? `border-red-500 bg-red-50 focus:ring-red-500 ${shouldBlinkQty ? "animate-pulse" : ""}`
+                      : currentItem.quantity && Number(currentItem.quantity) > 0
+                      ? "bg-green-50"
+                      : ""
                   }`}
                   placeholder="e.g., 100"
                   value={currentItem.quantity}
                   onChange={(e) => updateCurrentItem({ quantity: e.target.value })}
+                  onBlur={() => updateCurrentItem({ _touchedQuantity: true })}
                 />
                 <button
                   type="button"
@@ -98,7 +117,7 @@ export default function SpecsSection({
                   +
                 </button>
               </div>
-              {!currentItem.quantity && <p className="text-xs text-red-600 mt-1">Required</p>}
+              {qtyError && <p className="text-xs text-red-600 mt-1">{qtyError}</p>}
             </div>
 
             <div>
@@ -133,6 +152,9 @@ export default function SpecsSection({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
               <h4 className="text-sm font-medium text-gray-700 mb-3">Specifications (optional)</h4>
+              {filledCount === 0 && (
+                <FieldError id="err-specs">Please add at least one specification.</FieldError>
+              )}
               <div className="space-y-3">
                 {Object.keys(specs).length === 0 && (
                   <div className="text-sm text-gray-500 text-center py-8 border-2 border-dashed border-gray-200 rounded-lg">

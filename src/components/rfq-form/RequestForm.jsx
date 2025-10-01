@@ -1,6 +1,8 @@
 // src/components/rfq-form/RequestForm.jsx
 import React from "react";
 import { ArrowLeft, ShoppingCart, Package } from "lucide-react";
+import ReviewStep from "./ReviewStep";             
+import { formatDMY, addDays } from "../../utils/date";
 
 import useRFQForm from "./useRFQForm";
 import StepHeader from "./StepHeader";
@@ -9,9 +11,9 @@ import SpecsSection from "./SpecsSection";
 import MiniCart from "./MiniCart";
 import MobileCartSheet from "./MobileCartSheet";
 import OrderDetailsForm from "./OrderDetailsForm";
-import ReviewPanel from "./ReviewPanel";
 import SuccessScreen from "./SuccessScreen";
 import VariantMatrixModal from "./VariantMatrixModal";
+
 
 export default function RequestForm() {
   const {
@@ -43,16 +45,121 @@ export default function RequestForm() {
     recommendedFor,
   } = useRFQForm();
 
+  // --- Mappings for ReviewStep props (read-only) ---
+  // items → [{ id, name, quantity, categoryPath, specs[] }]
+  const itemsMapped = (items || []).map((it) => ({
+    id: it.id,
+    name: it.productName,
+    quantity: it.quantity,
+    categoryPath: it.category,
+    // specifications is a keyed object; convert to [{label, value}]
+    specs: Object.entries(it.specifications || {}).map(([label, spec]) => ({
+      label,
+      value: (spec && typeof spec === "object" && "value" in spec) ? spec.value : spec,
+    })),
+  }));
+  // User-facing label maps for Review UI
+const DELIVERY_TERMS_LABELS = {
+  CP: "Customer Pickup",
+  SD: "Supplier Delivery",
+  CPC: "Customer Pays Courier",
+  SPC: "Supplier Pays Courier",
+};
+const PAYMENT_TERMS_LABELS = {
+  PIA: "Payment In Advance",
+  DUR: "Due On Receipt",
+  "net-15": "Net 15 Days",
+  "net-30": "Net 30 Days",
+  "net-60": "Net 60 Days",
+  "net-90": "Net 90 Days",
+};
+const DELIVERY_TIMELINE_LABELS = {
+  asap: "ASAP",
+  standard: "Standard",
+  custom: "Specific Date",
+};
+const RFQ_VALID_LABELS = {
+  "7-days": "7 days",
+  "14-days": "14 days",
+  "1-month": "1 month",
+  "+1month": "+1month",
+};
+
+  // orderDetails → human-readable values (use current fields)
+  const orderDetailsMapped = {
+  // raw codes (kept for backend/use)
+  deliveryTimeline: orderDetails?.deliveryTimeline || "standard",
+  incoterms:        orderDetails?.incoterms || "",
+  paymentTerms:     orderDetails?.paymentTerms || "DUR",
+  quoteDeadline:    orderDetails?.quoteDeadline || "",
+  customDate:       orderDetails?.customDate,
+
+  // labels for the Review UI
+  deliveryTimelineLabel:
+    orderDetails?.deliveryTimeline === "custom"
+      ? `${DELIVERY_TIMELINE_LABELS.custom}${orderDetails?.customDate ? ` — ${formatDMY(orderDetails.customDate)}` : ""}`
+      : (DELIVERY_TIMELINE_LABELS[orderDetails?.deliveryTimeline] || orderDetails?.deliveryTimeline || "Standard"),
+  deliveryTermsLabel: DELIVERY_TERMS_LABELS[orderDetails?.incoterms] || orderDetails?.incoterms || "",
+  incotermsLabel:     DELIVERY_TERMS_LABELS[orderDetails?.incoterms] || orderDetails?.incoterms || "",
+  paymentTermsLabel:  PAYMENT_TERMS_LABELS[orderDetails?.paymentTerms || "DUR"] || orderDetails?.paymentTerms || "DUR",
+  rfqValidLabel:      RFQ_VALID_LABELS[orderDetails?.quoteDeadline] || orderDetails?.quoteDeadline || "",
+};
+
+  // Parse '7-days' / '14-days' → integer; leave undefined for non-day strings
+  const validDaysFromDeadline = (() => {
+    const m = /^([0-9]+)-days$/.exec(orderDetails?.quoteDeadline || "");
+    return m ? Number(m[1]) : undefined;
+  })();
+
+  // meta for ReviewStep header & deadline
+  const metaSource = {
+    publicId: rfqId,
+    issuedAt: new Date(),       // replace with backend createdAt when available
+    validDays: validDaysFromDeadline,
+    location: {},               // no location fields in state yet
+  };
+
   const onPrimary = async () => {
     if (currentStep === 1) {
       if (canSaveItem()) {
         const ok = addOrUpdateItem();
         if (!ok) return;
       }
+      
+      // Check if we can proceed from step 1
+      if (!canProceedStep1()) {
+        // Trigger validation for step 1 fields
+        if (currentItem) {
+          const touchedFields = {};
+          if (!currentItem.productName || currentItem.productName.trim().length < 2) {
+            touchedFields._touchedProductName = true;
+          }
+          if (!currentItem.categoryCommitted || !currentItem.category) {
+            touchedFields._touchedCategory = true;
+          }
+          if (!currentItem.quantity || Number(currentItem.quantity) <= 0) {
+            touchedFields._touchedQuantity = true;
+          }
+          if (Object.keys(touchedFields).length > 0) {
+            updateCurrentItem(touchedFields);
+          }
+        }
+        return;
+      }
+      
       goNext();
       return;
     }
-    if (currentStep === 2) { goNext(); return; }
+    if (currentStep === 2) { 
+      // Trigger validation for step 2 fields
+      if (!canProceedStep2()) {
+        // Mark deadline as touched to trigger validation
+        updateOrderDetails({ _touchedDeadline: true });
+        return;
+      }
+      goNext(); 
+      return; 
+    }
     if (currentStep === 3) { await submitRFQ(); }
   };
 
@@ -168,12 +275,11 @@ export default function RequestForm() {
           )}
 
           {currentStep === 3 && (
-            <ReviewPanel
-              items={items}
-              orderDetails={orderDetails}
-              onEditItem={(id) => { editItem(id); goTo(1); }}
-              showSupplierPreview={showSupplierPreview}
-              setShowSupplierPreview={setShowSupplierPreview}
+            <ReviewStep
+              items={itemsMapped}
+              orderDetails={orderDetailsMapped}
+              meta={metaSource}
+              groupByCategory={true} // added for grouping
             />
           )}
         </main>
@@ -241,15 +347,15 @@ export default function RequestForm() {
             <button
               onClick={onPrimary}
               disabled={
-                submitting ||
-                (currentStep === 1 && !canProceedStep1()) ||
-                (currentStep === 2 && !canProceedStep2())
+                submitting
               }
               className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
                 (currentStep === 1 && canProceedStep1()) ||
                 (currentStep === 2 && canProceedStep2()) ||
                 currentStep === 3
                   ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : (currentStep === 1 || currentStep === 2)
+                  ? "bg-gray-400 text-white hover:bg-gray-500"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
             >

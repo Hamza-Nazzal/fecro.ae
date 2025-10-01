@@ -11,7 +11,7 @@ export const BLANK_ITEM = {
 };
 
 export const BLANK_ORDER = {
-  deliveryTimeline: "standard", customDate: "", incoterms: "EXW",
+  deliveryTimeline: "standard", customDate: "", incoterms: "-",
   paymentTerms: "net-30", quoteDeadline: "", internalRef: "",
 };
 

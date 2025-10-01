@@ -1,0 +1,138 @@
+/* src/components/rfq-form/review-step.css */
+
+/* Tokens */
+:root{
+  --ink:#0f172a;
+  --muted:#475569;
+  --line:#e5e7eb;
+  --line-strong:#cbd5e1;
+  --bg:#ffffff;
+  --soft:#f8fafc;
+
+  /* Tag/pill theming */
+  --tag-bg-blue:#eef6ff;
+  --tag-border-blue:rgba(11,94,215,0.20);
+  --tag-bg-gray:#f3f4f6;
+  --tag-border-gray:rgba(15,23,42,0.12);
+  --spec-key:#6c757d;
+  --spec-value:#0f172a;
+}
+
+/* Shell */
+.rfq-review { color: var(--ink); }
+.title { color:#2C3E50; font-size:24px; margin:0 0 6px; }
+.muted { color: var(--muted); font-size:13px; }
+.section-title { border-bottom:2px solid #ddd; padding-bottom:6px; margin:22px 0 14px; font-size:18px; color:#333; }
+
+/* Summary / terms tables */
+.kv, .terms { width:100%; border-collapse:collapse; margin-bottom:18px; }
+.kv th, .kv td, .terms th, .terms td { border:1px solid #eee; padding:10px; text-align:left; vertical-align:top; }
+.kv th { width:240px; background:#f8f8f8; }
+
+/* Items wrapper */
+.items {
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+.item { padding:14px 16px; }
+.item + .item { border-top:2px dotted var(--line-strong); }
+
+/* Page background so the paper pops */
+body, .app-root { background:#f3f4f6; }
+
+/* Paper card */
+.paper{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  box-shadow:0 10px 24px rgba(15,23,42,0.08), 0 2px 6px rgba(15,23,42,0.06);
+  max-width:880px;
+  margin:24px auto;
+  padding:28px;
+}
+@media (max-width:640px){ .paper{ margin:12px auto; padding:16px; border-radius:10px; } }
+@media print{ .paper{ box-shadow:none; border-color:#ddd; } body{ background:#fff; } }
+
+/* ===== Stacked view (default) ===== */
+.name-row{ display:block; }
+.name-block{ min-width:0; }
+.category-path{
+  font-size:12px; color:var(--muted); margin:0 0 4px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.name-head{
+  display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+}
+.product-name{
+  font-size:16px; font-weight:700; line-height:1.25; margin:0; min-width:0;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+/* Inline Qty box (shared) */
+.qty-box{
+  display:inline-flex; align-items:center; gap:6px; padding:6px 10px;
+  background:var(--soft); border:1px solid var(--line); border-radius:10px;
+  white-space:nowrap;
+}
+.qty-box .lbl, .qty-box .num{ font-weight:700; font-size:15px; line-height:1.2; }
+
+/* ===== Grouped view (category headers) ===== */
+.group + .group { border-top:none !important; } /* header is separator */
+
+.group-header{
+  padding:12px 16px; margin-top:6px; /* tightened */
+  background:var(--soft);
+  border-bottom:2px solid var(--line-strong);
+  color:var(--ink);
+  background-clip:padding-box;
+}
+.items > .group:first-child .group-header{ margin-top:0; border-top-left-radius:10px; border-top-right-radius:10px; }
+
+.group-title{
+  font-size:14px; font-weight:600; letter-spacing:.2px; margin:0;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+.group-list{
+  list-style:none; margin:0; padding:8px 16px 8px;
+  display:grid; gap:10px;
+}
+.group-item{
+  padding:8px 0; border-bottom:1px dashed var(--line);
+}
+.group-item:last-child{ border-bottom:none; }
+.group-item:hover .group-product{
+  text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:2px;
+}
+
+.group-head{
+  display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+  margin-bottom:8px;
+}
+.group-product{
+  font-weight:700; font-size:16px; line-height:1.25; margin:0; min-width:0;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.group-item .qty-box{ padding:6px 10px; } /* reuse styling */
+
+/* ===== Spec pills (no panels) ===== */
+.specs-pills{
+  display:flex; flex-wrap:wrap; gap:8px; row-gap:8px; margin-top:10px;
+}
+.specs-cap{
+  width:100%; font-size:12px; color:var(--muted); margin-bottom:2px;
+}
+.spec-pill{
+  display:inline-flex; align-items:center; gap:6px; padding:6px 12px;
+  background:var(--tag-bg-blue); border:1px solid var(--tag-border-blue);
+  border-radius:999px; font-size:13px; line-height:1.25; white-space:nowrap;
+}
+/* Optional variants */
+.spec-pill--primary{ background:var(--tag-bg-blue); border-color:var(--tag-border-blue); }
+.spec-pill--secondary{ background:var(--tag-bg-gray); border-color:var(--tag-border-gray); }
+/* Key vs value */
+.spec-pill .k{ color:var(--spec-key); font-weight:600; }
+.spec-pill .v{ color:var(--spec-value); font-weight:700; }
+
+.specs-pills--empty{ margin-top:8px; color:var(--muted); }

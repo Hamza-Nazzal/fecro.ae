@@ -1,6 +1,7 @@
 // src/components/rfq-form/BasicsSection.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown, ChevronUp, Search } from "lucide-react";
+import { RequiredLabel, FieldError } from "./form/RequiredBits";
 
 const FALLBACK_CATEGORIES = [
   "Office Supplies → Paper → A4",
@@ -48,10 +49,13 @@ export default function BasicsSection({
     return FALLBACK_CATEGORIES.filter((o) => o.toLowerCase().includes(q)).slice(0, 8);
   }, [query]);
 
+  const markCategoryTouched = () => updateCurrentItem({ _touchedCategory: true });
+
   const pickCategory = (val) => {
     commitCategory(val);
     setQuery(val);
     setOpenList(false);
+    markCategoryTouched();
   };
 
   const onKeyDown = (e) => {
@@ -60,11 +64,32 @@ export default function BasicsSection({
       const exact = options.find((o) => o.toLowerCase() === query.toLowerCase().trim());
       if (exact) pickCategory(exact);
     }
-    if (e.key === "Escape") setOpenList(false);
+    if (e.key === "Escape") {
+      setOpenList(false);
+      markCategoryTouched();
+    }
   };
 
   const basicsReady = isBasicsValid();
   const qtyText = currentItem.quantity ? `Qty: ${currentItem.quantity}` : null;
+
+  const productNameValue = currentItem.productName || "";
+  const nameTrimmed = productNameValue.trim();
+  const nameMissing = nameTrimmed.length === 0;
+  const nameTooShort = nameTrimmed.length > 0 && nameTrimmed.length < 2;
+  const nameError = currentItem._touchedProductName
+    ? nameMissing
+      ? "Product name is required"
+      : nameTooShort
+      ? "Min 2 characters"
+      : null
+    : null;
+  const nameIsValid = nameTrimmed.length >= 2;
+
+  const catMissing =
+    !(currentItem.categoryCommitted && (currentItem.category || "").trim());
+  const catError =
+    currentItem._touchedCategory && catMissing ? "Please select a category from the list." : null;
 
   const CollapsedHeader = (
    <button
@@ -131,35 +156,53 @@ export default function BasicsSection({
       {basicsExpanded && (
         <div className="mt-4 space-y-4 p-4 rfq-card">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
+            <RequiredLabel htmlFor="rfq-name">Product name</RequiredLabel>
             <input
+              id="rfq-name"
               type="text"
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base ${
-                currentItem.productName.trim().length >= 2 ? "border-green-300 bg-green-50" : "border-gray-300"
+              className={`mt-2 w-full p-3 border rounded-lg focus:ring-2 text-base ${
+                nameError
+                  ? `border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50 ${currentItem._touchedProductName ? "animate-pulse" : ""}`
+                  : nameIsValid
+                  ? "border-green-300 bg-green-50 focus:ring-blue-500 focus:border-transparent"
+                  : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
               }`}
               placeholder="e.g., A4, office chair, laptop…"
-              value={currentItem.productName}
+              value={productNameValue}
               onChange={(e) => updateCurrentItem({ productName: e.target.value })}
+              onBlur={() => updateCurrentItem({ _touchedProductName: true })}
+              required
+              aria-required="true"
+              aria-invalid={!!nameError}
+              aria-describedby={nameError ? "err-name" : undefined}
             />
-            {currentItem.productName && currentItem.productName.trim().length < 2 && (
-              <p className="text-xs text-red-600 mt-1">Min 2 characters</p>
-            )}
+            <FieldError id="err-name">{nameError}</FieldError>
           </div>
 
           <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
-            <div className="relative">
+            <RequiredLabel htmlFor="rfq-cat">Category</RequiredLabel>
+            <div className="relative mt-2">
               <input
+                id="rfq-cat"
                 type="text"
-                className={`w-full p-3 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base ${
-                  currentItem.categoryCommitted ? "border-green-300 bg-green-50" : "border-gray-300"
+                className={`w-full p-3 pr-10 border rounded-lg focus:ring-2 text-base ${
+                  catError
+                    ? `border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50 ${currentItem._touchedCategory ? "animate-pulse" : ""}`
+                    : !catMissing
+                    ? "border-green-300 bg-green-50 focus:ring-blue-500 focus:border-transparent"
+                    : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
                 }`}
                 placeholder="Start typing to search categories…"
                 value={query}
                 onFocus={() => setOpenList(true)}
+                onBlur={markCategoryTouched}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={onKeyDown}
                 aria-haspopup="listbox"
+                required
+                aria-required="true"
+                aria-invalid={!!catError}
+                aria-describedby={catError ? "err-cat" : undefined}
               />
               <Search className="absolute right-3 top-3 h-5 w-5 text-gray-400" />
             </div>
@@ -191,9 +234,7 @@ export default function BasicsSection({
               </div>
             )}
 
-            {!currentItem.categoryCommitted && (
-              <p className="text-xs text-red-600 mt-1">Please select a category from the list.</p>
-            )}
+            <FieldError id="err-cat">{catError}</FieldError>
           </div>
 
           <div>
