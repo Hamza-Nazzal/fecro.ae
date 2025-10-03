@@ -2,6 +2,7 @@
 import { supabase } from "../backends/supabase";
 import { rfqCardDbToJs } from "./mapping";
 import { enrichRfqCardRows } from "./enrichment";
+import { getRFQHydrated } from "../backends/supabase/rfqs/hydrate";
 
 // Coalesce identical concurrent calls by params signature
 const __inflight = new Map(); // key -> Promise
@@ -93,7 +94,8 @@ export async function getRFQById(rfqId) {
 }
 
 export async function getRFQ(rfqId) {
-  return getRFQById(rfqId);
+  if (!rfqId) throw new Error("rfqId is required");
+  return await getRFQHydrated(rfqId);
 }
 
 export async function listRFQs(params = {}) {

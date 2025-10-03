@@ -79,3 +79,18 @@ export async function deleteQuotation(id) {
   if (error) throw new Error(error.message);
   return true;
 }
+
+// create or update in one shot
+export async function upsertQuotation(supabase, { header, items }) {
+  const { data, error } = await supabase.rpc('quotation_upsert', {
+    p_header: header,
+    p_items: items
+  });
+  if (error) throw error;
+  return data; // returns quotation id
+}
+
+export async function submitQuotation(supabase, id) {
+  const { error } = await supabase.rpc('quotation_submit', { p_id: id });
+  if (error) throw error;
+}

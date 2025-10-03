@@ -1,0 +1,241 @@
+/* seller-quote.css — scoped to .quote-page */
+
+/* ===== Theme tokens ===== */
+.quote-page{
+  --bg: #f6f8fb;
+  --card-bg: #ffffff;
+  --text: #0f172a;           /* slate-900 */
+  --muted: #64748b;          /* slate-500 */
+  --line: #e5e7eb;           /* gray-200 */
+  --ring: #93c5fd;           /* blue-300 */
+  --ring-strong: #2563eb;    /* blue-600 */
+  --shadow: 0 6px 20px rgba(2, 6, 23, 0.06);
+  --brand: #2563eb;          /* blue-600 */
+  --brand-700: #1d4ed8;      /* blue-700 */
+  --brand-50: #eff6ff;
+}
+
+/* Page container */
+.quote-page.max-w-5xl.mx-auto.p-4.md\:p-6.space-y-6{
+  max-width:1100px;
+  padding:22px;
+  background:linear-gradient(180deg,var(--bg),#fff 60%);
+  color:var(--text);
+}
+
+/* Cards (any rounded bordered white block) */
+.quote-page .rounded.border.bg-white{
+  border-color:var(--line) !important;
+  border-radius:14px !important;
+  background:var(--card-bg) !important;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+
+/* Section headers (grey header bars) */
+.quote-page .border-b.bg-gray-50{
+  background:linear-gradient(180deg,#f8fafc,#f1f5f9) !important;
+  border-bottom:1px solid var(--line) !important;
+  font-weight:700;
+  letter-spacing:.2px;
+}
+
+/* Body padding inside cards */
+.quote-page .p-4{ padding:18px !important; }
+
+/* Metadata text */
+.quote-page .text-sm.text-gray-500{ color:var(--muted) !important; }
+.quote-page .text-sm .font-medium{ color:var(--text) !important; }
+
+/* Inputs & selects */
+.quote-page input.border.rounded,
+.quote-page select.border.rounded,
+.quote-page input.w-full.border.rounded,
+.quote-page select.w-full.border.rounded,
+.quote-page input.w-28.border.rounded,
+.quote-page input.w-20.border.rounded,
+.quote-page input.w-32.border.rounded{
+  appearance:none;
+  border:1px solid #d6dbe4 !important;
+  background:#fff !important;
+  border-radius:10px !important;
+  padding:10px 12px !important;
+  font-size:14.5px !important;
+  color:var(--text) !important;
+  transition:border-color .15s ease, box-shadow .15s ease, transform .02s ease;
+}
+.quote-page input.border.rounded:focus,
+.quote-page select.border.rounded:focus{
+  outline:none !important;
+  border-color:var(--ring-strong) !important;
+  box-shadow:0 0 0 3px var(--brand-50) !important;
+}
+
+/* Buyer request pills */
+.quote-page button.px-2.py-1.rounded.text-sm.border{
+  border-radius:999px !important;
+  padding:6px 10px !important;
+  border-color:#dfe5ee !important;
+  background:#f8fafc !important;
+  color:#475569 !important;
+  transition:background .15s, color .15s, border-color .15s, transform .04s;
+  cursor:pointer;
+}
+.quote-page button.px-2.py-1.rounded.text-sm.border:hover{ background:#f1f5f9 !important; }
+.quote-page button.px-2.py-1.rounded.text-sm.border:active{ transform:translateY(1px); }
+
+/* Acknowledged pills */
+.quote-page .bg-blue-50.border-blue-300.text-blue-700{
+  background:var(--brand-50) !important;
+  border-color:var(--ring) !important;
+  color:var(--brand-700) !important;
+}
+
+/* Line totals */
+.quote-page .text-lg.font-semibold{ font-variant-numeric: tabular-nums; }
+
+/* Footer bar */
+.quote-page .fixed.bottom-0.left-0.right-0.border-t.bg-white\/90.backdrop-blur{
+  background:rgba(255,255,255,.94) !important;
+  backdrop-filter:saturate(160%) blur(8px);
+  border-top:1px solid var(--line) !important;
+  box-shadow:0 -10px 24px rgba(2,6,23,.04);
+}
+.quote-page .fixed .px-3.py-2.border.rounded{
+  border:1px solid #d6dbe4 !important;
+  border-radius:12px !important;
+  padding:10px 14px !important;
+  background:#fff !important;
+  color:#0f172a !important;
+  font-weight:600;
+  transition:background .15s,border-color .15s,box-shadow .15s,transform .04s;
+}
+.quote-page .fixed .px-3.py-2.border.rounded:hover{
+  background:#f8fafc !important; border-color:#cbd5e1 !important; box-shadow:0 6px 20px rgba(2,6,23,.06);
+}
+.quote-page .fixed .px-3.py-2.border.rounded:active{ transform:translateY(1px); }
+.quote-page .fixed .px-3.py-2.bg-black.text-white.rounded{
+  background:linear-gradient(180deg,var(--brand),var(--brand-700)) !important;
+  border:0 !important;
+  color:#fff !important;
+  box-shadow:0 6px 16px rgba(37,99,235,.35);
+}
+.quote-page .fixed .px-3.py-2.bg-black.text-white.rounded:hover{ filter:brightness(1.02); }
+.quote-page .fixed .px-3.py-2.bg-black.text-white.rounded:active{ transform:translateY(1px); }
+
+/* Labels */
+.quote-page label.block.text-sm.text-gray-600{ color:#334155 !important; }
+
+/* Dividers inside totals */
+.quote-page hr{ border:none; height:1px; background:linear-gradient(90deg,transparent,var(--line),transparent); }
+
+/* ========== Specs & Row Layout (scoped) ========== */
+.quote-page .quote-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+}
+
+@media (max-width: 900px) {
+  .quote-page .quote-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.quote-page .quote-row__title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.quote-page .quote-row__specs {
+  margin-top: 8px;
+}
+
+.quote-page .quote-row__specs-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.quote-page .quote-row__specs-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.quote-page .spec-pill {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px dashed #d1d5db;
+  color: #6b7280;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.quote-page .spec-pill:hover {
+  background: #f3f4f6;
+}
+
+.quote-page .spec-pill.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+/* Inputs grid on the right */
+.quote-page .form-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px 12px;
+  align-items: end;
+}
+
+@media (max-width: 1100px) {
+  .quote-page .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.quote-page .fld .lbl {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.quote-page .inp {
+  width: 100%;
+  height: 36px;
+  padding: 6px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.quote-page .inp:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.quote-page .discount-combo {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 8px;
+}
+
+.quote-page .fld.total {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.quote-page .line-total {
+  font-weight: 600;
+}

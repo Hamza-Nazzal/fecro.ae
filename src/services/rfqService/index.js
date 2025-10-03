@@ -10,7 +10,7 @@ import * as seeds from "./seeds";
 import { makePublicId } from "./util";
 
 // keep fast named re-exports (so tree-shaking can work)
-export { listRFQs, listMyRFQs, getRFQ } from "./reads";
+export { listRFQs, listMyRFQs, getRFQ, getRFQById } from "./reads";
 export { listRFQsForCards } from "./reads";
 export { createRFQ, updateRFQ, deleteRFQ } from "./writes";
 export { addSpec, updateSpec, removeSpec } from "./specs";
