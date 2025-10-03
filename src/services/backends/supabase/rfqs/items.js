@@ -131,6 +131,43 @@ export async function bulkInsertItemSpecs(itemSpecsMap) {
   }
 }
 
+// expects items with a stable rfq_item_id and an array specs: [{key_label, value, unit?}]
+export async function upsertRfqItemSpecs(rfqId, items, supabaseClient = supabase) {
+  const rows = [];
+  if (!Array.isArray(items) || items.length === 0) return;
+  const rfqIdStr = rfqId == null ? null : String(rfqId);
+
+  for (const it of items) {
+    const rfqItemId = it?.id ?? it?.rfq_item_id ?? it?.item_id;
+    if (!rfqItemId) continue;
+
+    const itemRfqId = it?.rfq_id ?? it?.rfqId ?? null;
+    if (rfqIdStr && itemRfqId != null && String(itemRfqId) !== rfqIdStr) continue;
+
+    const specsArray = Array.isArray(it?.specs)
+      ? it.specs
+      : normalizeSpecsInput(it?.specifications ?? it?.specs);
+    if (!specsArray.length) continue;
+
+    for (const s of specsArray) {
+      if (!s || !s.key_label || s.value == null) continue;
+      rows.push({
+        rfq_item_id: rfqItemId,
+        key_label: String(s.key_label),
+        value: String(s.value),
+        unit: s.unit ?? null,
+      });
+    }
+  }
+
+  if (!rows.length) return;
+
+  const { error } = await supabaseClient
+    .from("rfq_item_specs")
+    .upsert(rows, { onConflict: "rfq_item_id,key_label" });
+  if (error) throw new Error(error.message);
+}
+
 /** Manual cascade: delete specs + items for an RFQ */
 export async function cascadeDeleteItems(rfqId) {
   const { data: items } = await supabase.from("rfq_items").select("id").eq("rfq_id", rfqId);

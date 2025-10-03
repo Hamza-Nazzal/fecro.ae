@@ -10,6 +10,8 @@ import {
   useRFQUIFlags,
   makeSubmitRFQ,
 } from "./form";
+import { normalizeSpecs } from "../../utils/specs";
+
 
 export default function useRFQForm() {
   // core state
@@ -55,7 +57,15 @@ export default function useRFQForm() {
   const updateOrderDetails = makeUpdateOrderDetails({ setOrderDetails });
 
   // submit
-  const getState = () => ({ submitting, orderDetails, items, rfqId });
+  const getState = () => ({
+        submitting,
+        orderDetails,
+        items: items.map((it) =>
+          it?.specs ? { ...it, specs: normalizeSpecs(it.specs) } : it
+        ),
+        rfqId,
+      });
+      
   const submitRFQ = makeSubmitRFQ({ getState, setSubmitting, setSubmitError, setRfqId, setSubmitted });
 
   // misc
@@ -73,7 +83,12 @@ export default function useRFQForm() {
     // RFQ data
     items, currentItem, orderDetails, submitted, rfqId,
     // actions
-    updateCurrentItem: (patch) => setCurrentItem((prev) => ({ ...prev, ...patch })),
+    updateCurrentItem: (patch) =>
+      setCurrentItem((prev) => ({
+        ...prev,
+        ...patch,
+        ...(patch.specs ? { specs: normalizeSpecs(patch.specs) } : {}),
+      })),
     commitCategory: (label) => setCurrentItem((prev) => ({ ...prev, category: label || "", categoryCommitted: !!label })),
     addOrUpdateItem, editItem, duplicateItem, removeItem,
     updateOrderDetails,
