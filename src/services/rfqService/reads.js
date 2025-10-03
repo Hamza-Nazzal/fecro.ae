@@ -1,5 +1,6 @@
 // src/services/rfqService/reads.js
 import { supabase } from "../backends/supabase";
+import { getRFQHydrated } from "../backends/supabase/rfqs/hydrate";
 import { rfqCardDbToJs } from "./mapping";
 import { enrichRfqCardRows } from "./enrichment";
 
@@ -93,7 +94,26 @@ export async function getRFQById(rfqId) {
 }
 
 export async function getRFQ(rfqId) {
-  return getRFQById(rfqId);
+  if (!rfqId) throw new Error("rfqId is required");
+
+  // ✅ use the hydrated backend export that actually exists
+  const rfq = await getRFQHydrated(rfqId);
+  if (!rfq) return null;
+
+  // normalize items and guarantee item.specs is an array
+  const baseItems = Array.isArray(rfq.items)
+    ? rfq.items
+    : Array.isArray(rfq.rfq_items)
+    ? rfq.rfq_items
+    : [];
+
+  const items = baseItems.map((it) => ({
+    ...it,
+    specs: Array.isArray(it?.specs) ? it.specs : [],
+  }));
+
+  // return with a stable `items` key for all callers
+  return { ...rfq, items };
 }
 
 export async function listRFQs(params = {}) {
