@@ -75,7 +75,8 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
       : 0;
 
   // ---- items: prefer structured summary, fallback to old preview chips ----
-  const itemsSummary = Array.isArray(safeRfq.itemsSummary) ? safeRfq.itemsSummary : null;
+  // const itemsSummary = Array.isArray(safeRfq.itemsSummary) ? safeRfq.itemsSummary : null;
+  const itemsSummary = (Array.isArray(safeRfq.itemsSummary) && safeRfq.itemsSummary.length > 0) ? safeRfq.itemsSummary : null;
   const itemsPreview = Array.isArray(safeRfq.itemsPreview) ? safeRfq.itemsPreview : [];
 
   const maxItems = 2; // show up to 2 items per card
@@ -89,6 +90,7 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
   // [SHARED] START
   const handleSendQuote = (e) => {
     e?.preventDefault();
+    e?.stopPropagation?.();
     try {
       onSendQuote(safeRfq);
     } catch {
@@ -188,7 +190,9 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
                 const itemCat = it?.categoryPath || it?.category_path;
                 const rfqCat = safeRfq.categoryPath || safeRfq.first_category_path || "";
                 const catPath = itemCat || rfqCat; // fallback to RFQ-level path
-                const categoryTail = catPath ? catPath.split(" > ").pop() : "";
+                const categoryTail = catPath
+                      ? catPath.split(/\s*[>→]\s*/).pop()
+                      : "";
 
                 // Specs formatting (limit to first two entries)
                 const specsList = normalizeSpecsInput(it?.specifications);
@@ -224,6 +228,50 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
                     {!!specsText && (
                       <div className="text-xs text-slate-600 mt-1">Specs: {specsText}</div>
                     )}
+                    
+                    {/* Spec pills (fallback from structured summary) */}
+                    {(() => {
+                      const specList = normalizeSpecsInput(it?.specifications)
+                        .slice(0, 3)
+                        .map((s) => {
+                          const label = (s.key_label || s.key_norm || "").trim();
+                          const value = (s.value ?? "").toString().trim();
+                          const unit  = (s.unit ?? "").toString().trim();
+                          if (!label || !value) return null;
+                          const display = unit ? `${value} ${unit}` : value;
+                          return display ? `${label}: ${display}` : null;
+                        })
+                        .filter(Boolean);
+
+                      return specList.length ? (
+                        <div className="mt-1 flex items-center gap-2 flex-wrap pl-3">
+                          {specList.map((pill, pIdx) => (
+                            <span
+                              key={`sum-fb-pill-${i}-${pIdx}`}
+                              className="inline-block bg-slate-50 border rounded px-2 py-0.5 text-xs"
+                              title={pill}
+                            >
+                              {pill}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Inline spec pills (from normalized rfq_item_specs), aligned by item index */}
+                    {Array.isArray(rfq.itemsPreviewRich) && Array.isArray(rfq.itemsPreviewRich[i]?.specsPreview) && (
+                      <div className="mt-1 flex items-center gap-2 flex-wrap pl-3">
+                        {rfq.itemsPreviewRich[i].specsPreview.slice(0, 3).map((pill, pIdx) => (
+                          <span
+                            key={`sum-pill-${i}-${pIdx}`}
+                            className="inline-block bg-slate-50 border rounded px-2 py-0.5 text-xs"
+                            title={pill}
+                          >
+                            {pill}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -258,6 +306,33 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
                   </span>
                 )}
               </div>
+                    {/* ↓↓↓ Add this block right here, under the chips row, still inside the mt-3 container */}
+      {Array.isArray(rfq.itemsPreviewRich) && (
+        <div className="mt-2 space-y-1">
+          {shownPreview.map((_, idx) => {
+            const rich = rfq.itemsPreviewRich[idx];
+            if (!rich || !Array.isArray(rich.specsPreview) || rich.specsPreview.length === 0) {
+              return null;
+            }
+            return (
+              <div
+                key={`item-rich-${idx}`}
+                className="flex items-center gap-2 flex-wrap pl-3"
+              >
+                {rich.specsPreview.slice(0, 3).map((pill, pIdx) => (
+                  <span
+                    key={`pill-${idx}-${pIdx}`}
+                    className="inline-block bg-slate-50 border rounded px-2 py-0.5 text-xs"
+                    title={pill}
+                  >
+                    {pill}
+                  </span>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
             </div>
           )
         )}
@@ -267,6 +342,7 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
       {/* [SELLER ONLY] START */}
       <div className="ml-4 flex-shrink-0">
         <button
+          type="button"
           onClick={handleSendQuote}
           aria-label={`Send quote for ${safeRfq.title || headerIdText || "RFQ"}`}
           className="px-4 py-2 border rounded-md bg-white hover:bg-slate-50 text-sm transition-colors"

@@ -2,24 +2,69 @@
 //src/components/QuotationViewer.jsx
 import React from "react";
 import { X, Calendar, Package, Truck, FileText } from "lucide-react";
+import { formatDMY, addDays } from "../utils/date";
+// import "./quote/seller-quote.css";
+
+
+// VAT / totals helpers (5% now, future-proof later)
+const getVatRate = (quotation) => {
+  const vatFromModel = Array.isArray(quotation?.taxes)
+    ? quotation.taxes.find((t) => (t.code || t.label || "").toUpperCase() === "VAT")?.rate
+    : quotation?.vatRate ?? quotation?.taxRate;
+  const rate = typeof vatFromModel === "number" ? vatFromModel : 0.05; // default 5%
+  return Math.max(0, rate);
+};
+
+const calcTotalsWithVat = (quotation) => {
+  const items = Array.isArray(quotation?.lineItems) ? quotation.lineItems : [];
+  const currency = quotation?.currency || "AED";
+
+  const subtotal = items.reduce((sum, it) => {
+    const q = Number(it?.quantity ?? 0);
+    const up = Number(it?.unitPrice ?? it?.unit_price ?? 0);
+    const line = Number(it?.total ?? q * up);
+    return sum + (isFinite(line) ? line : 0);
+  }, 0);
+
+  const discountPct = Number(quotation?.discountPct ?? quotation?.discount_percent ?? 0);
+  const discountAmtExplicit = Number(quotation?.discountAmount ?? quotation?.discount_amount ?? 0);
+  const discountFromPct = discountPct > 0 ? (subtotal * discountPct) / 100 : 0;
+  const discount = Math.max(0, discountAmtExplicit || discountFromPct);
+
+  const taxableBase = Math.max(0, subtotal - discount);
+  const vatRate = getVatRate(quotation);
+  const vat = taxableBase * vatRate;
+  const total = taxableBase + vat;
+
+  return { currency, subtotal, discount, vatRate, vat, total, discountPct };
+};
 
 export default function QuotationViewer({ quotation, onClose }) {
   if (!quotation) return null;
+
+  // Canonical date fields with fallbacks
+  const createdAt = quotation.createdAt || quotation.created_at || null;
+  const explicitExpiry = quotation.expiresAt || quotation.expires_at || null;
+  const derivedExpiry =
+    explicitExpiry ||
+    (quotation.validityDays && createdAt ? addDays(createdAt, quotation.validityDays) : null);
 
   const formatCurrency = (amount, currency = "AED") => {
     const numAmount = Number(amount) || 0;
     return `${currency} ${numAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "—";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const formatDate = (dateLike) => {
+    if (!dateLike) return "—";
+    try {
+      return formatDMY(dateLike);
+    } catch {
+      try {
+        return new Date(dateLike).toLocaleDateString("en-GB"); // DD/MM/YYYY fallback
+      } catch {
+        return "—";
+      }
+    }
   };
 
   const statusStyles = {
@@ -41,6 +86,16 @@ export default function QuotationViewer({ quotation, onClose }) {
             <p className="text-sm text-gray-600 mt-1">
               {quotation.rfq?.sellerRfqId || "—"}
             </p>
+            <div className="text-sm text-gray-600 mt-1 flex items-center gap-4">
+              <span>
+                Created: <strong>{formatDate(createdAt)}</strong>
+              </span>
+              {derivedExpiry && (
+                <span>
+                  Expiry: <strong>{formatDate(derivedExpiry)}</strong>
+                </span>
+              )}
+            </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
             <X size={20} />
@@ -61,12 +116,17 @@ export default function QuotationViewer({ quotation, onClose }) {
                   : "Draft"}
               </span>
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-gray-900">
-                {formatCurrency(quotation.totalPrice, quotation.currency)}
-              </div>
-              <div className="text-sm text-gray-500">Total Price</div>
-            </div>
+            {(() => {
+              const { currency, total } = calcTotalsWithVat(quotation);
+              const fmt = (n) =>
+                `${currency} ${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+              return (
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-gray-900">{fmt(total)}</div>
+                  <div className="text-sm text-gray-500">Total</div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* RFQ Details */}
@@ -101,7 +161,7 @@ export default function QuotationViewer({ quotation, onClose }) {
                   <tbody className="divide-y divide-gray-200">
                     {quotation.lineItems.map((item, index) => (
                       <tr key={index}>
-                        <td className="px-4 py-3 text-sm text-gray-900">{item.item}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{item.item ?? item.name ?? item.title ?? "—"}</td>
                         <td className="px-4 py-3 text-sm text-gray-600 text-right">{item.quantity}</td>
                         <td className="px-4 py-3 text-sm text-gray-600 text-right">
                           {formatCurrency(item.unitPrice, quotation.currency)}
@@ -113,6 +173,43 @@ export default function QuotationViewer({ quotation, onClose }) {
                     ))}
                   </tbody>
                 </table>
+              </div>
+              <div className="mt-4 border rounded-lg p-4">
+                {(() => {
+                  const { currency, subtotal, discount, vatRate, vat, total, discountPct } =
+                    calcTotalsWithVat(quotation);
+                  const money = (n) =>
+                    `${currency} ${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+                  return (
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Subtotal</span>
+                        <span className="text-gray-900">{money(subtotal)}</span>
+                      </div>
+
+                      {discount > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">
+                            Discount{discountPct ? ` (${discountPct}%)` : ""}
+                          </span>
+                          <span className="text-gray-900">- {money(discount)}</span>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">VAT ({Math.round(vatRate * 100)}%)</span>
+                        <span className="text-gray-900">{money(vat)}</span>
+                      </div>
+
+                      <div className="h-px bg-gray-200 my-2" />
+
+                      <div className="flex justify-between text-base font-semibold">
+                        <span>Total</span>
+                        <span>{money(total)}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -136,6 +233,12 @@ export default function QuotationViewer({ quotation, onClose }) {
                   <span className="ml-2 font-medium">{quotation.paymentTerms || "—"}</span>
                 </div>
                 <div>
+                  <span className="text-gray-600">Delivery Terms:</span>
+                  <span className="ml-2 font-medium">
+                    {quotation.deliveryTerms || quotation.delivery_terms || "—"}
+                  </span>
+                </div>
+                <div>
                   <span className="text-gray-600">Shipping Terms:</span>
                   <span className="ml-2 font-medium">{quotation.shippingTerms || "—"}</span>
                 </div>
@@ -156,18 +259,18 @@ export default function QuotationViewer({ quotation, onClose }) {
               <div className="space-y-2 text-sm">
                 <div>
                   <span className="text-gray-600">Created:</span>
-                  <span className="ml-2 font-medium">{formatDate(quotation.createdAt)}</span>
+                  <span className="ml-2 font-medium">{formatDate(createdAt)}</span>
                 </div>
-                {quotation.submittedAt && (
+                {(quotation.submittedAt || quotation.submitted_at) && (
                   <div>
                     <span className="text-gray-600">Submitted:</span>
-                    <span className="ml-2 font-medium">{formatDate(quotation.submittedAt)}</span>
+                    <span className="ml-2 font-medium">{formatDate(quotation.submittedAt || quotation.submitted_at)}</span>
                   </div>
                 )}
-                {quotation.expiresAt && (
+                {derivedExpiry && (
                   <div>
                     <span className="text-gray-600">Expires:</span>
-                    <span className="ml-2 font-medium">{formatDate(quotation.expiresAt)}</span>
+                    <span className="ml-2 font-medium">{formatDate(derivedExpiry)}</span>
                   </div>
                 )}
               </div>
