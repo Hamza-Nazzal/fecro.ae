@@ -13,7 +13,11 @@ import "./quote/seller-quote.css";
 // shared helpers for item display
 import { getItemName, toSpecList } from "../utils/rfq/itemHelpers";
 
+
 export default function SellerQuoteComposer() {
+  // TEMP DEBUG
+  console.log("MOUNTED SellerQuoteComposer", window.location.pathname);
+  
   const { rfqId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
