@@ -29,6 +29,7 @@ export default function SavedProductsTab({
 }) {
   
 //debug 1
+/*
   console.log('SavedProductsTab props:', { 
     onAddClick: typeof onAddClick, 
     onEditClick: typeof onEditClick, 
@@ -36,7 +37,7 @@ export default function SavedProductsTab({
     items: items.length,
     mode 
   });
-
+*/
 
   const isEmpty = !loading && items.length === 0;
 

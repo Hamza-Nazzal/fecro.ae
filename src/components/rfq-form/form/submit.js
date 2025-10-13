@@ -2,7 +2,7 @@
 
 import { createRFQ, updateRFQ } from "../../../services/rfqService/writes";
 
-export const makeSubmitRFQ = ({ getState, setSubmitting, setSubmitError, setRfqId, setSubmitted }) => async () => {
+export const makeSubmitRFQ = ({ getState, setSubmitting, setSubmitError, setRfqId, setRfqPublicId, setSubmitted }) => async () => {
   const { submitting, orderDetails, items, rfqId } = getState();
   if (submitting) return;
   setSubmitError(null);
@@ -15,6 +15,7 @@ export const makeSubmitRFQ = ({ getState, setSubmitting, setSubmitError, setRfqI
     const rfqInput = { title: titleVal, orderDetails, items };
     const saved = rfqId ? await updateRFQ(rfqId, rfqInput) : await createRFQ(rfqInput);
     setRfqId(saved.id);
+    setRfqPublicId(saved.publicId || saved.public_id || saved.id);
     setSubmitted(true);
   } catch (e) {
     console.error("Error submitting RFQ:", e);

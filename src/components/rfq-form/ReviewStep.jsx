@@ -1,45 +1,15 @@
 // src/components/rfq-form/ReviewStep.jsx
 import React from "react";
 import { formatDMY, addDays } from "../../utils/date";
-
-/** Helper: consistent item name resolution (same behavior as your ReviewStep) */
-function getItemName(it) {
-  return it?.productName || it?.name || it?.title || "Item";
-}
-
-/** Helper: normalize specs from array or object shape (same behavior as your ReviewStep) */
-function toSpecList(specs) {
-  if (!specs) return [];
-  if (Array.isArray(specs)) {
-    return specs
-      .map((s) => {
-        const label = (s?.key_label || s?.key_norm || s?.label || "").trim();
-        const value = s?.value;
-        const unit  = (s?.unit ?? "").toString().trim();
-        if (!label || value === undefined || value === null || String(value).trim() === "") return null;
-        const display = unit ? `${value} ${unit}` : String(value);
-        return { label, display };
-      })
-      .filter(Boolean);
-  }
-  // object map { key_norm: { key_label, value, unit } }
-  return Object.entries(specs)
-    .map(([key, s]) => {
-      const label = (s?.key_label || key || "").trim();
-      const value = s?.value;
-      const unit  = (s?.unit ?? "").toString().trim();
-      if (!label || value === undefined || value === null || String(value).trim() === "") return null;
-      const display = unit ? `${value} ${unit}` : String(value);
-      return { label, display };
-    })
-    .filter(Boolean);
-}
+import ReviewItemsList from "./ReviewItemsList";
 
 export default function ReviewStep({
   items = [],
   orderDetails = {},
   meta = {},
   groupByCategory = false,
+  onEditItem = null,
+  onUpdateQuantity = null,
 }) {
   // ----- Logic preserved from your ReviewStep -----
   const issuedAt  = meta.issuedAt || new Date();
@@ -63,19 +33,6 @@ export default function ReviewStep({
 
   const paymentTerms =
     (orderDetails.paymentTermsLabel ?? orderDetails.paymentTerms) ?? "Net-30";
-
-  // Grouping (pure, memoized)
-  const groups = React.useMemo(() => {
-    if (!groupByCategory) return [["All Items", items]];
-    const map = new Map();
-    for (const it of items) {
-      const key = it?.categoryPath || it?.category_path || "—";
-      const arr = map.get(key) || [];
-      arr.push(it);
-      map.set(key, arr);
-    }
-    return Array.from(map.entries());
-  }, [items, groupByCategory]);
 
   const totalUnits = items.reduce((sum, it) => sum + Number(it?.quantity ?? 0), 0);
 
@@ -125,90 +82,12 @@ export default function ReviewStep({
         </div>
 
         {/* 2. Requested Items */}
-        <div className="mb-10">
-          <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide mb-6">
-            2. Requested Items
-          </h2>
-
-          <div className="space-y-6">
-            {(() => {
-              let itemCounter = 0;
-              return groups.map(([groupName, groupItems]) => (
-                <div key={groupName}>
-                  {groupByCategory && (
-                    <div className="bg-gray-50 border-l-4 border-blue-600 px-4 py-3 mb-4">
-                      <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
-                        {groupName}
-                      </h3>
-                    </div>
-                  )}
-
-                  <div className="space-y-4">
-                    {groupItems.map((it, idx) => {
-                      itemCounter += 1;
-                      const specs = toSpecList(it?.specifications || it?.specs || it?.rfq_item_specs);
-
-                      return (
-                        <div
-                          key={it?.id || `${getItemName(it)}-${idx}`}
-                          className="border border-gray-200"
-                        >
-                          {/* Item Header */}
-                          <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 flex justify-between items-center">
-                            <div className="flex items-baseline gap-3">
-                              <span className="text-xs font-bold text-gray-500 uppercase">
-                                Item #{itemCounter}
-                              </span>
-                              <h4 className="text-lg font-bold text-gray-900">
-                                {getItemName(it)}
-                              </h4>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <div className="bg-green-600 text-white rounded-lg px-3 py-1.5 text-center">
-                                <div className="text-xs font-medium uppercase">Quantity</div>
-                                <div className="text-lg font-bold">
-                                  {Number(it?.quantity ?? 0)}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Specs as pills */}
-                          <div className="px-5 py-4 bg-white">
-                            {specs.length ? (
-                              <div>
-                                <div className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">
-                                  Technical Specifications
-                                </div>
-                                <div className="flex flex-wrap gap-2" role="list">
-                                  {specs.map((s, i) => (
-                                    <span
-                                      key={`${it?.id || idx}-spec-${i}`}
-                                      role="listitem"
-                                      className="bg-blue-600 text-white rounded-full px-3 py-1 text-xs font-medium"
-                                      aria-label={`${s.label}: ${s.display}`}
-                                    >
-                                      <span className="font-semibold">{s.label}:</span>
-                                      <span className="ml-1 font-normal">{s.display}</span>
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-sm text-gray-500 italic">
-                                No technical specifications provided
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ));
-            })()}
-          </div>
-        </div>
+        <ReviewItemsList
+          items={items}
+          groupByCategory={groupByCategory}
+          onEditItem={onEditItem}
+          onUpdateQuantity={onUpdateQuantity}
+        />
 
         {/* 3. Commercial Terms */}
         <div className="mb-10">

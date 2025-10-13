@@ -1,5 +1,7 @@
 // src/utils/rfq/sanitizers.js
 
+import { normalizeSpecsInput as normalizeSpecsFromRfqSpecs } from '../rfq/rfqSpecs';
+
 // ---- getSellerRfqId (exact) ----
 export function getSellerRfqId(row) {
   return row?.seller_rfq_id || null;
@@ -58,7 +60,9 @@ export function sanitizeItemsSummary(entries, fallbackCategoryPath = "") {
     const normalizedCategory = category || fallback;
     summary.categoryPath = normalizedCategory || "";
 
-    const specsList = normalizeSpecsInput(entry?.specifications);
+    // const specsList = normalizeSpecsInput(entry?.specifications);
+    const specsList = normalizeSpecsFromRfqSpecs(entry?.specifications);
+    
     const normalizedSpecs = {};
     for (const spec of specsList.slice(0, 2)) {
       const label = (spec.key_label ?? spec.key_norm ?? "").toString().trim();
@@ -76,10 +80,10 @@ export function sanitizeItemsSummary(entries, fallbackCategoryPath = "") {
 }
 
 // Helper used by sanitizeItemsSummary (exact semantics)
-function normalizeSpecsInput(specsMaybeArray) {
-  const arr = Array.isArray(specsMaybeArray) ? specsMaybeArray : [];
-  return arr.filter(Boolean);
-}
+// function normalizeSpecsInput(specsMaybeArray) {
+//  const arr = Array.isArray(specsMaybeArray) ? specsMaybeArray : [];
+//  return arr.filter(Boolean);
+// }
 
 // ---- sanitizeQuotationsCount (exact) ----
 export function sanitizeQuotationsCount(value) {

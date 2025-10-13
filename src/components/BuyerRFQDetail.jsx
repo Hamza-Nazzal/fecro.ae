@@ -106,7 +106,7 @@ export default function BuyerRFQDetail() {
   return (
     <div className="p-4">
       <div className="mb-3 flex items-center justify-between">
-        <Link to="/buyer/rfqs" className="text-blue-600 hover:underline text-sm">← Back to My RFQs</Link>
+        <Link to="/buyer" className="text-blue-600 hover:underline text-sm">← Back to Dashboard</Link>
         {!!rfq?.publicId && <span className="text-xs text-slate-500">RFQ ID: {rfq.publicId}</span>}
       </div>
 

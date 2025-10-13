@@ -10,33 +10,8 @@ import useSubmitQuotation from "../hooks/useSubmitQuotation";
 // optional: your shared CSS for quote visuals
 import "./quote/seller-quote.css";
 
-// ------- UI helpers (pure) -------
-function getItemName(it) {
-  return it?.productName || it?.name || it?.title || "Item";
-}
-function toSpecList(specs) {
-  if (!specs) return [];
-  if (Array.isArray(specs)) {
-    return specs
-      .map((s) => {
-        const label = (s?.key_label || s?.key_norm || s?.label || "").trim();
-        const value = s?.value;
-        const unit  = (s?.unit ?? "").toString().trim();
-        if (!label || value === undefined || value === null || String(value).trim() === "") return null;
-        return { label, display: unit ? `${value} ${unit}` : String(value) };
-      })
-      .filter(Boolean);
-  }
-  return Object.entries(specs)
-    .map(([key, s]) => {
-      const label = (s?.key_label || key || "").trim();
-      const value = s?.value;
-      const unit  = (s?.unit ?? "").toString().trim();
-      if (!label || value === undefined || value === null || String(value).trim() === "") return null;
-      return { label, display: unit ? `${value} ${unit}` : String(value) };
-    })
-    .filter(Boolean);
-}
+// shared helpers for item display
+import { getItemName, toSpecList } from "../utils/rfq/itemHelpers";
 
 export default function SellerQuoteComposer() {
   const { rfqId } = useParams();
@@ -124,7 +99,7 @@ export default function SellerQuoteComposer() {
   return (
     <div className="p-4">
       <div className="mb-3">
-        <Link to="/seller" className="text-blue-600 hover:underline text-sm">← Back to Seller</Link>
+        <Link to="/seller" className="text-blue-600 hover:underline text-sm">← Back to Dashboard</Link>
       </div>
 
       {/* Loading / error states */}
@@ -223,7 +198,19 @@ export default function SellerQuoteComposer() {
                       <div className="space-y-3">
                         {groupItems.map((it, i) => {
                           globalIdx += 1;
-                          const specs = toSpecList(it?.specifications || it?.specs || it?.rfq_item_specs);
+                          
+                          // DEBUG: spec introspection
+                          console.log('DEBUG specs input', {
+                            itemId: it?.id,
+                            buyerSpecificationsLen: Array.isArray(it?.buyerSpecifications) ? it.buyerSpecifications.length : null,
+                            specificationsLen: Array.isArray(it?.specifications) ? it.specifications.length : null,
+                            specsLenAfterToSpecList: Array.isArray(toSpecList(it?.specifications || it?.specs || it?.rfq_item_specs || it?.buyerSpecifications)) 
+                              ? toSpecList(it?.specifications || it?.specs || it?.rfq_item_specs || it?.buyerSpecifications).length 
+                              : null,
+                            sampleBuyerSpec: (it?.buyerSpecifications || [])[0] || null,
+                          });
+                          
+                          const specs = toSpecList(it?.specifications || it?.specs || it?.rfq_item_specs || it?.buyerSpecifications);
 
                           const liIndex = runningLineIndex++; // aligns with seeded lineItems order
                           const li = form.lineItems?.[liIndex] || { item: getItemName(it), quantity: Number(it?.quantity ?? 0), unitPrice: 0 };
