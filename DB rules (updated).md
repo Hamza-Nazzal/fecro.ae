@@ -947,5 +947,28 @@ Seller and buyer cards both load from the same unified view, maintaining compati
 
 
 
+****************************************************************
+### rfq_hydrate_seller (v0.3.0 update)
+- Added buyerSpecifications array per item
+- Supports item/spec scaling for hundreds of specs
+- Joins:
+  - rfqs
+  - rfq_items
+  - rfq_item_specs
+- Output structure:
+  - payload.items[].buyerSpecifications[]
+  - payload.items[].specifications (for future seller-side input)
+
+
+
+## [v0.3.0-pre-audit] — 2025-10-13
+- Backend RPC refactored for spec visibility
+- Frontend: SellerQuoteComposer consumes buyerSpecifications
+- Safe baseline for component audit
+
+
+
+
+
 
  */
