@@ -1,0 +1,17 @@
+src/App.js:72:            <Routes>
+src/App.js:73:              <Route path="/" element={<Navigate to="/start" replace />} />
+src/App.js:74:              <Route path="/login" element={<LoginPage />} />
+src/App.js:75:              <Route path="/start" element={<AfterLoginRedirect />} />
+src/App.js:76:              <Route path="/__diag" element={<Diag />} />
+src/App.js:77:              <Route path="/admin/login" element={<AdminLogin />} />
+src/App.js:78:              <Route
+src/App.js:87:              <Route
+src/App.js:96:              <Route
+src/App.js:104:              <Route
+src/App.js:114:              <Route
+src/App.js:122:              <Route
+src/App.js:132:              <Route path="/buyer/rfqs" element={<RequireAuth><BuyerDashboard /></RequireAuth>} />
+src/App.js:133:              <Route path="/buyer/rfq/:rfqId" element={<RequireAuth><BuyerRFQDetail /></RequireAuth>} />
+src/App.js:134:              <Route path="/seller/quote/:rfqId" element={<RequireAuth><SellerQuoteComposer /></RequireAuth>} />
+src/App.js:136:              <Route
+src/App.js:145:              <Route path="*" element={<Navigate to="/start" replace />} />
