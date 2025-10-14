@@ -1,0 +1,11 @@
+=== check: src/components/QuotationCard.jsx
+=== check: src/components/QuotationForm.jsx
+=== check: src/components/QuotationModal.jsx
+src/pages/DualModeScreen.jsx:18:import QuotationModal from "../components/QuotationModal.jsx";
+src/pages/DualModeScreenPreview.jsx:18:import QuotationModal from "../components/QuotationModal.jsx";
+=== check: src/components/QuotationViewer.jsx
+=== check: src/components/quote/QuoteHeader.jsx
+=== check: src/components/quote/QuoteItemRow.jsx
+=== check: src/components/quote/QuoteTerms.jsx
+=== check: src/components/quote/QuoteTotals.jsx
+=== check: src/components/quote/useSellerRFQ.js
