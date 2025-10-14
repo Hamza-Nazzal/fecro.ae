@@ -855,6 +855,118 @@ Result: Database is now consistent: RFQs have two clear identifiers:
 
 ****************************************************************
 
+---
+
+## Update — RFQ Specs Visibility & v_rfqs_card View (2025-10-10)
+
+### 1. Context
+Sellers were unable to view item specifications (`rfq_item_specs`) in their dashboard, even though specs existed in the database.  
+Investigation showed:
+- Specs were correctly linked via `rfq_item_specs.rfq_item_id → rfq_items.id → rfqs.id`.
+- The issue was caused by missing RLS permissions for sellers.
+- `v_rfqs_card` view also needed cleanup to include `seller_rfq_id`.
+
+---
+
+### 2. Schema Relationships (Confirmed)
+| Table | Key Columns | Relation |
+|--------|--------------|-----------|
+| `rfqs` | `id` (PK) | — |
+| `rfq_items` | `id` (PK), `rfq_id` (FK → `rfqs.id`) | Each item belongs to one RFQ |
+| `rfq_item_specs` | `id` (PK), `rfq_item_id` (FK → `rfq_items.id`) | Each spec belongs to one item |
+
+---
+
+### 3. RLS Fix for Specs
+**Problem:** Only buyers (RFQ owners) could select specs; sellers were blocked.  
+**Solution:** Added a new policy to allow authenticated users to read specs of active RFQs.
+
+```sql
+-- Enable RLS (if not already)
+alter table public.rfq_item_specs enable row level security;
+
+-- Read policy for sellers
+create policy "rfq_item_specs_read_active"
+on public.rfq_item_specs
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.rfq_items i
+    join public.rfqs r on r.id = i.rfq_id
+    where i.id = rfq_item_specs.rfq_item_id
+      and r.status = 'active'
+  )
+);
+
+grant select on public.rfq_item_specs to authenticated;
+
+
+
+Effect:
+Sellers can now view specs for active RFQs while buyers retain full control.
+Specs remain hidden for closed or inactive RFQs.
+
+⸻
+
+4. v_rfqs_card View Rebuilt
+
+Reason: Old view did not include seller_rfq_id (the SRF code used in the seller UI).
+
+
+
+drop view if exists public.v_rfqs_card;
+
+create view public.v_rfqs_card as
+select
+  r.id,
+  r.public_id,
+  r.seller_rfq_id,      -- visible SRF code for sellers
+  r.status,
+  r.created_at,
+  (select count(*) from public.rfq_items i where i.rfq_id = r.id) as items_count
+from public.rfqs r;
+
+grant select on public.v_rfqs_card to authenticated;
+grant select on public.v_rfqs_card to anon;  -- optional if public browsing is allowed
+
+
+Result:
+Seller and buyer cards both load from the same unified view, maintaining compatibility with frontend filters
+(status=eq.active&order=created_at.desc).
+
+⸻
+
+5. Outcome
+
+✅ Specs now load correctly on seller cards.
+✅ No schema changes — only policy and view updates.
+✅ Frontend unaffected (same endpoints, improved visibility).
+✅ Future-safe: easy to re-run drop view + create view for view updates.
+
+
+
+****************************************************************
+### rfq_hydrate_seller (v0.3.0 update)
+- Added buyerSpecifications array per item
+- Supports item/spec scaling for hundreds of specs
+- Joins:
+  - rfqs
+  - rfq_items
+  - rfq_item_specs
+- Output structure:
+  - payload.items[].buyerSpecifications[]
+  - payload.items[].specifications (for future seller-side input)
+
+
+
+## [v0.3.0-pre-audit] — 2025-10-13
+- Backend RPC refactored for spec visibility
+- Frontend: SellerQuoteComposer consumes buyerSpecifications
+- Safe baseline for component audit
+
+
 
 
 

@@ -1,0 +1,107 @@
+=== src/data/adminDashboardData.js
+src/components/admin/AdminSidebar.jsx:3:import { menuItems } from '../../data/adminDashboardData';
+src/hooks/useAdminDashboard.js:3:import { dashboardData, calculateStats } from '../data/adminDashboardData';
+src/pages/admin/AdminDashboard.jsx:4:import { columnDefinitions } from '../../data/adminDashboardData';
+
+=== src/hooks/useAdminDashboard.js
+src/pages/admin/AdminDashboard.jsx:3:import { useAdminDashboard } from '../../hooks/useAdminDashboard';
+
+=== src/hooks/useRFQ.js
+src/pages/DualModeScreen.jsx:9:import useRFQ from "../hooks/useRFQ";
+src/pages/DualModeScreenPreview.jsx:9:import useRFQ from "../hooks/useRFQ";
+
+=== src/hooks/useSellerRFQs.js
+
+=== src/services/backends/__active.js
+
+=== src/services/backends/local-idb/db.js
+
+=== src/services/backends/localIndexedDb.js
+
+=== src/services/backends/products.js
+
+=== src/services/backends/supabase.js
+src/_archive/pages/Diag.jsx.bak:7:import { supabase, SB_PROJECT_URL } from "../services/backends/supabase";
+src/_archive/pages/Diag.jsx.bak:8://import { SB_PROJECT_URL } from "../services/backends/supabase";
+src/_archive/pages/Diag.jsx.bak:10:import { seedDemoRFQs } from "../services/backends/supabase";
+src/contexts/AuthContext.js:5:import { supabase } from '../services/backends/supabase';
+src/hooks/useRFQ/actions.js:14:import { seedDemoRFQs as beSeedDemoRFQs } from "../../services/backends/supabase";
+src/pages/Diag.jsx:4:import { supabase, SB_PROJECT_URL } from "../services/backends/supabase";
+
+=== src/services/backends/supabase/rfqs/base.js
+src/pages/Diag.jsx:6:import { seedDemoRFQs } from '../services/backends/supabase/rfqs';
+
+=== src/services/productsService.js
+src/hooks/useProducts.js:9:} from "../services/productsService";
+
+=== src/services/quotationHelpers.js
+src/components/QuotationCard.jsx:15:} from '../services/quotationHelpers.js';
+
+=== src/services/quotationsService.js
+src/components/BuyerQuotationsViewer.jsx:6:import { listQuotations, updateQuotation } from "../services/quotationsService";
+src/components/BuyerRFQDetail.jsx:10:} from "../services/quotationsService";
+src/components/SellerQuotationsTab.jsx:6:import { listQuotations } from "../services/quotationsService";
+src/components/SellerRFQsInline.jsx:6:import { listMyQuotedRFQIds } from "../services/quotationsService";
+src/hooks/useSellerRFQs.js:6:import { listQuotations } from "../services/quotationsService";
+src/hooks/useSubmitQuotation.js:3:import { createQuotation } from "../services/quotationsService";
+
+=== src/services/quotationsService/index.js
+src/components/BuyerQuotationsViewer.jsx:6:import { listQuotations, updateQuotation } from "../services/quotationsService";
+src/components/BuyerRFQDetail.jsx:10:} from "../services/quotationsService";
+src/components/SellerQuotationsTab.jsx:6:import { listQuotations } from "../services/quotationsService";
+src/components/SellerRFQsInline.jsx:6:import { listMyQuotedRFQIds } from "../services/quotationsService";
+src/hooks/useSellerRFQs.js:6:import { listQuotations } from "../services/quotationsService";
+src/hooks/useSubmitQuotation.js:3:import { createQuotation } from "../services/quotationsService";
+
+=== src/services/rfqService.js
+src/hooks/useRFQ.js:7:} from "../services/rfqService";
+src/hooks/useRFQ/actions.js:11:} from "../../services/rfqService";
+src/hooks/useRFQ/useRFQList.js:13:import { listRFQs, listMyRFQs } from "../../services/rfqService";
+src/hooks/useSellerRFQs.js:5:import { listRFQs } from "../services/rfqService";
+
+=== src/services/rfqService/enrichment.js
+src/hooks/useRFQ.js:7:} from "../services/rfqService";
+src/hooks/useRFQ/actions.js:11:} from "../../services/rfqService";
+src/hooks/useRFQ/useRFQList.js:13:import { listRFQs, listMyRFQs } from "../../services/rfqService";
+src/hooks/useSellerRFQs.js:5:import { listRFQs } from "../services/rfqService";
+
+=== src/services/rfqService/mapping.js
+src/hooks/useRFQ.js:7:} from "../services/rfqService";
+src/hooks/useRFQ/actions.js:11:} from "../../services/rfqService";
+src/hooks/useRFQ/useRFQList.js:13:import { listRFQs, listMyRFQs } from "../../services/rfqService";
+src/hooks/useSellerRFQs.js:5:import { listRFQs } from "../services/rfqService";
+
+=== src/services/searchService.js
+
+=== src/utils/mappers/core.js
+src/services/backends/local-idb/rfqs.js:4:import { rfqJsToDb, rfqDbToJs } from "../../utils/mappers";
+src/services/backends/supabase/events.js:3:import { eventDbToJs, eventJsToDb } from "../../../utils/mappers";
+src/services/backends/supabase/products.js:3:import { productJsToDb, productDbToJs } from '../../../utils/mappers';
+src/services/backends/supabase/quotations.js:4:import { quotationDbToJs, quotationJsToDb } from "../../../utils/mappers";
+src/services/backends/supabase/rfqs/base.js:3:import { rfqDbToJs, rfqJsToDb } from "../../../../utils/mappers";
+src/services/backends/supabase/rfqs/hydrate.js:2:import { rfqDbToJs } from "../../../../utils/mappers";
+src/services/backends/supabase/rfqs/items.js:4:import { specsRowsToObject } from "../../../../utils/mappers";
+src/services/productsService.js:8:import { productJsToDb, productDbToJs } from "../utils/mappers";
+src/services/quotationsService.js:15:import { quotationJsToDb, quotationDbToJs } from "../utils/mappers";
+src/services/rfqService/mapping.js:2:import { rfqDbToJs } from "../../utils/mappers";
+src/services/rfqService/writes.js:4:import { rfqJsToDb } from "../../utils/mappers";
+
+=== src/utils/quoteTotals.js
+src/services/backends/local-idb/db.js:4:import { _normalizeKey, _splitValueUnit } from "./utils";
+src/services/backends/local-idb/rfqs.js:5:import { _splitValueUnit, _normKeyPair } from "./utils";
+src/services/backends/local-idb/specs.js:4:import { _normalizeKey, _splitValueUnit, _normKeyPair } from "./utils";
+
+=== src/utils/rfq/rfqSpecs.js
+src/components/RFQCardItems.jsx:3:import { normalizeSpecsInput } from "../utils/rfq/rfqSpecs";
+src/components/rfq-form/SpecsSection.jsx:4:import { joinValueUnit, splitValueUnit, makeKeyPair, normalizeKey } from "../../utils/rfq/rfqSpecs";
+src/components/rfq-form/spec-editor/SpecEditor.jsx:12:} from "../../utils/rfq/rfqSpecs"
+src/services/backends/supabase/rfqs/index.js:4:import { normalizeSpecsInput } from "../../../../utils/rfq/rfqSpecs";
+src/services/backends/supabase/rfqs/items.js:5:import { normalizeSpecsInput } from "../../../../utils/rfq/rfqSpecs";
+src/services/rfqService/writes.js:5:import { normalizeSpecsInput } from "../../utils/rfq/rfqSpecs";
+
+=== src/utils/rfq/sanitizers.js
+src/services/rfqService/enrichment.js:13:} from "../../utils/rfq/sanitizers";
+src/services/rfqService/mapping.js:8:} from '../../utils/rfq/sanitizers';
+
+=== src/utils/validators/quotation.js
+

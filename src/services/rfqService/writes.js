@@ -55,7 +55,7 @@ export async function createRFQ(rfq) {
   const uiItems = Array.isArray(rfq.items) ? rfq.items : [];
   if (uiItems.length) {
     const cleanItems = uiItems.map((it) => normalizeItemForRPC(it, { rfqId, allowId: false }));
-    console.log("[rfq_upsert] items payload ->", JSON.stringify(cleanItems, null, 2));
+    // console.log("[rfq_upsert] items payload ->", JSON.stringify(cleanItems, null, 2));
     const { error: rpcErr } = await supabase.rpc("rfq_upsert_items_and_specs", {
       _rfq_id: rfqId,
       _items: cleanItems,
@@ -63,7 +63,7 @@ export async function createRFQ(rfq) {
     if (rpcErr) {
    console.error("[rpc] rfq_upsert_items_and_specs failed:", rpcErr);
  } else {
-   console.log("[rpc] rfq_upsert_items_and_specs ok:");
+   // console.log("[rpc] rfq_upsert_items_and_specs ok:");
  }
     if (rpcErr) {
       // compensating delete avoids orphan rfqs

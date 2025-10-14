@@ -1,0 +1,158 @@
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/App.test.js
+  2:1  error  No exports found  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/_archive/pages/BuyerHome.js
+  9:1  error  exported declaration 'default' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/_archive/pages/SellerHome.js
+   8:8  warning  'SellerRFQsInline' is defined but never used                  no-unused-vars
+  11:1  error    exported declaration 'default' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/components/RFQCardItems.jsx
+  24:9  warning  The 'shownSummary' conditional could make the dependencies of useMemo Hook (at line 46) change on every render. To fix this, wrap the initialization of 'shownSummary' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/components/rfq-form/RequestForm.jsx
+   5:21  warning  'addDays' is defined but never used                          no-unused-vars
+  26:5   warning  'showSupplierPreview' is assigned a value but never used     no-unused-vars
+  26:26  warning  'setShowSupplierPreview' is assigned a value but never used  no-unused-vars
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/components/rfq-form/form/index.js
+  3:1  error  No exports found  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/components/rfq-form/spec-editor/SpecEditor.jsx
+  13:10  warning  'hasText' is defined but never used           no-unused-vars
+  13:19  warning  'normalizeSpec' is defined but never used     no-unused-vars
+  13:34  warning  'specToInlineText' is defined but never used  no-unused-vars
+  13:52  warning  'isDupe' is defined but never used            no-unused-vars
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/components/rfq-form/spec-editor/index.js
+  3:10  error  exported declaration 'default' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/data/adminDashboardData.js
+  50:1  error  exported declaration 'columnDefinitions' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/hooks/useAdminDashboard.js
+  5:1  error  exported declaration 'useAdminDashboard' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/hooks/useRFQ.js
+  50:1  error  exported declaration 'default' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/hooks/useRFQ/index.js
+   9:10  error  exported declaration 'useRFQList' not used within other modules  import/no-unused-modules
+   9:22  error  exported declaration 'useRFQs' not used within other modules     import/no-unused-modules
+   9:31  error  exported declaration 'useRFQ' not used within other modules      import/no-unused-modules
+   9:39  error  exported declaration 'rfqActions' not used within other modules  import/no-unused-modules
+  12:1   error  exported declaration 'default' not used within other modules     import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/hooks/useSellerRFQs.js
+  17:1  error  exported declaration 'default' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/hooks/useSubmitQuotation.js
+  55:10  warning  The 'rfqItems' conditional could make the dependencies of useMemo Hook (at line 66) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'rfqItems' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/index.js
+  2:1  error  No exports found  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/services/backends/__active.js
+  21:10  error  exported declaration 'supabase' not used within other modules        import/no-unused-modules
+  21:20  error  exported declaration 'SB_PROJECT_URL' not used within other modules  import/no-unused-modules
+  21:36  error  exported declaration 'SB_ANON_KEY' not used within other modules     import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/services/backends/local-idb/db.js
+  7:1  error  exported declaration 'db' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/services/backends/local-idb/index.js
+  2:1  error  No exports found  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/services/backends/localIndexedDb.js
+  4:1  error  No exports found  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/services/backends/products.js
+  50:1  error  exported declaration 'listProducts' not used within other modules  import/no-unused-modules
+  59:1  error  exported declaration 'getProduct' not used within other modules    import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/services/backends/supabase.js
+  35:1  error  exported declaration 'default' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/services/backends/supabase/rfqs/base.js
+  59:1  error  exported declaration 'rowToJs' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/services/configService/index.js
+  4:1  error  exported declaration 'getUnits' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/services/productsService.js
+  26:1  error  exported declaration 'getProduct' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/services/quotationHelpers.js
+   62:1  error  exported declaration 'calculateLineItemTotal' not used within other modules        import/no-unused-modules
+   63:1  error  exported declaration 'calculateQuotationTotal' not used within other modules       import/no-unused-modules
+   77:1  error  exported declaration 'validateLineItem' not used within other modules              import/no-unused-modules
+   86:1  error  exported declaration 'validateQuotationData' not used within other modules         import/no-unused-modules
+  107:1  error  exported declaration 'isQuotationExpired' not used within other modules            import/no-unused-modules
+  126:1  error  exported declaration 'sortQuotationsByPrice' not used within other modules         import/no-unused-modules
+  127:1  error  exported declaration 'sortQuotationsByDelivery' not used within other modules      import/no-unused-modules
+  130:1  error  exported declaration 'filterQuotationsByStatus' not used within other modules      import/no-unused-modules
+  133:1  error  exported declaration 'filterQuotationsByPriceRange' not used within other modules  import/no-unused-modules
+  140:1  error  exported declaration 'getQuotationSummary' not used within other modules           import/no-unused-modules
+  162:1  error  exported declaration 'createEmptyLineItem' not used within other modules           import/no-unused-modules
+  163:1  error  exported declaration 'updateLineItemTotal' not used within other modules           import/no-unused-modules
+  170:1  error  exported declaration 'getCurrencySymbol' not used within other modules             import/no-unused-modules
+  175:1  error  exported declaration 'INITIAL_QUOTATION_DATA' not used within other modules        import/no-unused-modules
+  187:1  error  exported declaration 'createNewQuotationData' not used within other modules        import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/services/quotationsService.js
+  105:1  error  exported declaration 'deleteQuotation' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/services/quotationsService/index.js
+   6:1  error  exported declaration 'getDraft' not used within other modules  import/no-unused-modules
+  18:1  error  exported declaration 'upsert' not used within other modules    import/no-unused-modules
+  28:1  error  exported declaration 'submit' not used within other modules    import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/services/rfqService.js
+  5:10  error  exported declaration 'default' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/services/rfqService/enrichment.js
+  23:2  error  exported declaration 'fetchQuotationCounts' not used within other modules   import/no-unused-modules
+  45:2  error  exported declaration 'fetchItemsPreviewData' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/services/rfqService/mapping.js
+  49:1  error  exported declaration 'mapRFQRow' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/services/searchService.js
+  6:1  error  exported declaration 'suggest' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/setupTests.js
+  5:1  error  No exports found  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/utils/mappers/core.js
+  32:1  error  exported declaration 'pruneNullish' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/utils/mappers/index.js
+  26:10  error  exported declaration 'emptyToNull' not used within other modules      import/no-unused-modules
+  26:23  error  exported declaration 'intOrNull' not used within other modules        import/no-unused-modules
+  26:34  error  exported declaration 'dateOrNull' not used within other modules       import/no-unused-modules
+  26:46  error  exported declaration 'omitNullish' not used within other modules      import/no-unused-modules
+  26:59  error  exported declaration 'mapArray' not used within other modules         import/no-unused-modules
+  29:1   error  exported declaration 'addEntityMapper' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/utils/quoteTotals.js
+   3:1  error  exported declaration 'lineEffectiveTotal' not used within other modules  import/no-unused-modules
+  11:1  error  exported declaration 'computeQuoteTotals' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/utils/rfq/rfqSpecs.js
+  22:1  error  exported declaration 'formatKey' not used within other modules          import/no-unused-modules
+  59:1  error  exported declaration 'isEmptySpecValue' not used within other modules   import/no-unused-modules
+  77:1  error  exported declaration 'COMMON_UNITS' not used within other modules       import/no-unused-modules
+  92:1  error  exported declaration 'keyUsuallyHasUnit' not used within other modules  import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/utils/rfq/sanitizers.js
+   97:1  error  exported declaration 'specRowsToEntries' not used within other modules  import/no-unused-modules
+  134:1  error  exported declaration 'buildSpecRecord' not used within other modules    import/no-unused-modules
+
+/Users/hamzanazzal/Desktop/fecro.ae/src/utils/validators/quotation.js
+   3:1  error  exported declaration 'validateItem' not used within other modules    import/no-unused-modules
+  13:1  error  exported declaration 'validateHeader' not used within other modules  import/no-unused-modules
+
+✖ 79 problems (69 errors, 10 warnings)
+
