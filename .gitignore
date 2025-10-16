@@ -36,3 +36,6 @@ safety.patch
 safety.patch
 
 safety.patch # if not already there
+
+# audit artifacts
+AUDIT-pass4-*
