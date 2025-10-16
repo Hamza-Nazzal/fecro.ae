@@ -1,0 +1,24 @@
+=== src/components/BuyerQuotationsViewer.jsx
+src/pages/DualModeScreen.jsx:10:import BuyerQuotationsViewer from "../components/BuyerQuotationsViewer";
+src/pages/DualModeScreenPreview.jsx:10:import BuyerQuotationsViewer from "../components/BuyerQuotationsViewer";
+
+=== src/components/SellerQuotationsTab.jsx
+src/components/SellerDashboard.jsx:5:import SellerQuotationsTab from "./SellerQuotationsTab.jsx";
+src/components/SellerDashboardPreview.jsx:5:import SellerQuotationsTab from "./SellerQuotationsTab.jsx";
+
+=== src/components/BuyerDashboard.jsx
+src/App.js:23:import BuyerDashboard from "./components/BuyerDashboard.jsx";
+src/pages/DualModeScreen.jsx:15:import BuyerDashboard from "../components/BuyerDashboard.jsx";
+src/pages/DualModeScreenPreview.jsx:15:import BuyerDashboard from "../components/BuyerDashboard.jsx";
+
+=== src/components/PreviewToggle.jsx
+src/App.js:20:import PreviewToggle from "./components/PreviewToggle.jsx";
+
+=== src/components/Toasts.jsx
+src/App.js:19:import ToastProvider from "./components/Toasts.jsx";
+src/components/BuyerRFQDetail.jsx:11:import { useToast } from "./Toasts.jsx";
+
+=== src/components/RFQCardSkeleton.jsx
+src/components/BuyerRFQsInline.jsx:7:import RFQCardSkeleton from "./RFQCardSkeleton";
+src/components/SellerRFQsInline.jsx:9:import RFQCardSkeleton from "./RFQCardSkeleton";
+
