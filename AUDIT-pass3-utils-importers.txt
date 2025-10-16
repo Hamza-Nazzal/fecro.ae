@@ -1,0 +1,57 @@
+=== src/utils/date.js
+src/components/QuotationViewer.jsx:5:import { formatDMY, addDays } from "../utils/date";
+src/components/rfq-form/RequestForm.jsx:5:import { formatDMY, addDays } from "../../utils/date";
+src/components/rfq-form/ReviewStep.jsx:3:import { formatDMY, addDays } from "../../utils/date";
+
+=== src/utils/mappers/core.js
+src/utils/mappers/index.js:12:} from "./core.js";
+src/utils/mappers/rfq.js:2:import { emptyToNull, intOrNull, dateOrNull } from "./core.js";
+
+=== src/utils/mappers/event.js
+src/utils/mappers/index.js:17:import { EVENT_SCHEMA } from "./event.js";
+
+=== src/utils/mappers/index.js
+src/services/rfqService.js:4:export * from "./rfqService/index.js";
+src/services/rfqService.js:5:export { default } from "./rfqService/index.js"; 
+
+=== src/utils/mappers/product.js
+src/utils/mappers/index.js:15:import { PRODUCT_SCHEMA } from "./product.js";
+
+=== src/utils/mappers/quotation.js
+src/services/quotationsService/index.js:4:import { quotationDbToJs, quotationJsToDb } from "../../utils/mappers/quotation";
+src/utils/mappers/index.js:16:import { QUOTATION_SCHEMA } from "./quotation.js";
+
+=== src/utils/mappers/rfq.js
+src/utils/mappers/index.js:14:import { RFQ_SCHEMA } from "./rfq.js";
+
+=== src/utils/mappers/sellerHydrateMapper.js
+src/services/backends/supabase/rfqs/hydrateSeller.js:3:import { mapSellerHydrate } from "../../../../utils/mappers/sellerHydrateMapper";
+
+=== src/utils/mappers/specs.js
+src/services/backends/local-idb/index.js:3:export * from "./specs";
+src/services/rfqService/index.js:8:import * as specs from "./specs";
+src/services/rfqService/index.js:16:export { addSpec, updateSpec, removeSpec } from "./specs";
+src/services/rfqService/index.js:32:export { addSpec, updateSpec, removeSpec } from "./specs";
+src/services/rfqService/index.js:42:import * as _specs from "./specs";
+src/utils/mappers/index.js:13:import { specsRowsToObject } from "./specs.js";
+
+=== src/utils/rfq/itemHelpers.js
+src/components/SellerQuoteComposer.jsx:14:import { getItemName, toSpecList } from "../utils/rfq/itemHelpers";
+src/components/rfq-form/ReviewItemsList.jsx:4:import { getItemName, toSpecList } from "../../utils/rfq/itemHelpers";
+
+=== src/utils/rfq/rfqSpecs.js
+src/components/RFQCardItems.jsx:3:import { normalizeSpecsInput } from "../utils/rfq/rfqSpecs";
+src/components/rfq-form/SpecsSection.jsx:4:import { joinValueUnit, splitValueUnit, makeKeyPair, normalizeKey } from "../../utils/rfq/rfqSpecs";
+src/components/rfq-form/spec-editor/SpecEditor.jsx:12:} from "../../utils/rfq/rfqSpecs"
+src/services/backends/supabase/rfqs/index.js:4:import { normalizeSpecsInput } from "../../../../utils/rfq/rfqSpecs";
+src/services/backends/supabase/rfqs/items.js:5:import { normalizeSpecsInput } from "../../../../utils/rfq/rfqSpecs";
+src/services/rfqService/writes.js:5:import { normalizeSpecsInput } from "../../utils/rfq/rfqSpecs";
+src/utils/rfq/sanitizers.js:3:import { normalizeSpecsInput as normalizeSpecsFromRfqSpecs } from '../rfq/rfqSpecs';
+
+=== src/utils/rfq/sanitizers.js
+src/services/rfqService/enrichment.js:13:} from "../../utils/rfq/sanitizers";
+src/services/rfqService/mapping.js:8:} from '../../utils/rfq/sanitizers';
+
+---- SUMMARY utils ----
+Total: 12
+All have importers.
