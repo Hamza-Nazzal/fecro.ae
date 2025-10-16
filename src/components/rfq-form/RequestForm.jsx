@@ -28,11 +28,12 @@ export default function RequestForm() {
     specsExpanded, setSpecsExpanded,
 
     // RFQ data
-    items, currentItem, orderDetails, submitted, rfqId,
+    items, currentItem, orderDetails, submitted, rfqId, rfqPublicId,
 
     // actions
     updateCurrentItem, commitCategory, addOrUpdateItem,
     editItem, duplicateItem, removeItem, updateOrderDetails,
+    updateItemDirectly,
 
     // validators
     isBasicsValid, canSaveItem, canProceedStep1, canProceedStep2,
@@ -44,6 +45,18 @@ export default function RequestForm() {
     // misc
     recommendedFor,
   } = useRFQForm();
+
+  // --- Helper: Update item quantity from review step (without navigation) ---
+  const updateItemQuantity = (itemId, delta) => {
+    const item = items.find(it => it.id === itemId);
+    if (!item) return;
+    const currentQty = Number(item.quantity || 0);
+    const newQty = currentQty + delta;
+    // Don't allow quantity below 1
+    if (newQty < 1) return;
+    // Update directly without navigation
+    updateItemDirectly(itemId, { quantity: newQty });
+  };
 
   // --- Mappings for ReviewStep props (read-only) ---
   // items → [{ id, name, quantity, categoryPath, specs[] }]
@@ -174,7 +187,12 @@ const RFQ_VALID_LABELS = {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="px-6 py-8">
-          <SuccessScreen rfqId={rfqId} />
+          <SuccessScreen 
+            rfqId={rfqId} 
+            rfqPublicId={rfqPublicId}
+            items={items}
+            orderDetails={orderDetails}
+          />
         </div>
       </div>
     );
@@ -198,13 +216,15 @@ const RFQ_VALID_LABELS = {
               <h1 className="text-xl font-bold text-gray-900">Request for Quotation</h1>
             </div>
 
-            <button
-              className="md:hidden flex items-center p-2 border border-gray-300 rounded-lg"
-              onClick={() => setShowMobileCart(true)}
-            >
-              <ShoppingCart className="h-4 w-4 mr-1" />
-              <span className="text-sm">{items.length}</span>
-            </button>
+            {currentStep < 3 && (
+              <button
+                className="md:hidden flex items-center p-2 border border-gray-300 rounded-lg"
+                onClick={() => setShowMobileCart(true)}
+              >
+                <ShoppingCart className="h-4 w-4 mr-1" />
+                <span className="text-sm">{items.length}</span>
+              </button>
+            )}
           </div>
 
           <StepHeader currentStep={currentStep} canGoTo={canGoTo} goTo={goTo} />
@@ -280,12 +300,14 @@ const RFQ_VALID_LABELS = {
               orderDetails={orderDetailsMapped}
               meta={metaSource}
               groupByCategory={true} // added for grouping
+              onEditItem={(id) => { editItem(id); goTo(1); }}
+              onUpdateQuantity={updateItemQuantity}
             />
           )}
         </main>
 
-        {/* Sidebar (steps 2 & 3) */}
-        {currentStep > 1 && (
+        {/* Sidebar (step 2 only) */}
+        {currentStep === 2 && (
           <aside className="hidden md:block w-80 p-6">
             <div className="sticky top-24">
               <div className="bg-white border border-gray-200 rounded-lg p-4">

@@ -21,6 +21,7 @@ export default function useRFQForm() {
   const [orderDetails, setOrderDetails] = useState(BLANK_ORDER);
   const [submitted, setSubmitted] = useState(false);
   const [rfqId, setRfqId] = useState(null);
+  const [rfqPublicId, setRfqPublicId] = useState(null);
 
   // ui flags (includes auto-expand effect)
   const {
@@ -56,10 +57,19 @@ export default function useRFQForm() {
 
   // submit
   const getState = () => ({ submitting, orderDetails, items, rfqId });
-  const submitRFQ = makeSubmitRFQ({ getState, setSubmitting, setSubmitError, setRfqId, setSubmitted });
+  const submitRFQ = makeSubmitRFQ({ getState, setSubmitting, setSubmitError, setRfqId, setRfqPublicId, setSubmitted });
 
   // misc
   const recommendedFor = useCallback((category) => defaultRecommended(category), []);
+
+  // Direct item update (without triggering edit flow)
+  const updateItemDirectly = useCallback((itemId, updates) => {
+    setItems(prevItems => 
+      prevItems.map(item => 
+        item.id === itemId ? { ...item, ...updates } : item
+      )
+    );
+  }, []);
 
   return {
     // navigation
@@ -71,12 +81,13 @@ export default function useRFQForm() {
     basicsExpanded, setBasicsExpanded,
     specsExpanded, setSpecsExpanded,
     // RFQ data
-    items, currentItem, orderDetails, submitted, rfqId,
+    items, currentItem, orderDetails, submitted, rfqId, rfqPublicId,
     // actions
     updateCurrentItem: (patch) => setCurrentItem((prev) => ({ ...prev, ...patch })),
     commitCategory: (label) => setCurrentItem((prev) => ({ ...prev, category: label || "", categoryCommitted: !!label })),
     addOrUpdateItem, editItem, duplicateItem, removeItem,
     updateOrderDetails,
+    updateItemDirectly,
     // validators & guards
     isBasicsValid, canSaveItem, canProceedStep1, canProceedStep2,
     // submission

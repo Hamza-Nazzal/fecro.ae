@@ -1,0 +1,8 @@
+src/pages/Diag.jsx
+src/pages/DualModeScreen.jsx
+src/pages/DualModeScreenPreview.jsx
+src/pages/LoginPage.js
+src/pages/Products.jsx
+src/pages/RoleChooser.jsx
+src/pages/admin/AdminDashboard.jsx
+src/pages/admin/adminLogin.js

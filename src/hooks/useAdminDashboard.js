@@ -24,13 +24,13 @@ export const useAdminDashboard = () => {
   };
 
   const handleSave = () => {
-    console.log('Saving:', modalType);
+    // console.log('Saving:', modalType);
     closeModal();
   };
 
   const handleDelete = (type, id) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
-      console.log('Deleting:', type, id);
+     // console.log('Deleting:', type, id);
     }
   };
 

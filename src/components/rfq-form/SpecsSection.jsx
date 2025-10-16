@@ -92,10 +92,9 @@ export default function SpecsSection({
                   –
                 </button>
                 <input
-                  type="number"
-                  min={1}
-                  inputMode="numeric"
-                  pattern="[0-9]*"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]*\.?[0-9]{0,2}"
                   className={`w-full p-3 border-t border-b border-gray-300 focus:ring-2 focus:ring-blue-500 text-sm ${
                     qtyError
                       ? `border-red-500 bg-red-50 focus:ring-red-500 ${shouldBlinkQty ? "animate-pulse" : ""}`
@@ -103,9 +102,23 @@ export default function SpecsSection({
                       ? "bg-green-50"
                       : ""
                   }`}
-                  placeholder="e.g., 100"
+                  placeholder="e.g., 100 or 50.5"
                   value={currentItem.quantity}
-                  onChange={(e) => updateCurrentItem({ quantity: e.target.value })}
+                  onChange={(e) => {
+                    let value = e.target.value;
+                    // Remove all non-numeric characters except decimal point
+                    value = value.replace(/[^0-9.]/g, '');
+                    // Allow only one decimal point
+                    const parts = value.split('.');
+                    if (parts.length > 2) {
+                      value = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                    // Limit to 2 decimal places
+                    if (parts.length === 2 && parts[1].length > 2) {
+                      value = parts[0] + '.' + parts[1].slice(0, 2);
+                    }
+                    updateCurrentItem({ quantity: value });
+                  }}
                   onBlur={() => updateCurrentItem({ _touchedQuantity: true })}
                 />
                 <button
@@ -201,7 +214,7 @@ export default function SpecsSection({
             </div>
 
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-3">Recommended Attributes</h4>
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Product Details</h4>
               <div className="space-y-2">
                 {recommended
                   .filter((s) => !specs[normalizeKey(s)])

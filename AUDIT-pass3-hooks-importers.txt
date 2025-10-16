@@ -1,0 +1,52 @@
+=== src/hooks/useAdminDashboard.js
+src/pages/admin/AdminDashboard.jsx:3:import { useAdminDashboard } from '../../hooks/useAdminDashboard';
+
+=== src/hooks/useDebouncedValue.js
+src/components/BuyerRFQsInline.jsx:9:import useDebouncedValue from "../hooks/useDebouncedValue";
+src/components/SellerRFQsInline.jsx:10:import useDebouncedValue from "../hooks/useDebouncedValue";
+
+=== src/hooks/useOnceEffect.js
+src/components/BuyerQuotationsViewer.jsx:4:import { useOnceEffect } from "../hooks/useOnceEffect";
+src/components/SellerQuotationsTab.jsx:4:import { useOnceEffect } from "../hooks/useOnceEffect";
+src/hooks/useSellerRFQs.js:3://import { useOnceEffect } from "./useOnceEffect";
+
+=== src/hooks/useProducts.js
+src/containers/SavedProductsContainer.jsx:17:import useProducts from "../hooks/useProducts";
+src/pages/Products.jsx:4:import useProducts from "../hooks/useProducts";
+
+=== src/hooks/useRFQ.js
+src/pages/DualModeScreen.jsx:9:import useRFQ from "../hooks/useRFQ";
+src/pages/DualModeScreenPreview.jsx:9:import useRFQ from "../hooks/useRFQ";
+
+=== src/hooks/useRFQ/actions.js
+src/hooks/useRFQ.js:209:import * as rfqActions from "./useRFQ/actions";
+src/hooks/useRFQ/index.js:6:import * as rfqActions from "./actions";
+src/hooks/useRFQ/useRFQList.js:12:} from "./actions";
+src/hooks/useRFQ/useRFQSingle.js:12:} from "./actions";
+
+=== src/hooks/useRFQ/index.js
+src/services/rfqService.js:4:export * from "./rfqService/index.js";
+src/services/rfqService.js:5:export { default } from "./rfqService/index.js"; 
+
+=== src/hooks/useRFQ/useRFQList.js
+src/hooks/useRFQ.js:208:import { useRFQList, useRFQs as _useRFQs } from "./useRFQ/useRFQList";
+src/hooks/useRFQ/index.js:4:import { useRFQList, useRFQs } from "./useRFQList";
+
+=== src/hooks/useRFQ/useRFQSingle.js
+src/hooks/useRFQ.js:207:import { useRFQ as _useRFQ } from "./useRFQ/useRFQSingle";
+src/hooks/useRFQ/index.js:5:import { useRFQ } from "./useRFQSingle";
+
+=== src/hooks/useRFQ/useSafeState.js
+src/hooks/useRFQ/useRFQList.js:3:import { useSafeState } from "./useSafeState";
+src/hooks/useRFQ/useRFQSingle.js:3:import { useSafeState } from "./useSafeState";
+
+=== src/hooks/useSellerRFQs.js
+(no importers found)
+
+=== src/hooks/useSubmitQuotation.js
+src/components/SellerQuoteComposer.jsx:8:import useSubmitQuotation from "../hooks/useSubmitQuotation";
+
+---- SUMMARY hooks ----
+Total: 12
+No-importers:
+src/hooks/useSellerRFQs.js

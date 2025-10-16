@@ -1,0 +1,7 @@
+src/services/backends/localIndexedDb.js
+src/services/backends/local-idb/db.js
+src/services/backends/__active.js
+src/services/backends/products.js
+src/services/searchService.js
+src/utils/quoteTotals.js
+src/utils/validators/quotation.js

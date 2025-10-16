@@ -1,0 +1,228 @@
+=== src/services/backends/__active.js
+src/services/quotationsService.js:10:} from "./backends/__active";
+
+=== src/services/backends/local-idb/index.js
+src/services/rfqService.js:4:export * from "./rfqService/index.js";
+src/services/rfqService.js:5:export { default } from "./rfqService/index.js"; 
+
+=== src/services/backends/local-idb/rfqs.js
+src/pages/Diag.jsx:6:import { seedDemoRFQs } from '../services/backends/supabase/rfqs';
+src/services/backends/__active.js:15:export * from "./supabase/rfqs";
+src/services/backends/local-idb/index.js:2:export * from "./rfqs";
+src/services/backends/local-idb/specs.js:5:import { getRFQ } from "./rfqs";
+src/services/backends/supabase.js:39://export * from "./supabase/rfqs";
+
+=== src/services/backends/local-idb/specs.js
+src/services/backends/local-idb/index.js:3:export * from "./specs";
+src/services/rfqService/index.js:8:import * as specs from "./specs";
+src/services/rfqService/index.js:16:export { addSpec, updateSpec, removeSpec } from "./specs";
+src/services/rfqService/index.js:32:export { addSpec, updateSpec, removeSpec } from "./specs";
+src/services/rfqService/index.js:42:import * as _specs from "./specs";
+src/utils/mappers/index.js:13:import { specsRowsToObject } from "./specs.js";
+
+=== src/services/backends/local-idb/utils.js
+src/services/backends/local-idb/rfqs.js:5:import { _splitValueUnit, _normKeyPair } from "./utils";
+src/services/backends/local-idb/specs.js:4:import { _normalizeKey, _splitValueUnit, _normKeyPair } from "./utils";
+
+=== src/services/backends/products.js
+src/services/backends/__active.js:17:export * from "./supabase/products";
+src/services/backends/supabase.js:41://export * from "./supabase/products";
+src/services/productsService.js:7:} from "./backends/products";
+
+=== src/services/backends/supabase.js
+src/contexts/AuthContext.js:5:import { supabase } from '../services/backends/supabase';
+src/hooks/useRFQ/actions.js:14:import { seedDemoRFQs as beSeedDemoRFQs } from "../../services/backends/supabase";
+src/pages/Diag.jsx:4:import { supabase, SB_PROJECT_URL } from "../services/backends/supabase";
+src/services/backends/__active.js:7:export * from "./supabase";
+src/services/backends/__active.js:9:export { supabase, SB_PROJECT_URL, SB_ANON_KEY } from './supabase';
+src/services/backends/__active.js:21:export { supabase, SB_PROJECT_URL, SB_ANON_KEY } from "./supabase";
+src/services/backends/__active.js:41:import * as supabaseBackend from "./supabase"
+src/services/backends/__active.js:78:// from "./supabase". This file is only for swapping the *service* functions above.
+src/services/backends/products.js:5:import { supabase } from "./supabase"; // same client used elsewhere
+src/services/backends/products.js.bak:5:import { supabase } from "./supabase"; // same client used elsewhere
+src/services/backends/supabase/auth.js:2:import { supabase } from '../supabase';
+src/services/backends/supabase/categories.js:2:import { supabase } from '../supabase';
+src/services/backends/supabase/events.js:2:import { supabase } from "../supabase";
+src/services/backends/supabase/products.js:2:import { supabase } from '../supabase';
+src/services/backends/supabase/quotations.js:3:import { supabase } from "../supabase.js";
+src/services/backends/supabase/rfqs/base.js:2:import { supabase } from "../../supabase.js";
+src/services/backends/supabase/rfqs/hydrateSeller.js:2:import { supabase } from "../../supabase";
+src/services/backends/supabase/rfqs/items.js:2:import { supabase } from "../../supabase.js";
+src/services/backends/supabase/rfqs/seed.js:2:import { supabase } from "../../supabase.js";
+src/services/configService/index.js:3:import { supabase } from "../backends/supabase";
+src/services/productsService.js:2:import { supabase } from "./backends/supabase";
+src/services/quotationsService.js:12:import { supabase } from './backends/supabase';
+src/services/quotationsService/index.js:3:import { supabase } from "../backends/supabase";
+src/services/rfqService/enrichment.js:3:import { supabase } from "../backends/supabase";
+src/services/rfqService/reads.js:2:import { supabase } from "../backends/supabase";
+src/services/rfqService/specs.js:2:import { supabase } from "../backends/supabase";
+src/services/rfqService/writes.js:2:import { supabase } from "../backends/supabase";
+
+=== src/services/backends/supabase/auth.js
+src/contexts/AuthContext.js:6:import { getCurrentUserCached, signIn as authSignIn, signOut as authSignOut } from '../services/backends/supabase/auth';
+src/services/backends/__active.js:14:export * from "./supabase/auth";
+src/services/backends/supabase.js:38://export * from "./supabase/auth";
+src/services/quotationsService.js:13:import { getCurrentUserCached } from './backends/supabase/auth';
+src/services/rfqService/writes.js:3:import { getCurrentUserCached } from "../backends/supabase/auth";
+
+=== src/services/backends/supabase/categories.js
+src/services/backends/__active.js:18:export * from "./supabase/categories";
+src/services/backends/supabase.js:42://export * from "./supabase/categories";
+
+=== src/services/backends/supabase/events.js
+src/services/backends/__active.js:19:export * from "./supabase/events";
+src/services/backends/supabase.js:43://export * from "./supabase/events";
+
+=== src/services/backends/supabase/products.js
+src/services/backends/__active.js:17:export * from "./supabase/products";
+src/services/backends/supabase.js:41://export * from "./supabase/products";
+src/services/productsService.js:7:} from "./backends/products";
+
+=== src/services/backends/supabase/quotations.js
+src/services/backends/__active.js:16:export * from "./supabase/quotations";
+src/services/backends/supabase.js:40://export * from "./supabase/quotations";
+
+=== src/services/backends/supabase/rfqs/base.js
+src/contexts/AuthContext.js:5:import { supabase } from '../services/backends/supabase';
+src/hooks/useRFQ/actions.js:14:import { seedDemoRFQs as beSeedDemoRFQs } from "../../services/backends/supabase";
+src/pages/Diag.jsx:4:import { supabase, SB_PROJECT_URL } from "../services/backends/supabase";
+src/services/backends/__active.js:7:export * from "./supabase";
+src/services/backends/__active.js:9:export { supabase, SB_PROJECT_URL, SB_ANON_KEY } from './supabase';
+src/services/backends/__active.js:21:export { supabase, SB_PROJECT_URL, SB_ANON_KEY } from "./supabase";
+src/services/backends/__active.js:41:import * as supabaseBackend from "./supabase"
+src/services/backends/__active.js:78:// from "./supabase". This file is only for swapping the *service* functions above.
+src/services/backends/products.js:5:import { supabase } from "./supabase"; // same client used elsewhere
+src/services/backends/products.js.bak:5:import { supabase } from "./supabase"; // same client used elsewhere
+src/services/backends/supabase/auth.js:2:import { supabase } from '../supabase';
+src/services/backends/supabase/categories.js:2:import { supabase } from '../supabase';
+src/services/backends/supabase/events.js:2:import { supabase } from "../supabase";
+src/services/backends/supabase/products.js:2:import { supabase } from '../supabase';
+src/services/backends/supabase/quotations.js:3:import { supabase } from "../supabase.js";
+src/services/backends/supabase/rfqs/hydrate.js:3:import { fetchRFQRow } from "./base";
+src/services/backends/supabase/rfqs/hydrateSeller.js:2:import { supabase } from "../../supabase";
+src/services/backends/supabase/rfqs/index.js:2:import { mapRowsToJs, listRFQRows, insertRFQ, patchRFQ, removeRFQ } from "./base";
+src/services/backends/supabase/rfqs/items.js:2:import { supabase } from "../../supabase.js";
+src/services/backends/supabase/rfqs/seed.js:2:import { supabase } from "../../supabase.js";
+src/services/configService/index.js:3:import { supabase } from "../backends/supabase";
+src/services/productsService.js:2:import { supabase } from "./backends/supabase";
+src/services/quotationsService.js:12:import { supabase } from './backends/supabase';
+src/services/quotationsService/index.js:3:import { supabase } from "../backends/supabase";
+src/services/rfqService/enrichment.js:3:import { supabase } from "../backends/supabase";
+src/services/rfqService/reads.js:2:import { supabase } from "../backends/supabase";
+src/services/rfqService/specs.js:2:import { supabase } from "../backends/supabase";
+src/services/rfqService/writes.js:2:import { supabase } from "../backends/supabase";
+
+=== src/services/backends/supabase/rfqs/hydrate.js
+src/services/backends/supabase/rfqs/index.js:5:import { getRFQHydrated } from "./hydrate";
+
+=== src/services/backends/supabase/rfqs/hydrateSeller.js
+src/components/quote/useSellerRFQ.js:3:import { hydrateRFQForSeller } from "../../services/backends/supabase/rfqs/hydrateSeller";
+
+=== src/services/backends/supabase/rfqs/index.js
+src/services/rfqService.js:4:export * from "./rfqService/index.js";
+src/services/rfqService.js:5:export { default } from "./rfqService/index.js"; 
+
+=== src/services/backends/supabase/rfqs/items.js
+src/components/rfq-form/form/index.js:5:export * from './items';
+src/services/backends/supabase/rfqs/hydrate.js:4:import { fetchItems, fetchSpecsByItemIds, buildHydratedItems } from "./items";
+src/services/backends/supabase/rfqs/index.js:3:import { upsertItem, upsertItemSpecs, deleteSpecsNotIn, cascadeDeleteItems, bulkInsertItemSpecs } from "./items";
+
+=== src/services/backends/supabase/rfqs/seed.js
+src/services/backends/supabase/rfqs/index.js:83:export { seedDemoRFQs } from "./seed";
+
+=== src/services/configService/index.js
+src/services/rfqService.js:4:export * from "./rfqService/index.js";
+src/services/rfqService.js:5:export { default } from "./rfqService/index.js"; 
+
+=== src/services/ids.js
+src/services/backends/local-idb/rfqs.js:3:import { makeUUID } from "../../ids";
+src/services/backends/local-idb/specs.js:3:import { makeUUID } from "../../ids";
+src/services/backends/supabase/rfqs/base.js:4:import { makeUUID, ensureUniquePublicId } from "../../../ids";
+src/services/backends/supabase/rfqs/items.js:3:import { makeUUID } from "../../../ids";
+src/services/backends/supabase/rfqs/seed.js:3:import { makeUUID } from "../../../ids";
+src/services/rfqService/index.js:19:export { makeUUID, ensureUniquePublicId } from "../ids";
+src/services/rfqService/index.js:37:export { makeUUID, ensureUniquePublicId } from "../ids";
+src/services/rfqService/seeds.js:2:import { makeUUID } from "../ids";
+
+=== src/services/productsService.js
+src/hooks/useProducts.js:9:} from "../services/productsService";
+
+=== src/services/quotationHelpers.js
+src/components/QuotationCard.jsx:15:} from '../services/quotationHelpers.js';
+
+=== src/services/quotationsService.js
+src/components/BuyerQuotationsViewer.jsx:6:import { listQuotations, updateQuotation } from "../services/quotationsService";
+src/components/BuyerRFQDetail.jsx:10:} from "../services/quotationsService";
+src/components/SellerQuotationsTab.jsx:6:import { listQuotations } from "../services/quotationsService";
+src/components/SellerRFQsInline.jsx:6:import { listMyQuotedRFQIds } from "../services/quotationsService";
+src/hooks/useSellerRFQs.js:6:import { listQuotations } from "../services/quotationsService";
+src/hooks/useSubmitQuotation.js:3:import { createQuotation } from "../services/quotationsService";
+
+=== src/services/quotationsService/index.js
+src/services/rfqService.js:4:export * from "./rfqService/index.js";
+src/services/rfqService.js:5:export { default } from "./rfqService/index.js"; 
+
+=== src/services/rfqService.js
+src/hooks/useRFQ.js:7:} from "../services/rfqService";
+src/hooks/useRFQ/actions.js:11:} from "../../services/rfqService";
+src/hooks/useRFQ/useRFQList.js:13:import { listRFQs, listMyRFQs } from "../../services/rfqService";
+src/hooks/useSellerRFQs.js:5:import { listRFQs } from "../services/rfqService";
+src/services/quotationsService.js:16://import { updateRFQ } from "./rfqService";
+
+=== src/services/rfqService/enrichment.js
+src/services/rfqService/reads.js:4:import { enrichRfqCardRows } from "./enrichment";
+
+=== src/services/rfqService/errors.js
+src/services/rfqService/enrichment.js:4:import { isMissingRelationError } from './errors';
+
+=== src/services/rfqService/index.js
+src/services/rfqService.js:4:export * from "./rfqService/index.js";
+src/services/rfqService.js:5:export { default } from "./rfqService/index.js"; 
+
+=== src/services/rfqService/mapping.js
+src/services/rfqService/reads.js:3:import { rfqCardDbToJs } from "./mapping";
+
+=== src/services/rfqService/reads.js
+src/components/BuyerRFQDetail.jsx:7:import { listRFQsForCards } from "../services/rfqService/reads";
+src/components/BuyerRFQsInline.jsx:8:import { listRFQsForCards } from "../services/rfqService/reads";
+src/components/SellerRFQsInline.jsx:5:import { listRFQsForCards } from "../services/rfqService/reads";
+src/components/quote/useSellerRFQ.js:4:import { listRFQsForCards } from "../../services/rfqService/reads";
+src/services/rfqService/index.js:6:import * as reads from "./reads";
+src/services/rfqService/index.js:13:export { listRFQs, listMyRFQs, getRFQ } from "./reads";
+src/services/rfqService/index.js:14:export { listRFQsForCards } from "./reads";
+src/services/rfqService/index.js:30:export { listRFQs, listMyRFQs, getRFQ } from "./reads";
+src/services/rfqService/index.js:40:import * as _reads from "./reads";
+src/services/rfqService/specs.js:3:import { getRFQ } from "./reads";
+src/services/rfqService/writes.js:6:import { getRFQ } from "./reads";
+
+=== src/services/rfqService/seeds.js
+src/services/rfqService/index.js:9:import * as seeds from "./seeds";
+src/services/rfqService/index.js:17:export { seedRFQs, seedDemoQuotations, createQuotationRecord } from "./seeds";
+src/services/rfqService/index.js:33:export { seedRFQs, seedDemoQuotations, createQuotationRecord } from "./seeds";
+src/services/rfqService/index.js:43:import * as _seeds from "./seeds";
+
+=== src/services/rfqService/specs.js
+src/services/backends/local-idb/index.js:3:export * from "./specs";
+src/services/rfqService/index.js:8:import * as specs from "./specs";
+src/services/rfqService/index.js:16:export { addSpec, updateSpec, removeSpec } from "./specs";
+src/services/rfqService/index.js:32:export { addSpec, updateSpec, removeSpec } from "./specs";
+src/services/rfqService/index.js:42:import * as _specs from "./specs";
+src/utils/mappers/index.js:13:import { specsRowsToObject } from "./specs.js";
+
+=== src/services/rfqService/util.js
+src/services/rfqService/index.js:10:import { makePublicId } from "./util";
+src/services/rfqService/index.js:18:export { makePublicId } from "./util";
+src/services/rfqService/index.js:34:export { makePublicId } from "./util";
+src/services/rfqService/index.js:44:import { makePublicId as _makePublicId } from "./util";
+src/services/rfqService/seeds.js:3:import { makePublicId } from "./util";
+
+=== src/services/rfqService/writes.js
+src/components/rfq-form/form/submit.js:3:import { createRFQ, updateRFQ } from "../../../services/rfqService/writes";
+src/services/rfqService/index.js:7:import * as writes from "./writes";
+src/services/rfqService/index.js:15:export { createRFQ, updateRFQ, deleteRFQ } from "./writes";
+src/services/rfqService/index.js:31:export { createRFQ, updateRFQ, deleteRFQ } from "./writes";
+src/services/rfqService/index.js:41:import * as _writes from "./writes";
+
+---- SUMMARY services ----
+Total: 34
+All have importers.

@@ -3,9 +3,10 @@
 // 14 Oct 2025 style (day–month–year)
 export function formatDMY(date, locale = "en-GB") {
   const d = date instanceof Date ? date : new Date(date);
-  return d
-    .toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" })
-    .replace(",", "");
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
 }
 
 export function addDays(dateLike, days = 14) {

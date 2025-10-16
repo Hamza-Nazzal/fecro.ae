@@ -1,7 +1,7 @@
 // src/components/RFQCard.jsx
 import React from "react";
 import { CheckCircle, Clock, XCircle, Eye } from "lucide-react";
-import { normalizeSpecsInput } from "../utils/rfq/rfqSpecs";
+import RFQCardItems from "./RFQCardItems";
 
 // REGIONS:
 // [SHARED]: used by both buyer and seller cards.
@@ -13,9 +13,6 @@ import { normalizeSpecsInput } from "../utils/rfq/rfqSpecs";
  * Data is still available on the rfq object (quotationsCount, views) if we re-enable later.
  */
 const SHOW_QUOTE_AND_VIEW_BADGES = false;
-
-// TEMP DEBUG (remove after verification)
-const DEBUG_ITEMS = true;
 
 /**
  * RFQCard
@@ -75,20 +72,15 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
       : 0;
 
   // ---- items: prefer structured summary, fallback to old preview chips ----
-  const itemsSummary = Array.isArray(safeRfq.itemsSummary) ? safeRfq.itemsSummary : null;
+  const itemsSummary = (Array.isArray(safeRfq.itemsSummary) && safeRfq.itemsSummary.length > 0) ? safeRfq.itemsSummary : null;
   const itemsPreview = Array.isArray(safeRfq.itemsPreview) ? safeRfq.itemsPreview : [];
-
-  const maxItems = 2; // show up to 2 items per card
-  const shownSummary = itemsSummary ? itemsSummary.slice(0, maxItems) : [];
-  const shownPreview = !itemsSummary ? itemsPreview.slice(0, maxItems) : [];
-  const totalItems = itemsSummary ? itemsSummary.length : itemsPreview.length;
-  const overflowCount =
-    Math.max(0, totalItems - (itemsSummary ? shownSummary.length : shownPreview.length));
+  const maxItems = 5; // show up to 5 items per card
   // [SHARED] END
 
   // [SHARED] START
   const handleSendQuote = (e) => {
     e?.preventDefault();
+    e?.stopPropagation?.();
     try {
       onSendQuote(safeRfq);
     } catch {
@@ -141,6 +133,15 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
           )}
           {/* [SELLER ONLY] END */}
           
+          {/* [BUYER ONLY] START */}
+          {/* Quotation count for buyers */}
+          {!isSeller && (
+            <span className="inline-flex items-center gap-1 text-xs font-medium">
+              {quotationsCount} {quotationsCount === 1 ? "quotation" : "quotations"} submitted
+            </span>
+          )}
+          {/* [BUYER ONLY] END */}
+          
           {/* [SHARED] START */}
           {/* HIDDEN (toggle later if needed) */}
           {SHOW_QUOTE_AND_VIEW_BADGES && (
@@ -149,132 +150,53 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
               {views} views
             </span>
           )}
-          {SHOW_QUOTE_AND_VIEW_BADGES && (
-            <span className="inline-flex items-center gap-1 text-xs">
-              {quotationsCount} {quotationsCount === 1 ? "quote" : "quotes"}
-            </span>
-          )}
           {/* [SHARED] END */}
         </div>
 
         {/* [SHARED] START */}
-        {/* Items: structured summary (preferred) or legacy chips (fallback) */}
-        {itemsSummary ? (
-          shownSummary.length > 0 && (
-            <div className="mt-3 space-y-1.5">
-              {//DEBUG_ITEMS && (
-                // eslint-disable-next-line no-console
-               // console.log('RFQCard DEBUG itemsSummary len:', Array.isArray(itemsSummary) ? itemsSummary.length : 0,
-                 //           'sample:', Array.isArray(itemsSummary) ? itemsSummary[0] : null,
-                   //         'rfq.id:', safeRfq?.id, 'sellerRfqId:', safeRfq?.sellerRfqId)
-              //)
-              }
-              {shownSummary.map((it, i) => {
-                if (DEBUG_ITEMS && i === 0) {
-                  // eslint-disable-next-line no-console
-                 // console.log('RFQCard DEBUG first itemSummary entry:', it);
-                }
-
-                const name =
-                  it?.name || it?.title || it?.item_name || (typeof it === "string" ? it : "");
-                const qty =
-                  typeof it?.qty === "number"
-                    ? it.qty
-                    : typeof it?.quantity === "number"
-                    ? it.quantity
-                    : null;
-
-                // Category tail fallback (same logic as SellerQuoteComposer)
-                const itemCat = it?.categoryPath || it?.category_path;
-                const rfqCat = safeRfq.categoryPath || safeRfq.first_category_path || "";
-                const catPath = itemCat || rfqCat; // fallback to RFQ-level path
-                const categoryTail = catPath ? catPath.split(" > ").pop() : "";
-
-                // Specs formatting (limit to first two entries)
-                const specsList = normalizeSpecsInput(it?.specifications);
-                const specsText = specsList
-                  .slice(0, 2)
-                  .map((spec) => {
-                    const label = (spec.key_label || spec.key_norm || "").trim();
-                    const value = (spec.value ?? "").toString().trim();
-                    const unit = (spec.unit ?? "").toString().trim();
-                    if (!label || !value) return null;
-                    const display = unit ? `${value} ${unit}`.trim() : value;
-                    return display ? `${label}=${display}` : null;
-                  })
-                  .filter(Boolean)
-                  .join(" | ");
-
-                return (
-                  <div key={`item-sum-${i}`} className="text-slate-700 pl-3 border-l-2 border-slate-200">
-                    {/* Line 1: bullet dot + item name — category tail */}
-                    <div className="text-base font-medium">
-                      • {name}
-                      {categoryTail && <span className="text-slate-500"> — {categoryTail}</span>}
-                    </div>
-
-                    {/* Line 2: Qty (if present and > 0) */}
-                    {Number.isFinite(qty) && qty > 0 && (
-                      <div className="text-xs text-slate-600 mt-1">
-                        Qty: {qty}
-                      </div>
-                    )}
-
-                    {/* Line 3: Specs (up to 2 pairs) */}
-                    {!!specsText && (
-                      <div className="text-xs text-slate-600 mt-1">Specs: {specsText}</div>
-                    )}
-                  </div>
-                );
-              })}
-
-              {overflowCount > 0 && (
-                <div className="text-xs text-slate-500 italic">+{overflowCount} more items</div>
-              )}
-            </div>
-          )
-        ) : (
-          shownPreview.length > 0 && (
-            <div className="mt-3 text-sm text-slate-700">
-              <div className="flex items-center gap-2 flex-wrap">
-                {shownPreview.map((val, i) => {
-                  const label =
-                    typeof val === "string"
-                      ? val
-                      : val?.name || val?.title || val?.item_name || String(val || "");
-                  return (
-                    <span
-                      key={`item-preview-${i}`}
-                      className="inline-block bg-slate-50 border rounded px-2 py-1 text-xs truncate max-w-[200px]"
-                      title={label}
-                    >
-                      {label}
-                    </span>
-                  );
-                })}
-                {overflowCount > 0 && (
-                  <span className="inline-block px-2 py-1 text-xs text-slate-500 bg-slate-100 border rounded">
-                    +{overflowCount} more
-                  </span>
-                )}
-              </div>
-            </div>
-          )
-        )}
+        <RFQCardItems
+          rfq={safeRfq}
+          itemsSummary={itemsSummary}
+          itemsPreview={itemsPreview}
+          maxItems={maxItems}
+        />
         {/* [SHARED] END */}
       </div>
 
       {/* [SELLER ONLY] START */}
-      <div className="ml-4 flex-shrink-0">
-        <button
-          onClick={handleSendQuote}
-          aria-label={`Send quote for ${safeRfq.title || headerIdText || "RFQ"}`}
-          className="px-4 py-2 border rounded-md bg-white hover:bg-slate-50 text-sm transition-colors"
-        >
-          Send quote
-        </button>
-      </div>
+      {isSeller && (
+        <div className="ml-4 flex-shrink-0">
+          <button
+            type="button"
+            onClick={handleSendQuote}
+            aria-label={`Send quote for ${safeRfq.title || headerIdText || "RFQ"}`}
+            className="px-4 py-2 border rounded-md bg-white hover:bg-slate-50 text-sm transition-colors"
+          >
+            Send quote
+          </button>
+        </div>
+      )}
       {/* [SELLER ONLY] END */}
+
+      {/* [BUYER ONLY] START */}
+      {!isSeller && (
+        <div className="ml-4 flex-shrink-0">
+          <button
+            type="button"
+            onClick={quotationsCount > 0 ? handleSendQuote : undefined}
+            disabled={quotationsCount === 0}
+            aria-label={`View quotations for ${safeRfq.title || headerIdText || "RFQ"}`}
+            className={`px-4 py-2 border rounded-md text-sm transition-colors ${
+              quotationsCount === 0
+                ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                : "bg-white hover:bg-slate-50 text-slate-900 cursor-pointer"
+            }`}
+          >
+            View quotations
+          </button>
+        </div>
+      )}
+      {/* [BUYER ONLY] END */}
     </div>
   );
 }
