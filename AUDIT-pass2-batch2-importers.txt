@@ -1,0 +1,27 @@
+=== src/components/SellerDashboard.jsx
+src/pages/DualModeScreen.jsx:16:import SellerDashboard from "../components/SellerDashboard.jsx";
+
+=== src/components/SellerDashboardPreview.jsx
+src/pages/DualModeScreenPreview.jsx:16:import SellerDashboardPreview from "../components/SellerDashboardPreview.jsx"; // Preview version
+
+=== src/components/SellerRFQsInline.jsx
+src/components/SellerDashboard.jsx:4:import SellerRFQsInline from "./SellerRFQsInline.jsx";
+src/components/SellerDashboardPreview.jsx:4:import SellerRFQsInline from "./SellerRFQsInline.jsx";
+
+=== src/components/BuyerRFQsInline.jsx
+src/components/BuyerDashboard.jsx:3:import BuyerRFQsInline from "./BuyerRFQsInline";
+
+=== src/components/SavedProductsTab.jsx
+src/containers/SavedProductsContainer.jsx:18:import SavedProductsTab from "../components/SavedProductsTab";
+
+=== src/components/SideMenu.jsx
+src/pages/DualModeScreen.jsx:14:import SideMenu from "../components/SideMenu.jsx";
+src/pages/DualModeScreenPreview.jsx:14:import SideMenu from "../components/SideMenu.jsx";
+
+=== src/components/RFQCardSkeleton.jsx
+src/components/BuyerRFQsInline.jsx:7:import RFQCardSkeleton from "./RFQCardSkeleton";
+src/components/SellerRFQsInline.jsx:9:import RFQCardSkeleton from "./RFQCardSkeleton";
+
+=== src/components/RequestCard.jsx
+(no importers found)
+
