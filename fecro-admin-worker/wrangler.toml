@@ -1,0 +1,9 @@
+name = "fecro-admin-worker"
+main = "src/index.js"
+compatibility_date = "2025-10-11"
+
+[vars]
+SUPABASE_SCHEMA = "public"
+
+[observability]
+enabled = true

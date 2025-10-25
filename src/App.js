@@ -25,6 +25,16 @@ import BuyerRFQDetail from "./components/BuyerRFQDetail.jsx";
 import SellerQuoteComposer from "./components/SellerQuoteComposer.jsx";
 
 
+/*
+console.log("[App] module loaded");
+export default function App() {
+  console.log("[App] render", window.location.pathname);
+  return <div style={{padding:20}}>App minimal smoke</div>;   // TEMP
+}
+*/
+
+
+
 console.log(process.env.REACT_APP_SELLER_HYDRATE_ENABLED); // should log "true"
 
 
