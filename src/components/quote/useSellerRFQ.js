@@ -33,6 +33,14 @@ export function useSellerRFQ(rfqId, userId) {
 
   // Hydration
   useEffect(() => {
+    // TEMP debug (REMOVE AFTER AUDIT)
+    console.debug('[HYDRATE-PROBE]', { 
+      enabled: SELLER_HYDRATE_ENABLED, 
+      rfqId: rfq?.id, 
+      userId, 
+      willHydrate: SELLER_HYDRATE_ENABLED && !!rfq?.id && !!userId 
+    });
+    
     if (!SELLER_HYDRATE_ENABLED || !rfq?.id || !userId) return;
     let cancelled = false;
     setHydrating(true);

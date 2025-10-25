@@ -25,11 +25,32 @@ export default function SellerQuoteComposer() {
   const submitHook = useSubmitQuotation({ rfq: rfq || {}, seller: user || {} });
   const { form, setForm, updateLine, totals, submitting, errors, submit } = submitHook;
 
+  // --- spec selection state (safe add) ---
+  const [selectedSpecs, setSelectedSpecs] = useState(() => new Set());
+  const toggleSpec = (itemId, specIdx) => {
+    setSelectedSpecs(prev => {
+      const next = new Set(prev);
+      const key = `${itemId}-${specIdx}`;
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+  // --- end spec selection state ---
+
   // items to render (hydrated preferred)
-  const items = useMemo(
-    () => (Array.isArray(hydrated?.items) && hydrated.items.length ? hydrated.items : (rfq?.items || [])),
-    [hydrated?.items, rfq?.items]
-  );
+  const items = useMemo(() => {
+    const result = (Array.isArray(hydrated?.items) && hydrated.items.length ? hydrated.items : (rfq?.items || []));
+    
+    // TEMP debug (REMOVE AFTER AUDIT)
+    console.debug('[ITEM-SOURCE]', {
+      hydratedLen: Array.isArray(hydrated?.items) ? hydrated.items.length : null,
+      rfqLen: Array.isArray(rfq?.items) ? rfq.items.length : null,
+      using: (Array.isArray(hydrated?.items) && hydrated.items.length) ? 'hydrated' : 'rfq'
+    });
+    
+    return result;
+  }, [hydrated?.items, rfq?.items]);
 
   // group items by category for the UI
   const groupEntries = useMemo(() => {
@@ -58,7 +79,7 @@ export default function SellerQuoteComposer() {
     const seededLines = items.map((it) => ({
       item: getItemName(it),
       quantity: Number(it?.quantity ?? 0),
-      unitPrice: 0, // seller fills in
+      unitPrice: "", // seller fills in
     }));
     setForm((f) => ({ ...f, currency: "AED", lineItems: seededLines }));
     setSeeded(true);
@@ -199,21 +220,22 @@ export default function SellerQuoteComposer() {
                         {groupItems.map((it, i) => {
                           globalIdx += 1;
                           
-                          // DEBUG: spec introspection
-                          console.log('DEBUG specs input', {
+                          // TEMP: spec introspection debug (REMOVE AFTER AUDIT)
+                          console.debug('[SPEC-PROBE]', {
                             itemId: it?.id,
-                            buyerSpecificationsLen: Array.isArray(it?.buyerSpecifications) ? it.buyerSpecifications.length : null,
-                            specificationsLen: Array.isArray(it?.specifications) ? it.specifications.length : null,
+                            hasBuyerSpecs: Array.isArray(it?.buyerSpecifications) ? it.buyerSpecifications.length : null,
+                            hasSpecificationsArr: Array.isArray(it?.specifications) ? it.specifications.length : null,
+                            hasSpecificationsObj: it?.specifications && !Array.isArray(it?.specifications) && typeof it?.specifications === 'object',
                             specsLenAfterToSpecList: Array.isArray(toSpecList(it?.specifications || it?.specs || it?.rfq_item_specs || it?.buyerSpecifications)) 
                               ? toSpecList(it?.specifications || it?.specs || it?.rfq_item_specs || it?.buyerSpecifications).length 
                               : null,
-                            sampleBuyerSpec: (it?.buyerSpecifications || [])[0] || null,
                           });
                           
                           const specs = toSpecList(it?.specifications || it?.specs || it?.rfq_item_specs || it?.buyerSpecifications);
+                          const itemId = it?.id ?? `${getItemName(it)}-${i}`;
 
                           const liIndex = runningLineIndex++; // aligns with seeded lineItems order
-                          const li = form.lineItems?.[liIndex] || { item: getItemName(it), quantity: Number(it?.quantity ?? 0), unitPrice: 0 };
+                          const li = form.lineItems?.[liIndex] || { item: getItemName(it), quantity: Number(it?.quantity ?? 0), unitPrice: "" };
 
                           return (
                             <div key={it?.id || `${getItemName(it)}-${i}`} className="border border-gray-200">
@@ -236,23 +258,43 @@ export default function SellerQuoteComposer() {
 
                               <div className="px-4 py-3">
                                 {specs.length ? (
-                                  <div className="mb-4">
-                                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">
-                                      Technical Specifications
-                                    </div>
-                                    <div className="flex flex-wrap gap-2" role="list">
-                                      {specs.map((s, idx) => (
-                                        <span
-                                          key={`${it?.id || i}-${idx}`}
+                                  <div className="mt-2 flex flex-wrap gap-2" role="list" aria-label="Technical specifications">
+                                    {specs.slice(0, 12).map((s, idx) => {
+                                      const specKey = `${itemId}-${idx}`;
+                                      const isSelected = selectedSpecs.has(specKey);
+                                      const isFirstSpec = idx === 0;
+                                      const hasAnySelected = specs.some((_, sIdx) => selectedSpecs.has(`${itemId}-${sIdx}`));
+
+                                      // text to show inside pill
+                                      const label = s?.label ?? s?.key_label ?? s?.key_norm ?? "Spec";
+                                      const display = s?.display ?? s?.value ?? "";
+
+                                      return (
+                                        <button
+                                          key={specKey}
+                                          type="button"
+                                          onClick={() => toggleSpec(itemId, idx)}
                                           role="listitem"
-                                          className="bg-gray-100 text-gray-800 rounded-full px-3 py-1 text-[11px] font-medium"
-                                          aria-label={`${s.label}: ${s.display}`}
+                                          className={[
+                                            "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium transition-colors cursor-pointer border",
+                                            isSelected ? "!bg-blue-700 !text-white !border-blue-600" : "bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-200",
+                                            isFirstSpec && !hasAnySelected ? "first-spec-pulse" : ""
+                                          ].join(" ")}
+                                          aria-pressed={isSelected ? "true" : "false"}
                                         >
-                                          <span className="font-semibold">{s.label}:</span>
-                                          <span className="ml-1 font-normal">{s.display}</span>
-                                        </span>
-                                      ))}
-                                    </div>
+                                          <span className="truncate" title={`${label}: ${display}`}>
+                                            {label}{display ? `: ${display}` : ""}
+                                          </span>
+                                          {isSelected ? (
+                                            <svg className="w-3 h-3 ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            </svg>
+                                          ) : (
+                                            <span className="text-gray-500 ml-0.5">+</span>
+                                          )}
+                                        </button>
+                                      );
+                                    })}
                                   </div>
                                 ) : (
                                   <div className="text-sm text-gray-500 italic mb-4">
