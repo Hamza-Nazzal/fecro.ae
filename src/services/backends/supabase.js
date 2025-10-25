@@ -18,6 +18,35 @@ export const SB_ANON_KEY =
   process.env.SUPABASE_ANON_KEY ||
   "";
 
+
+  // De-dup in-flight GETs by URL — but return a FRESH clone per subscriber
+const inFlight = new Map(); // key: URL string -> Promise<Response>
+
+const dedupingFetch = (input, init = {}) => {
+  const method = (init.method || "GET").toUpperCase();
+  const realFetch = window.fetch.bind(window);
+
+  if (method !== "GET") return realFetch(input, init);
+
+  const key =
+    typeof input === "string"
+      ? input
+      : (input && (input.url || input.toString())) || String(input);
+
+  let p = inFlight.get(key);
+  if (p) {
+    // Important: each subscriber must get its own clone
+    return p.then((res) => res.clone());
+  }
+
+  p = realFetch(input, init).finally(() => inFlight.delete(key));
+  inFlight.set(key, p);
+
+  // First subscriber also gets a clone, so nobody shares the same Response instance
+  return p.then((res) => res.clone());
+};
+
+/*
 // De-dup in-flight GETs by URL
 const inFlight = new Map(); // key: URL string -> Promise<Response>
 const dedupingFetch = (url, opts = {}) => {
@@ -29,6 +58,7 @@ const dedupingFetch = (url, opts = {}) => {
   inFlight.set(key, p);
   return p;
 };
+*/
 
 // Single client with deduplication
 export const supabase = createClient(SB_PROJECT_URL, SB_ANON_KEY, { global: { fetch: dedupingFetch } });

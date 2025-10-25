@@ -90,7 +90,7 @@ export default function SellerQuotationsTab() {
           <label className="text-sm text-gray-600">Status:</label>
           <select
             className="border rounded-md px-2 py-1 text-sm"
-            value={filter}
+            value={filter ?? ""}
             onChange={(e) => setFilter(e.target.value)}
           >
             <option value="all">All</option>
