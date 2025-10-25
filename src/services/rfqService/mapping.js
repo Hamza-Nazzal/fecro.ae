@@ -7,6 +7,26 @@ import {
   getSellerRfqId,
 } from '../../utils/rfq/sanitizers';
 
+// Normalizes specifications into array form.
+// Supports:
+//   • Array: [{ key_label, key_norm?, value, unit? }]
+//   • Object: { key_norm: { key_label, value, unit } }
+function normalizeSpecsAny(src) {
+  if (Array.isArray(src)) return src;
+  if (src && typeof src === "object") {
+    return Object.entries(src)
+      .map(([key_norm, v]) => {
+        const keyLabel = (v?.key_label ?? v?.label ?? key_norm ?? "").toString();
+        const norm = (key_norm ?? keyLabel).toString();
+        const value = v?.value ?? v?.val ?? v?.display ?? "";
+        const unit = v?.unit ?? "";
+        return { key_label: keyLabel, key_norm: norm, value, unit };
+      })
+      .filter(s => (s.key_label || s.key_norm) && (s.value ?? "") !== "");
+  }
+  return [];
+}
+
 
 /** Convert rfq_item_specs[] → { key_norm: { key_norm, key_label, value, unit } } */
 function specRowsToObject(rows = []) {
@@ -29,7 +49,28 @@ function specRowsToObject(rows = []) {
 }
 
 function mapItemRow(row = {}) {
-  const specs = specRowsToObject(row.rfq_item_specs || []);
+  const srcSpecs =
+    Array.isArray(row.specifications)
+      ? row.specifications
+      : normalizeSpecsAny(row.specifications);
+
+  const buyerSpecs = Array.isArray(row.buyerSpecifications)
+    ? row.buyerSpecifications
+    : [];
+
+  const rfqItemSpecs = Array.isArray(row.rfq_item_specs)
+    ? row.rfq_item_specs
+    : [];
+
+  const specsFallback =
+    srcSpecs.length
+      ? srcSpecs
+      : buyerSpecs.length
+      ? buyerSpecs
+      : rfqItemSpecs.length
+      ? rfqItemSpecs
+      : [];
+
   return {
     id: row.id ?? null,
     rfqId: row.rfq_id ?? null,
@@ -39,7 +80,7 @@ function mapItemRow(row = {}) {
     barcode: row.barcode ?? "",
     quantity: row.quantity ?? "",
     purchaseType: row.purchase_type ?? "one-time",
-    specifications: specs,
+    specifications: specsFallback,
     createdAt: row.created_at ?? null,
     updatedAt: row.updated_at ?? null,
   };
