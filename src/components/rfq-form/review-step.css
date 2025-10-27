@@ -77,62 +77,16 @@ body, .app-root { background:#f3f4f6; }
 }
 .qty-box .lbl, .qty-box .num{ font-weight:700; font-size:15px; line-height:1.2; }
 
-/* ===== Grouped view (category headers) ===== */
-.group + .group { border-top:none !important; } /* header is separator */
+/* Legacy styles removed - now using Tailwind classes */
 
-.group-header{
-  padding:12px 16px; margin-top:6px; /* tightened */
-  background:var(--soft);
-  border-bottom:2px solid var(--line-strong);
-  color:var(--ink);
-  background-clip:padding-box;
+/* Solid blue chip like ui02 */
+.spec-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 6px 12px;
+  background-color: rgb(37 99 235); /* Tailwind blue-600 */
+  color: white;
+  font-size: 14px;
+  line-height: 1;
 }
-.items > .group:first-child .group-header{ margin-top:0; border-top-left-radius:10px; border-top-right-radius:10px; }
-
-.group-title{
-  font-size:14px; font-weight:600; letter-spacing:.2px; margin:0;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-
-.group-list{
-  list-style:none; margin:0; padding:8px 16px 8px;
-  display:grid; gap:10px;
-}
-.group-item{
-  padding:8px 0; border-bottom:1px dashed var(--line);
-}
-.group-item:last-child{ border-bottom:none; }
-.group-item:hover .group-product{
-  text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:2px;
-}
-
-.group-head{
-  display:flex; align-items:baseline; justify-content:space-between; gap:12px;
-  margin-bottom:8px;
-}
-.group-product{
-  font-weight:700; font-size:16px; line-height:1.25; margin:0; min-width:0;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.group-item .qty-box{ padding:6px 10px; } /* reuse styling */
-
-/* ===== Spec pills (no panels) ===== */
-.specs-pills{
-  display:flex; flex-wrap:wrap; gap:8px; row-gap:8px; margin-top:10px;
-}
-.specs-cap{
-  width:100%; font-size:12px; color:var(--muted); margin-bottom:2px;
-}
-.spec-pill{
-  display:inline-flex; align-items:center; gap:6px; padding:6px 12px;
-  background:var(--tag-bg-blue); border:1px solid var(--tag-border-blue);
-  border-radius:999px; font-size:13px; line-height:1.25; white-space:nowrap;
-}
-/* Optional variants */
-.spec-pill--primary{ background:var(--tag-bg-blue); border-color:var(--tag-border-blue); }
-.spec-pill--secondary{ background:var(--tag-bg-gray); border-color:var(--tag-border-gray); }
-/* Key vs value */
-.spec-pill .k{ color:var(--spec-key); font-weight:600; }
-.spec-pill .v{ color:var(--spec-value); font-weight:700; }
-
-.specs-pills--empty{ margin-top:8px; color:var(--muted); }

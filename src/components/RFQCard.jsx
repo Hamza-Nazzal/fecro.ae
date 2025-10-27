@@ -98,6 +98,8 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
 
   const containerClasses = [
     "bg-white border rounded-md flex items-center justify-between",
+    "transition-all duration-300 ease-in-out", // Smooth transitions for hover
+    "hover:translate-x-1 hover:shadow-lg", // Slide right 4px and enhance shadow on hover
     dense ? "py-2 px-3" : "py-4 px-5",
   ].join(" ");
   // [SHARED] END
@@ -109,7 +111,7 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
       aria-labelledby={`rfq-title-${safeRfq.id ?? (headerIdText || "unknown")}`}
     >
       <div className="flex-1 min-w-0">
-        {/* Header: SRF ID + status */}
+        {/* Header: SRF ID */}
         <div className="flex items-start justify-between gap-3">
           <h3
             id={`rfq-title-${safeRfq.id ?? (headerIdText || "unknown")}`}
@@ -118,29 +120,10 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
           >
             {headerIdText}
           </h3>
-
-          {/* [SHARED] START */}
-          <div
-            className={`inline-flex items-center gap-1 border rounded-full px-2 py-1 text-xs ${statusCfg.className}`}
-            aria-label={`Status: ${statusCfg.label}`}
-          >
-            <StatusIcon className="w-3 h-3" />
-            <span>{statusCfg.label}</span>
-          </div>
-          {/* [SHARED] END */}
         </div>
 
         {/* Stats row */}
         <div className="mt-2 flex items-center flex-wrap gap-3 text-sm text-slate-600">
-          {/* [SELLER ONLY] START */}
-          {/* SRF chip - only show for sellers */}
-          {isSeller && sellerRfqId && (
-            <span className="inline-block bg-blue-50 border border-blue-200 rounded px-2 py-1 text-xs text-blue-700">
-              {sellerRfqId}
-            </span>
-          )}
-          {/* [SELLER ONLY] END */}
-          
           {/* [SHARED] START */}
           {/* HIDDEN (toggle later if needed) */}
           {SHOW_QUOTE_AND_VIEW_BADGES && (
@@ -161,75 +144,98 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
         {/* Items: structured summary (preferred) or legacy chips (fallback) */}
         {itemsSummary ? (
           shownSummary.length > 0 && (
-            <div className="mt-3 space-y-1.5">
-              {//DEBUG_ITEMS && (
-                // eslint-disable-next-line no-console
-               // console.log('RFQCard DEBUG itemsSummary len:', Array.isArray(itemsSummary) ? itemsSummary.length : 0,
-                 //           'sample:', Array.isArray(itemsSummary) ? itemsSummary[0] : null,
-                   //         'rfq.id:', safeRfq?.id, 'sellerRfqId:', safeRfq?.sellerRfqId)
-              //)
-              }
-              {shownSummary.map((it, i) => {
-                if (DEBUG_ITEMS && i === 0) {
-                  // eslint-disable-next-line no-console
-                 // console.log('RFQCard DEBUG first itemSummary entry:', it);
-                }
+            <div className="mt-3">
+              {(() => {
+                // Group items by category
+                const groupedItems = shownSummary.reduce((groups, it, i) => {
+                  const itemCat = it?.categoryPath || it?.category_path;
+                  const rfqCat = safeRfq.categoryPath || safeRfq.first_category_path || "";
+                  const catPath = itemCat || rfqCat;
+                  const categoryKey = catPath || "Uncategorized";
+                  
+                  if (!groups[categoryKey]) {
+                    groups[categoryKey] = [];
+                  }
+                  groups[categoryKey].push({ ...it, originalIndex: i });
+                  return groups;
+                }, {});
 
-                const name =
-                  it?.name || it?.title || it?.item_name || (typeof it === "string" ? it : "");
-                const qty =
-                  typeof it?.qty === "number"
-                    ? it.qty
-                    : typeof it?.quantity === "number"
-                    ? it.quantity
-                    : null;
-
-                // Category tail fallback (same logic as SellerQuoteComposer)
-                const itemCat = it?.categoryPath || it?.category_path;
-                const rfqCat = safeRfq.categoryPath || safeRfq.first_category_path || "";
-                const catPath = itemCat || rfqCat; // fallback to RFQ-level path
-                const categoryTail = catPath ? catPath.split(" > ").pop() : "";
-
-                // Specs formatting (limit to first two entries)
-                const specsList = normalizeSpecsInput(it?.specifications);
-                const specsText = specsList
-                  .slice(0, 2)
-                  .map((spec) => {
-                    const label = (spec.key_label || spec.key_norm || "").trim();
-                    const value = (spec.value ?? "").toString().trim();
-                    const unit = (spec.unit ?? "").toString().trim();
-                    if (!label || !value) return null;
-                    const display = unit ? `${value} ${unit}`.trim() : value;
-                    return display ? `${label}=${display}` : null;
-                  })
-                  .filter(Boolean)
-                  .join(" | ");
-
-                return (
-                  <div key={`item-sum-${i}`} className="text-slate-700 pl-3 border-l-2 border-slate-200">
-                    {/* Line 1: bullet dot + item name — category tail */}
-                    <div className="text-base font-medium">
-                      • {name}
-                      {categoryTail && <span className="text-slate-500"> — {categoryTail}</span>}
+                return Object.entries(groupedItems).map(([category, items]) => (
+                  <div key={category} className="mb-4">
+                    {/* Category Header with L-shaped line */}
+                    <div className="relative bg-gray-100 mb-2">
+                      {/* Horizontal line on top */}
+                      <div className="h-[2px] bg-blue-600 w-full"></div>
+                      {/* Vertical line on left */}
+                      <div className="absolute top-0 left-0 w-[4px] h-full bg-blue-600"></div>
+                      {/* Category text */}
+                      <div className="pl-6 py-2">
+                        <div className="text-slate-900 font-semibold uppercase tracking-wide text-[13px]">
+                          {category.toUpperCase()}
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Line 2: Qty (if present and > 0) */}
-                    {Number.isFinite(qty) && qty > 0 && (
-                      <div className="text-xs text-slate-600 mt-1">
-                        Qty: {qty}
-                      </div>
-                    )}
+                    {/* Items under this category */}
+                    <div className="space-y-1.5">
+                      {items.map((it, itemIndex) => {
+                        const name =
+                          it?.name || it?.title || it?.item_name || (typeof it === "string" ? it : "");
+                        const qty =
+                          typeof it?.qty === "number"
+                            ? it.qty
+                            : typeof it?.quantity === "number"
+                            ? it.quantity
+                            : null;
 
-                    {/* Line 3: Specs (up to 2 pairs) */}
-                    {!!specsText && (
-                      <div className="text-xs text-slate-600 mt-1">Specs: {specsText}</div>
-                    )}
+                        // Specs formatting (limit to first two entries)
+                        const specsList = normalizeSpecsInput(it?.specifications);
+                        const specsText = specsList
+                          .slice(0, 2)
+                          .map((spec) => {
+                            const label = (spec.key_label || spec.key_norm || "").trim();
+                            const value = (spec.value ?? "").toString().trim();
+                            const unit = (spec.unit ?? "").toString().trim();
+                            if (!label || !value) return null;
+                            const display = unit ? `${value} ${unit}`.trim() : value;
+                            return display ? `${label}=${display}` : null;
+                          })
+                          .filter(Boolean)
+                          .join(" | ");
+
+                        return (
+                          <div key={`item-sum-${it.originalIndex}`} className="relative">
+                            {/* Vertical line on left side of item */}
+                            <div className="absolute top-0 left-0 w-[2px] h-full bg-blue-600"></div>
+                            
+                            <div className="text-slate-700 pl-6">
+                              {/* Line 1: item name */}
+                              <div className="text-base font-medium">
+                                {name}
+                              </div>
+
+                              {/* Line 2: Qty (if present and > 0) */}
+                              {Number.isFinite(qty) && qty > 0 && (
+                                <div className="text-xs text-slate-600 mt-1">
+                                  Qty: {qty}
+                                </div>
+                              )}
+
+                              {/* Line 3: Specs (up to 2 pairs) */}
+                              {!!specsText && (
+                                <div className="text-xs text-slate-600 mt-1">Specs: {specsText}</div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                );
-              })}
+                ));
+              })()}
 
               {overflowCount > 0 && (
-                <div className="text-xs text-slate-500 italic">+{overflowCount} more items</div>
+                <div className="text-xs text-slate-500 italic mt-2">+{overflowCount} more items</div>
               )}
             </div>
           )
@@ -264,17 +270,33 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
         {/* [SHARED] END */}
       </div>
 
-      {/* [SELLER ONLY] START */}
-      <div className="ml-4 flex-shrink-0">
+      {/* [SHARED] START */}
+      <div className="ml-4 flex-shrink-0 flex flex-col items-center gap-2">
+        {/* Status badge */}
+        <div
+          className={`inline-flex items-center gap-1 border rounded-full px-2 py-1 text-xs ${statusCfg.className}`}
+          aria-label={`Status: ${statusCfg.label}`}
+        >
+          <StatusIcon className="w-3 h-3" />
+          <span>{statusCfg.label}</span>
+        </div>
+        
+        {/* Action button */}
         <button
           onClick={handleSendQuote}
-          aria-label={`Send quote for ${safeRfq.title || headerIdText || "RFQ"}`}
+          aria-label={`${isSeller ? 'Send quote' : 'View quotations'} for ${safeRfq.title || headerIdText || "RFQ"}`}
           className="px-4 py-2 border rounded-md bg-white hover:bg-slate-50 text-sm transition-colors"
         >
-          Send quote
+          {isSeller ? "Send quote" : "View quotations"}
         </button>
+        
+        {/* Quotation count */}
+        <div className="text-xs text-slate-500 text-center">
+          {quotationsCount} {quotationsCount === 1 ? "quote" : "quotes"}
+          {/* Debug: {JSON.stringify({quotationsCount, quotationsCountType: typeof quotationsCount, safeRfqKeys: Object.keys(safeRfq)})} */}
+        </div>
       </div>
-      {/* [SELLER ONLY] END */}
+      {/* [SHARED] END */}
     </div>
   );
 }

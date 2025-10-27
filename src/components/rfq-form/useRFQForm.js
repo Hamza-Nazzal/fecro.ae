@@ -77,6 +77,7 @@ export default function useRFQForm() {
     commitCategory: (label) => setCurrentItem((prev) => ({ ...prev, category: label || "", categoryCommitted: !!label })),
     addOrUpdateItem, editItem, duplicateItem, removeItem,
     updateOrderDetails,
+    setItems, // Expose setItems for direct updates
     // validators & guards
     isBasicsValid, canSaveItem, canProceedStep1, canProceedStep2,
     // submission
