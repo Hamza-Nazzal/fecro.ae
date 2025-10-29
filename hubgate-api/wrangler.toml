@@ -1,0 +1,15 @@
+name = "hubgate-api"
+main = "src/index.js"
+compatibility_date = "2024-06-20"
+
+# (optional) Wrangler can auto-detect after login:
+# account_id = "<paste from: wrangler whoami>"
+
+routes = [
+  { pattern = "api.hubgate.ae/*", zone_name = "hubgate.ae" }
+]
+
+[vars]
+
+CORS_ALLOWED_ORIGINS = "https://app.hubgate.ae,http://localhost:3000"
+
