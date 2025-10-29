@@ -14,6 +14,8 @@ import Diag from "./pages/Diag.jsx";
 import RoleChooser from "./pages/RoleChooser.jsx";
 import AdminLogin from './pages/admin/adminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminInvites from './pages/admin/AdminInvites';
+import AuthCallback from './pages/AuthCallback';
 
 // NEW
 import ToastProvider from "./components/Toasts.jsx";
@@ -82,6 +84,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Navigate to="/start" replace />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/start" element={<AfterLoginRedirect />} />
               <Route path="/__diag" element={<Diag />} />
               <Route path="/admin/login" element={<AdminLogin />} />
@@ -90,6 +93,14 @@ export default function App() {
                 element={
                   <RequireAdminAuth>
                     <AdminDashboard />
+                  </RequireAdminAuth>
+                }
+              />
+              <Route
+                path="/admin/invites"
+                element={
+                  <RequireAdminAuth>
+                    <AdminInvites />
                   </RequireAdminAuth>
                 }
               />

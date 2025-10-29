@@ -14,8 +14,12 @@ function Chip({ icon: Icon, children }) {
   return <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs bg-slate-100 text-slate-700">{Icon ? <Icon className="w-3 h-3" /> : null}{children}</span>;
 }
 function StatusBadge({ status }) {
-  const map = { accepted: "bg-green-50 text-green-700 ring-1 ring-green-200", rejected: "bg-red-50 text-red-700 ring-1 ring-red-200", pending: "bg-slate-50 text-slate-700 ring-1 ring-slate-200" };
-  return status ? <span className={`rounded-full px-2 py-0.5 text-xs ${map[status] || map.pending}`}>{String(status).toUpperCase()}</span> : null;
+  const map = { 
+    accepted: "bg-green-100 text-green-700", 
+    rejected: "bg-red-100 text-red-700", 
+    pending: "bg-slate-100 text-slate-700" 
+  };
+  return status ? <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium uppercase ${map[status] || map.pending}`}>{String(status).toUpperCase()}</span> : null;
 }
 function ItemRow({ item }) {
   return (
@@ -106,8 +110,8 @@ export default function BuyerRFQDetail() {
   return (
     <div className="p-4">
       <div className="mb-3 flex items-center justify-between">
-        <Link to="/buyer/rfqs" className="text-blue-600 hover:underline text-sm">← Back to My RFQs</Link>
-        {!!rfq?.publicId && <span className="text-xs text-slate-500">RFQ ID: {rfq.publicId}</span>}
+        <Link to="/buyer" className="text-blue-600 hover:underline text-sm">← Back to My RFQs</Link>
+        {!!rfq?.publicId && <span className="text-[14px] font-bold uppercase text-slate-900">RFQ ID: {rfq.publicId}</span>}
       </div>
 
       {loading ? (

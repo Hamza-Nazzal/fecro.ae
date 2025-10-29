@@ -7,6 +7,7 @@ import AdminHeader from '../../components/admin/AdminHeader';
 import DashboardOverview from '../../components/admin/DashboardOverview';
 import DataTable from '../../components/admin/DataTable';
 import AdminModal from '../../components/admin/AdminModal';
+import { AdminInvitePanel } from './AdminInvites';
 
 const AdminDashboard = () => {
   const {
@@ -97,6 +98,8 @@ const AdminDashboard = () => {
             handleDelete={handleDelete}
           />
         );
+      case 'invites':
+        return <AdminInvitePanel />;
       default:
         return <DashboardOverview stats={stats} dashboardData={dashboardData} />;
     }

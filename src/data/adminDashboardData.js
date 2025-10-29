@@ -44,7 +44,8 @@ export const menuItems = (stats) => [
   { id: 'categories', label: 'Categories' },
   { id: 'rfqs', label: 'RFQ Monitor', badge: stats.activeRFQs },
   { id: 'quotations', label: 'Quote Responses', badge: stats.pendingQuotations },
-  { id: 'staff', label: 'Team' }
+  { id: 'staff', label: 'Team' },
+  { id: 'invites', label: 'Invites' }
 ];
 
 export const columnDefinitions = {

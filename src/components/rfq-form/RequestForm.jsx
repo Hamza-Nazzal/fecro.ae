@@ -32,7 +32,7 @@ export default function RequestForm() {
 
     // actions
     updateCurrentItem, commitCategory, addOrUpdateItem,
-    editItem, duplicateItem, removeItem, updateOrderDetails,
+    editItem, duplicateItem, removeItem, updateOrderDetails, setItems,
 
     // validators
     isBasicsValid, canSaveItem, canProceedStep1, canProceedStep2,
@@ -117,6 +117,17 @@ const RFQ_VALID_LABELS = {
     issuedAt: new Date(),       // replace with backend createdAt when available
     validDays: validDaysFromDeadline,
     location: {},               // no location fields in state yet
+  };
+
+  // Quantity change handler for ReviewStep
+  const handleQuantityChange = (itemId, newQuantity) => {
+    setItems(prevItems => 
+      prevItems.map(item => 
+        item.id === itemId 
+          ? { ...item, quantity: Math.max(1, newQuantity) } // Ensure minimum quantity of 1
+          : item
+      )
+    );
   };
 
   const onPrimary = async () => {
@@ -280,6 +291,7 @@ const RFQ_VALID_LABELS = {
               orderDetails={orderDetailsMapped}
               meta={metaSource}
               groupByCategory={true} // added for grouping
+              onQuantityChange={handleQuantityChange}
             />
           )}
         </main>
