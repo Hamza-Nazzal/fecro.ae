@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { listRFQsForCards } from "../services/rfqService/reads";
+import { listSellerRFQs } from "../services/workerApi";
 import { listMyQuotedRFQIds } from "../services/quotationsService";
 import RFQCard from "./RFQCard";
 import RFQToolbar from "./RFQToolbar";
@@ -21,6 +21,7 @@ export default function SellerRFQsInline() {
   const debouncedQuery = useDebouncedValue(query, 180);
 
   const [rfqs, setRfqs] = useState([]);
+  const [total, setTotal] = useState(0);
   const [quotedSet, setQuotedSet] = useState(() => new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,19 +37,19 @@ export default function SellerRFQsInline() {
       try {
         setLoading(true);
         setError(null);
-        const data = await listRFQsForCards({
+        const { rows, count } = await listSellerRFQs({
           page,
           pageSize,
-          onlyOpen,
-          search: debouncedQuery,
-          sort,
+          userId: user?.id || null, // TEMP: debug header to Worker
         });
         if (!alive || myReq !== reqIdRef.current) return;
-        setRfqs(Array.isArray(data) ? data : data?.data || []);
+        setRfqs(rows || []);
+        setTotal(count ?? rows?.length ?? 0);
       } catch (e) {
         if (!alive || myReq !== reqIdRef.current) return;
         setError(e?.message || String(e));
         setRfqs([]);
+        setTotal(0);
       } finally {
         if (!alive || myReq !== reqIdRef.current) return;
         setLoading(false);
@@ -57,7 +58,7 @@ export default function SellerRFQsInline() {
     return () => {
       alive = false;
     };
-  }, [page, pageSize, onlyOpen, debouncedQuery, sort]);
+  }, [page, pageSize]); // Worker already returns only active & company-filtered
 
   useEffect(() => {
     let alive = true;
@@ -86,7 +87,7 @@ export default function SellerRFQsInline() {
     return () => window.removeEventListener("quotation:submitted", onSubmitted);
   }, []);
 
-  useEffect(() => setPage(1), [onlyOpen, sort, debouncedQuery]);
+  useEffect(() => setPage(1), [pageSize]); // Reset page when pageSize changes
 
   const display = useMemo(() => {
     let base = rfqs;
