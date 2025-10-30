@@ -151,7 +151,7 @@ export default {
     }
 
     // Health
-    if (url.pathname === "/healthz") {
+    if (url.pathname === "/api/health" || url.pathname === "/health" || url.pathname === "/healthz") {
       return ok({ ok: true, service: "hubgate-api", ts: Date.now() }, corsHeaders(acao));
     }
 
