@@ -1,0 +1,172 @@
+/* src/components/quote/seller-quote.css */
+
+/* Layout wrappers */
+.quote-root {
+  display: grid;
+  gap: 1rem;
+}
+
+.quote-section {
+  background: #fff;
+  border: 1px solid #e5e7eb; /* slate-200 */
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+/* Header */
+.quote-header {
+  display: grid;
+  gap: 0.25rem;
+}
+.quote-header .title {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: #111827; /* slate-900 */
+}
+.quote-header .meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: #374151; /* slate-700 */
+}
+.quote-header .meta .badge {
+  background: #f3f4f6; /* slate-100 */
+  border: 1px solid #e5e7eb; /* slate-200 */
+  border-radius: 9999px;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  color: #111827;
+}
+
+/* Category groups */
+.category-group {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+.category-group .group-title {
+  background: #f9fafb; /* slate-50 */
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+.category-group .group-body {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+}
+
+/* Item row */
+.quote-item-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 0.5rem 1rem;
+  align-items: start;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed #e5e7eb;
+}
+.quote-item-row:last-child {
+  border-bottom: 0;
+}
+.quote-item-row .main {
+  min-width: 0;
+}
+.quote-item-row .name {
+  font-weight: 600;
+  color: #111827;
+}
+.quote-item-row .specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  margin-top: 0.25rem;
+}
+.quote-item-row .spec-pill {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  color: #374151;
+}
+
+.quote-item-row .qty,
+.quote-item-row .unit-price,
+.quote-item-row .line-total {
+  text-align: right;
+  white-space: nowrap;
+  color: #111827;
+  font-variant-numeric: tabular-nums;
+}
+.quote-item-row .muted {
+  color: #6b7280; /* slate-500 */
+  font-size: 0.875rem;
+}
+
+/* Totals */
+.quote-totals {
+  display: grid;
+  gap: 0.25rem;
+}
+.quote-totals .row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+.quote-totals .row .num {
+  text-align: right;
+  color: #111827;
+}
+.quote-totals .divider {
+  margin: 0.5rem 0;
+  border-top: 1px solid #e5e7eb;
+}
+.quote-totals .grand {
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+/* Terms */
+.quote-terms {
+  display: grid;
+  gap: 0.5rem;
+}
+.quote-terms .term {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 0.5rem;
+}
+.quote-terms .label {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+.quote-terms .value {
+  color: #111827;
+}
+
+/* Utility */
+.print-break {
+  break-inside: avoid;
+}
+
+/* TEMP probe — remove after you see it working */
+.css-probe {
+  outline: 2px solid #ef4444; /* red */
+}
+
+/* === SPEC-PULSE BEGIN (safe-append) === */
+@keyframes pulse-subtle {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0);
+  }
+}
+.first-spec-pulse {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+/* === SPEC-PULSE END === */
