@@ -73,3 +73,21 @@ export async function listSellerRFQs({ page = 1, pageSize = 20 } = {}) {
   if (!res.ok) throw new Error(`Worker rfqs failed ${res.status}`);
   return res.json();
 }
+
+export async function createCompany({ name }) {
+  const token = await getAuthToken();
+  const headers = {
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+  const res = await fetch(`${API_BASE}/company/create`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`createCompany failed ${res.status}: ${txt}`);
+  }
+  return res.json();
+}
