@@ -21,44 +21,39 @@ export default function SellerRFQsInline() {
   const debouncedQuery = useDebouncedValue(query, 180);
 
   const [rfqs, setRfqs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
   const [quotedSet, setQuotedSet] = useState(() => new Set());
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const [page, setPage] = useState(1);
-  const pageSize = 20;
   const reqIdRef = useRef(0);
 
   useEffect(() => {
     let alive = true;
-    const myReq = ++reqIdRef.current;
+    reqIdRef.current += 1;
+    const currentReqId = reqIdRef.current;
     (async () => {
       try {
         setLoading(true);
-        setError(null);
-        const { rows, count } = await listSellerRFQs({
-          page,
-          pageSize,
-          userId: user?.id || null, // TEMP: debug header to Worker
-        });
-        if (!alive || myReq !== reqIdRef.current) return;
-        setRfqs(rows || []);
-        setTotal(count ?? rows?.length ?? 0);
+        setError("");
+        const res = await listSellerRFQs({ page, pageSize });
+        if (!alive) return;
+        if (reqIdRef.current !== currentReqId) return;
+        setRfqs(res?.rows ?? []);
+        setTotal(res?.count ?? 0);
       } catch (e) {
-        if (!alive || myReq !== reqIdRef.current) return;
+        if (!alive) return;
         setError(e?.message || String(e));
         setRfqs([]);
         setTotal(0);
       } finally {
-        if (!alive || myReq !== reqIdRef.current) return;
+        if (!alive) return;
         setLoading(false);
       }
     })();
-    return () => {
-      alive = false;
-    };
-  }, [page, pageSize]); // Worker already returns only active & company-filtered
+    return () => { alive = false; };
+  }, [user?.id, page, pageSize]);
 
   useEffect(() => {
     let alive = true;

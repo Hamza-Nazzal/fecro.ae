@@ -32,6 +32,13 @@ function unauthorized(origin = "") {
   });
 }
 
+function jsonResponse(data, status = 200, origin = "") {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "content-type": "application/json", ...corsHeaders(origin) },
+  });
+}
+
 async function requireAdmin(req, env) {
   const hdr = req.headers.get("authorization") || "";
   const token = hdr.toLowerCase().startsWith("bearer ") ? hdr.slice(7) : "";
@@ -55,6 +62,13 @@ async function requireUser(req, env) {
     return { ok: false, res: new Response(JSON.stringify({ error: "invalid_token" }), { status: 401, headers: { "content-type": "application/json" } }) };
   }
   const user = await r.json();
+  
+  // Fetch and attach company_id from company_memberships
+  const company_id = await getCompanyIdForUser(env, user.id);
+  if (company_id) {
+    user.company_id = company_id;
+  }
+  
   return { ok: true, user };
 }
 
@@ -110,6 +124,83 @@ async function getUserIdFromJWT(req, env) {
   if (!resp.ok) return null;
   const json = await resp.json();
   return json?.id || null;
+}
+
+
+async function supaPOSTService(env, table, rows) {
+  const url = `${env.SUPABASE_URL}/rest/v1/${table}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      apikey: env.SUPABASE_SERVICE_KEY,
+      authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+      "content-type": "application/json",
+      prefer: "return=representation",
+    },
+    body: JSON.stringify(Array.isArray(rows) ? rows : [rows]),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Supabase POST ${table} failed ${res.status}: ${text}`);
+  }
+  return res.json();
+}
+
+async function supaGETService(env, path) {
+  const url = `${env.SUPABASE_URL}/rest/v1/${path}`;
+  const res = await fetch(url, {
+    headers: {
+      apikey: env.SUPABASE_SERVICE_KEY,
+      authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+      accept: "application/json",
+    },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Supabase GET failed ${res.status}: ${text}`);
+  }
+  const data = await res.json();
+  return { data };
+}
+
+async function supaPATCHService(env, table, rowId, patch) {
+  const url = `${env.SUPABASE_URL}/rest/v1/${table}?id=eq.${encodeURIComponent(rowId)}`;
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: {
+      apikey: env.SUPABASE_SERVICE_KEY,
+      authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+      "content-type": "application/json",
+      prefer: "return=representation",
+    },
+    body: JSON.stringify(patch || {}),
+  });
+  const text = await res.text();
+  let json;
+  try { json = text ? JSON.parse(text) : null; } catch { json = { raw: text }; }
+  if (!res.ok) {
+    throw new Error(`Supabase PATCH ${table} failed ${res.status}: ${text}`);
+  }
+  return { data: Array.isArray(json) ? json : [json], error: null };
+}
+
+async function getCompanyIdForUser(env, userId) {
+  // Fetch company_id from company_memberships for the user
+  // Using service key to bypass RLS if needed
+  const url = `${env.SUPABASE_URL}/rest/v1/company_memberships?user_id=eq.${userId}&select=company_id&limit=1`;
+  const res = await fetch(url, {
+    headers: {
+      apikey: env.SUPABASE_SERVICE_KEY,
+      authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+      accept: "application/json",
+    },
+  });
+  if (!res.ok) {
+    // If query fails, return null (user may not have a company yet)
+    return null;
+  }
+  const data = await res.json();
+  return Array.isArray(data) && data.length > 0 ? data[0].company_id : null;
 }
 
 async function supaGETWithUser(env, table, qs, userJWT) {
@@ -265,7 +356,147 @@ export default {
       }
     }
 
+    // CORS preflight for company endpoints
+    if (req.method === "OPTIONS" && url.pathname.startsWith("/company/")) {
+      return new Response(null, { status: 200, headers: corsHeaders(acao) });
+    }
+
+    // POST /company/create  -> creates company, adds caller as procurement manager (lvl 30, primary)
+    if (url.pathname === "/company/create" && req.method === "POST") {
+      const authCheck = await requireUser(req, env); // verifies Supabase JWT
+      if (!authCheck.ok) return authCheck.res;
+      const user = authCheck.user;
+
+      const payload = await req.json().catch(() => ({}));
+      const name = (payload?.name || "").trim();
+
+      if (!name) {
+        return new Response(JSON.stringify({ error: "name_required" }), {
+          status: 400,
+          headers: { "content-type": "application/json", ...corsHeaders(acao) },
+        });
+      }
+
+      try {
+        // 1) create company
+        const [company] = await supaPOSTService(env, "companies", { name });
+
+        // 2) create membership for caller
+        const [m] = await supaPOSTService(env, "company_memberships", {
+          company_id: company.id,
+          user_id: user.id,
+          track: "procurement",
+          role_level: 30,
+        });
+
+        return new Response(
+          JSON.stringify({
+            companyId: company.id,
+            name: company.name ?? name,
+            membershipId: m.id,
+          }),
+          { status: 200, headers: { "content-type": "application/json", ...corsHeaders(acao) } }
+        );
+      } catch (e) {
+        console.error("company/create crash:", e && (e.stack || e.message || e));
+        return new Response(JSON.stringify({ error: "worker_crash", message: String(e) }), {
+          status: 500,
+          headers: { "content-type": "application/json", ...corsHeaders(acao) },
+        });
+      }
+    }
+
+    // POST /company/invite -> creates company invite
+    if (url.pathname === "/company/invite" && req.method === "POST") {
+      const authCheck = await requireUser(req, env);
+
+      if (!authCheck.ok) return authCheck.res;
+
+      const user = authCheck.user;
+
+      const { email } = await req.json();
+      if (!email) return jsonResponse({ error: "missing_email" }, 400, acao);
+
+      const token = crypto.randomUUID();
+
+      try {
+        const result = await supaPOSTService(env, "company_invites", {
+          company_id: user.company_id, // or derive from memberships
+          email,
+          invited_by: user.id,
+          token,
+        });
+
+        const invite = Array.isArray(result) ? result[0] : result;
+        return jsonResponse({ ok: true, invite }, 200, acao);
+      } catch (err) {
+        return jsonResponse({ error: "invite_create_failed", details: err.message || String(err) }, 500, acao);
+      }
+    }
+
+    // POST /company/accept -> accepts company invite
+    if (url.pathname === "/company/accept" && req.method === "POST") {
+      const authCheck = await requireUser(req, env);
+      if (!authCheck.ok) return authCheck.res;
+      const user = authCheck.user;
+
+      try {
+        const body = await req.json();
+        const token = body.token?.trim();
+        if (!token) return jsonResponse({ error: "missing_token" }, 400, acao);
+
+        // 1. Fetch pending invite by token
+        const { data: invites, error: fetchErr } = await supaGETService(
+          env,
+          `company_invites?token=eq.${encodeURIComponent(token)}&status=eq.pending`
+        );
+        if (fetchErr) throw new Error(fetchErr.message);
+        const invite = (invites || [])[0];
+        if (!invite) return jsonResponse({ error: "invalid_or_expired" }, 404, acao);
+
+        if (invite.email && user.email && invite.email.toLowerCase() !== user.email.toLowerCase()) {
+          return jsonResponse({ error: "invite_email_mismatch" }, 403, acao);
+        }
+
+        // 2. Create company membership
+        let membershipId;
+
+        try {
+          const [membership] = await supaPOSTService(env, "company_memberships", {
+            company_id: invite.company_id,
+            user_id: user.id,
+            track: "sales",
+            role_level: 10,
+          });
+          membershipId = membership.id;
+        } catch (e) {
+          const msg = String(e.message || e);
+          const isDuplicate = msg.includes('"code":"23505"') || msg.includes("company_memberships_company_id_user_id_key");
+          if (!isDuplicate) throw e;
+          // already a member → look it up
+          const { data: existing } = await supaGETService(
+            env,
+            `company_memberships?company_id=eq.${encodeURIComponent(invite.company_id)}&user_id=eq.${encodeURIComponent(user.id)}&select=id&limit=1`
+          );
+          membershipId = existing?.[0]?.id || null;
+        }
+
+        // 3. Mark invite as accepted (even if duplicate)
+        await supaPATCHService(env, "company_invites", invite.id, {
+          status: "accepted",
+          accepted_at: new Date().toISOString(),
+        });
+
+        return jsonResponse(
+          { ok: true, company_id: invite.company_id, membership_id: membershipId },
+          200,
+          acao
+        );
+      } catch (err) {
+        return jsonResponse({ error: "worker_crash", message: String(err) }, 500, acao);
+      }
+    }
+
     return new Response("Not Found", { status: 404, headers: corsHeaders(acao) });
   },
 };
-
