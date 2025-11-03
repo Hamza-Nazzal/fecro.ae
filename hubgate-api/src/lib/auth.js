@@ -1,5 +1,7 @@
 // hubgate-api/src/lib/auth.js
 
+import { corsHeaders } from "../utils/cors.js";
+
 // Base64URL → string (keep if still needed elsewhere)
 export function b64urlToStr(s) {
   s = s.replace(/-/g, "+").replace(/_/g, "/");
@@ -28,7 +30,7 @@ export async function getCompanyIdForUser(env, userId) {
   return Array.isArray(data) && data.length > 0 ? data[0].company_id : null;
 }
 
-export async function requireUser(req, env) {
+export async function requireUser(req, env, acao = "") {
   const hdr = req.headers.get("authorization") || "";
   const token = hdr.startsWith("Bearer ") ? hdr.slice(7) : "";
   if (!token) {
@@ -36,23 +38,31 @@ export async function requireUser(req, env) {
       ok: false,
       res: new Response(JSON.stringify({ error: "missing_bearer" }), {
         status: 401,
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          ...corsHeaders(acao),
+        },
       }),
     };
   }
-  // Validate token with Supabase Auth using the ANON key
+
   const r = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
     headers: { apikey: env.SUPABASE_ANON_KEY, authorization: `Bearer ${token}` },
   });
+
   if (!r.ok) {
     return {
       ok: false,
       res: new Response(JSON.stringify({ error: "invalid_token" }), {
         status: 401,
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          ...corsHeaders(acao),
+        },
       }),
     };
   }
+
   const user = await r.json();
 
   // Attach company_id from company_memberships (via service key)

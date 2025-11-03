@@ -1,8 +1,8 @@
 // hubgate-api/src/index.js
 
 import { ok } from "./utils/response.js";
-import { corsHeaders, allowOrigin } from "./utils/cors.js";
-import { requireAdmin } from "./lib/auth.js";
+import { corsHeaders, allowOrigin, unauthorized } from "./utils/cors.js";
+import { requireAdmin, inviteUserByEmail } from "./lib/auth.js";
 
 import { listSellerRFQs } from "./handlers/seller.js";
 import {
@@ -11,28 +11,6 @@ import {
   acceptCompanyInvite,
 } from "./handlers/company.js";
 
-// Keep this here (not yet moved): Admin invite via Supabase Auth
-async function inviteUserByEmail(env, email, roles = []) {
-  const url = `${env.SUPABASE_URL}/auth/v1/invite`;
-  const body = JSON.stringify({
-    email,
-    data: { roles }, // stored on user_metadata.roles
-    redirect_to: "https://api.hubgate.ae/auth/redirect",
-  });
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      apikey: env.SUPABASE_SERVICE_KEY,
-      authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-    },
-    body,
-  });
-  const text = await res.text();
-  let json;
-  try { json = JSON.parse(text); } catch { json = { raw: text }; }
-  return { status: res.status, body: json };
-}
 
 export default {
   async fetch(req, env) {
@@ -62,27 +40,18 @@ export default {
     }
 
     // --- Admin routes (kept here; not moved yet) ---
-    if (url.pathname === "/admin/whoami" && req.method === "GET") {
+     if (url.pathname === "/admin/whoami" && req.method === "GET") {
       const isAdmin = await requireAdmin(req, env);
-      if (!isAdmin) {
-        return new Response(JSON.stringify({ error: "unauthorized" }), {
-          status: 401,
-          headers: { "content-type": "application/json", ...corsHeaders(acao) },
-        });
-      }
+      if (!isAdmin) return unauthorized(acao);
       return ok({ ok: true, role: "SuperAdmin" }, corsHeaders(acao));
     }
 
     if (url.pathname === "/admin/users.invite" && req.method === "POST") {
       const isAdmin = await requireAdmin(req, env);
-      if (!isAdmin) {
-        return new Response(JSON.stringify({ error: "unauthorized" }), {
-          status: 401,
-          headers: { "content-type": "application/json", ...corsHeaders(acao) },
-        });
-      }
+      if (!isAdmin) return unauthorized(acao);
 
       const payload = await req.json().catch(() => ({}));
+      
       const email = String(payload.email || "").trim().toLowerCase();
       const roles = Array.isArray(payload.roles) ? payload.roles : [];
 
@@ -100,14 +69,9 @@ export default {
       });
     }
 
-    if (url.pathname === "/admin/debug/supabase-host" && req.method === "GET") {
+      if (url.pathname === "/admin/debug/supabase-host" && req.method === "GET") {
       const isAdmin = await requireAdmin(req, env);
-      if (!isAdmin) {
-        return new Response(JSON.stringify({ error: "unauthorized" }), {
-          status: 401,
-          headers: { "content-type": "application/json", ...corsHeaders(acao) },
-        });
-      }
+      if (!isAdmin) return unauthorized(acao);
       let host = "BAD_URL";
       try { host = new URL(env.SUPABASE_URL).host; } catch {}
       return ok({ supabaseHost: host }, corsHeaders(acao));

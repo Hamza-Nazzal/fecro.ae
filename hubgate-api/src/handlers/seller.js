@@ -5,7 +5,7 @@ import { hasSellerRole, requireUser } from "../lib/auth.js";
 import { supaGETWithUser } from "../lib/supabase.js";
 
 export async function listSellerRFQs(req, env, acao) {
-  const authCheck = await requireUser(req, env);
+  const authCheck = await requireUser(req, env, acao);
   if (!authCheck.ok) return authCheck.res;
 
   const user = authCheck.user;
@@ -48,7 +48,7 @@ export async function listSellerRFQs(req, env, acao) {
     if (!bearer) {
       return new Response(JSON.stringify({ error: "unauthorized" }), {
         status: 401,
-        headers: corsHeaders(acao),
+        headers: { "content-type": "application/json", ...corsHeaders(acao) },
       });
     }
 
