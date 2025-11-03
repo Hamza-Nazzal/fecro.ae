@@ -69,6 +69,8 @@ export async function supaGETWithUser(env, table, qs, userJWT) {
   const clean = String(qs || "").replace(/^\?+/, "");
   const url = `${env.SUPABASE_URL}/rest/v1/${table}?${clean}`;
 
+  // console.log("POSTGREST GET:", url);
+
   const res = await fetch(url, {
     headers: {
       apikey: env.SUPABASE_ANON_KEY,
