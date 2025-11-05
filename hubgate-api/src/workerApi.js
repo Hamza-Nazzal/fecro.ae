@@ -1,4 +1,5 @@
-// src/services/workerApi.js
+// hubgate-api/src/workerApi.js
+
 import { supabase } from "./backends/supabase";
 
 const API_BASE =

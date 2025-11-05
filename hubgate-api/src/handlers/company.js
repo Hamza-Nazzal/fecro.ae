@@ -65,7 +65,7 @@ export async function inviteCompanyUser(req, env, acao) {
 }
 
 export async function acceptCompanyInvite(req, env, acao) {
-  const authCheck = await requireUser(req, env, acaos);
+  const authCheck = await requireUser(req, env, acao);
   if (!authCheck.ok) return authCheck.res;
   const user = authCheck.user;
   try {
