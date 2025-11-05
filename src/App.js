@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage";
 import Products from "./pages/Products.jsx";
 import Diag from "./pages/Diag.jsx";
 import RoleChooser from "./pages/RoleChooser.jsx";
+import CompanyGate from "./components/CompanyGate";
 import AdminLogin from './pages/admin/adminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminInvites from './pages/admin/AdminInvites';
@@ -25,6 +26,7 @@ import PreviewToggle from "./components/PreviewToggle.jsx";
 import BuyerDashboard from "./components/BuyerDashboard.jsx";
 import BuyerRFQDetail from "./components/BuyerRFQDetail.jsx";
 import SellerQuoteComposer from "./components/SellerQuoteComposer.jsx";
+//
 
 
 /*
@@ -114,19 +116,24 @@ export default function App() {
                 }
               />
 
-              <Route
+             <Route
                 path="/buyer"
                 element={
                   <RequireAuth>
-                    <DualModeScreen initialMode="buy" locked />
+                    <CompanyGate>
+                      <DualModeScreen initialMode="buy" locked />
+                    </CompanyGate>
                   </RequireAuth>
                 }
               />
+
               <Route
                 path="/seller"
                 element={
                   <RequireAuth>
-                    <DualModeScreen initialMode="sell" locked />
+                    <CompanyGate>
+                      <DualModeScreen initialMode="sell" locked />
+                    </CompanyGate>
                   </RequireAuth>
                 }
               />
@@ -136,7 +143,9 @@ export default function App() {
                 path="/preview/buyer"
                 element={
                   <RequireAuth>
-                    <DualModeScreenPreview initialMode="buy" locked />
+                    <CompanyGate>
+                      <DualModeScreenPreview initialMode="buy" locked />
+                    </CompanyGate>
                   </RequireAuth>
                 }
               />
@@ -144,7 +153,9 @@ export default function App() {
                 path="/preview/seller"
                 element={
                   <RequireAuth>
-                    <DualModeScreenPreview initialMode="sell" locked />
+                    <CompanyGate>
+                      <DualModeScreenPreview initialMode="sell" locked />
+                    </CompanyGate>
                   </RequireAuth>
                 }
               />

@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { listSellerRFQs } from "../services/workerApi";
+import { listSellerRFQs } from "../services/worker/workerRfq.js";
 import { listMyQuotedRFQIds } from "../services/quotationsService";
 import RFQCard from "./RFQCard";
 import RFQToolbar from "./RFQToolbar";
