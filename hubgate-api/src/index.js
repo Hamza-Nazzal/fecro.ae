@@ -3,13 +3,16 @@
 import { ok } from "./utils/response.js";
 import { corsHeaders, allowOrigin, unauthorized } from "./utils/cors.js";
 import { requireAdmin, inviteUserByEmail } from "./lib/auth.js";
-
 import { listSellerRFQs } from "./handlers/seller.js";
 import {
   createCompany,
   inviteCompanyUser,
   acceptCompanyInvite,
 } from "./handlers/company.js";
+import {
+  listBuyerRFQs,
+  getBuyerRFQ,
+} from "./handlers/buyerRfq";
 
 
 export default {
@@ -75,6 +78,16 @@ export default {
       let host = "BAD_URL";
       try { host = new URL(env.SUPABASE_URL).host; } catch {}
       return ok({ supabaseHost: host }, corsHeaders(acao));
+    }
+
+    // --- Buyer RFQs ---
+
+    if (url.pathname === "/buyer/rfqs" && req.method === "GET") {
+      return listBuyerRFQs(req, env, acao);
+    }
+
+    if (url.pathname.startsWith("/buyer/rfq/") && req.method === "GET") {
+      return getBuyerRFQ(req, env, acao);
     }
 
     // --- Seller ---
