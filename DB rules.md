@@ -875,5 +875,10 @@ We keep the same “server-only writes” pattern:
 	•	RFQs:
 	•	Still keyed by user_id (owner).
 	•	Company-level RFQ scoping is not enforced yet; future phases can add company_id to RFQs and adjust RLS accordingly.
+************************************************************
+
+
+
+
 
  */
