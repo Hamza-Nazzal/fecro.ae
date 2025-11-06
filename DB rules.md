@@ -1,4 +1,4 @@
-
+/Users/hamzanazzal/Desktop/fecro.ae/DB rules.md
 
 
 
@@ -677,6 +677,203 @@ Fix: follow the sanitization rules in §15.
 
 ****************************************************************
 
+Part 6 — Companies, Memberships & Invites (Oct 2025)
 
+0) What we’re building (plain English)
+
+We added companies and company memberships so a user can belong to a company, and companies can invite additional users (e.g. sales teammates).
+
+Right now:
+	•	RFQs are still owned by user_id (as before).
+	•	Company is used for:
+	•	Gating the UI (buyers/sellers must belong to a company to use the app).
+	•	Inviting additional users into a company.
+	•	All company writes go through the Cloudflare Worker using the Supabase service key (RLS-safe; no client-side service key).
+
+⸻
+
+1) Tables
+
+A) public.companies
+Columns (simplified):
+	•	id uuid primary key
+	•	name text not null
+	•	created_at timestamptz default now()
+
+Uniqueness:
+	•	ux_companies_lower_name — unique on lower(name)
+	•	Prevents duplicate company names ignoring case/spaces
+	•	Example: "Acme Demo" vs "acme demo" → rejected with 23505 (we saw this in tests)
+
+Usage:
+	•	Created only via the Worker endpoint /company/create (using the service key).
+	•	Not directly writable from the frontend.
+
+⸻
+
+B) public.company_memberships
+Each row connects a user to a company, with a track and a role level.
+
+Columns (current shape):
+	•	id uuid primary key
+	•	company_id uuid not null references public.companies(id)
+	•	user_id uuid not null references auth.users(id)
+	•	track text not null
+	•	"procurement" → buyer-side roles
+	•	"sales" → seller-side roles
+	•	role_level int not null
+	•	30 = “manager” (e.g. procurement manager)
+	•	10 = basic member
+	•	created_at timestamptz default now()
+	•	updated_at timestamptz default now()
+
+Constraints:
+	•	company_memberships_company_id_user_id_key — unique (company_id, user_id)
+	•	Same user cannot join the same company twice.
+	•	We removed old columns like role and is_primary (these caused 400/42703 errors and were removed in the final schema).
+
+Usage:
+	•	When a user creates a company:
+	•	Insert membership with:
+	•	track = 'procurement'
+	•	role_level = 30 (manager)
+	•	When a user accepts a company invite:
+	•	Insert membership with:
+	•	track = 'sales'
+	•	role_level = 10
+	•	Our Worker helper getCompanyIdForUser(env, userId) queries this table (with the service key) and attaches user.company_id to the authenticated user object.
+
+Note: Right now we pick the first membership row; if a user ever has multiple companies, we’d need a “primary” flag or a way to choose which membership is active.
+
+⸻
+
+C) public.company_invites
+Invites allow an existing company member to bring another user into their company by email.
+
+Columns:
+	•	id uuid primary key
+	•	company_id uuid not null references public.companies(id)
+	•	email text not null
+	•	invited_by uuid not null references auth.users(id)  — who sent the invite
+	•	status text not null default 'pending'
+	•	'pending' | 'accepted' | 'cancelled' | 'expired' (we currently use pending/accepted)
+	•	token uuid not null unique — invite token used by the accept endpoint
+	•	created_at timestamptz default now()
+	•	accepted_at timestamptz null
+
+Usage:
+	•	Created only via Worker /company/invite using the service key.
+	•	Accepted via Worker /company/accept using the invite token + user’s JWT.
+
+⸻
+
+2) Worker Endpoints (how the app talks to these tables)
+
+All endpoints live in the Cloudflare Worker, not directly in the React app.
+
+/company/create (POST)
+	•	Auth: requires a valid Supabase JWT (requireUser).
+	•	Input (JSON):
+	•	{ "name": "Acme Demo" }
+	•	Flow:
+	1.	Validate name is non-empty.
+	2.	Insert into public.companies with the service key.
+	3.	Insert a company_memberships row for the caller:
+	•	track = 'procurement'
+	•	role_level = 30
+	4.	Return { companyId, name, membershipId }.
+	•	DB guarantees:
+	•	If name clashes case-insensitively, Postgres raises 23505 (ux_companies_lower_name) and we send a 500 with "duplicate key value violates unique constraint \"ux_companies_lower_name\"".
+
+⸻
+
+/company/invite (POST)
+	•	Auth: requires Supabase JWT + a membership (so user.company_id is present).
+	•	Input (JSON):
+	•	{ "email": "someone@example.com" }
+	•	Flow:
+	1.	Validate email is non-empty.
+	2.	Generate token = uuid.
+	3.	Insert into public.company_invites with:
+	•	company_id = user.company_id (from membership lookup)
+	•	email
+	•	invited_by = user.id
+	•	status = 'pending'
+	•	token
+	4.	Return { ok: true, invite: { ... } }.
+	•	Notes:
+	•	Invite rows are internal; UI will typically send the token via a link (e.g. in email) and the invitee will accept from a logged-in session.
+
+⸻
+
+/company/accept (POST)
+	•	Auth: requires Supabase JWT for the invitee.
+	•	Input (JSON):
+	•	{ "token": "<invite-token-uuid>" }
+	•	Flow:
+	1.	Validate token is present.
+	2.	Lookup invite:
+	•	company_invites?token=eq.<token>&status=eq.pending (service key).
+	•	If none → { error: "invalid_or_expired" } with 404.
+	3.	Create membership:
+	•	Insert into company_memberships:
+	•	company_id = invite.company_id
+	•	user_id = auth.user.id
+	•	track = 'sales'
+	•	role_level = 10
+	•	If the unique constraint (company_id, user_id) fires (23505), treat it as “already a member” and fetch the existing membership instead of crashing.
+	4.	Mark invite as accepted:
+	•	status = 'accepted'
+	•	accepted_at = now()
+	5.	Return:
+	•	{ ok: true, company_id, membership_id }
+	•	Behavior:
+	•	Endpoint is effectively idempotent for an invitee:
+	•	First call creates membership.
+	•	Later calls with same token/user see the duplicate key but still resolve to the existing membership and mark invite accepted.
+
+⸻
+
+3) RLS & Access Rules (high-level)
+
+We keep the same “server-only writes” pattern:
+	•	Read paths:
+	•	For now, most company reads (like getCompanyIdForUser) are done from the Worker using the service key, so RLS can be very strict (no direct client SELECT needed).
+	•	If we later expose “My company” to the UI, we’ll either:
+	•	Add invoker views with user-aware filters, or
+	•	Keep reads via Worker + service key and just expose a minimal API.
+	•	Write paths:
+	•	Only the service role writes:
+	•	INSERT / UPDATE on companies
+	•	INSERT / UPDATE on company_memberships
+	•	INSERT / UPDATE on company_invites
+	•	The React app never gets the service key.
+	•	Recommended RLS shape (what we’re following conceptually):
+	•	companies:
+	•	Allow SELECT to authenticated (if we want users to see company names), or keep it service-only.
+	•	Writes only via service role.
+	•	company_memberships:
+	•	SELECT restricted to:
+	•	user_id = auth.uid() for end users (if we ever expose it directly), or
+	•	service role.
+	•	Writes only via service role (Worker).
+	•	company_invites:
+	•	SELECT/INSERT/UPDATE only via service role.
+	•	No direct app access; only through Worker endpoints.
+
+⸻
+
+4) UI Contract (for later readers)
+	•	Frontend never talks to Supabase directly for company operations.
+	•	Frontend uses worker client services:
+	•	createCompany(name) → calls Worker /company/create
+	•	inviteCompanyUser(email) → calls Worker /company/invite
+	•	acceptCompanyInvite(token) → calls Worker /company/accept
+	•	Auth:
+	•	Auth still uses Supabase JWT.
+	•	requireUser in Worker validates JWT and attaches user.company_id by looking up company_memberships with the service key.
+	•	RFQs:
+	•	Still keyed by user_id (owner).
+	•	Company-level RFQ scoping is not enforced yet; future phases can add company_id to RFQs and adjust RLS accordingly.
 
  */

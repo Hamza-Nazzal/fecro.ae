@@ -1,3 +1,6 @@
+/Users/hamzanazzal/Desktop/fecro.ae/DB rules (updated).md
+
+
 This playbook explains how we store, secure, and work with categories, RFQs, items, and specs so the app stays simple while the database enforces the rules.
 It’s written in plain English for fast onboarding—copy the snippets, run the SQL, and use the service patterns as building blocks.
 Follow it end-to-end to get clean queries, safe writes (RLS), and predictable behavior from UI to DB.
