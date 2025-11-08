@@ -9,6 +9,7 @@ export default function ReviewStep({
   meta = {},
   groupByCategory = false,
   onQuantityChange = null,
+  showItemControls = true,
 }) {
   const issuedAt = meta.issuedAt || new Date();
   const validDays = Number(meta.validDays ?? 14);
@@ -145,34 +146,36 @@ export default function ReviewStep({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3 shrink-0">
-                          {/* Qty pill */}
-                          <div className="flex items-center gap-2 bg-green-100 text-green-900 rounded-full px-3 py-1 text-[14px]">
-                            <button
-                              type="button"
-                              className="h-6 w-6 rounded-full border border-green-300 grid place-items-center hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                              onClick={() => handleDecrement(it)}
-                              disabled={(it.quantity || 1) <= 1}
-                              aria-label="decrease quantity"
-                            >−</button>
-                            <span className="font-semibold">Qty: {it.quantity ?? 1}</span>
-                            <button
-                              type="button"
-                              className="h-6 w-6 rounded-full border border-green-300 grid place-items-center hover:bg-green-200"
-                              onClick={() => handleIncrement(it)}
-                              aria-label="increase quantity"
-                            >+</button>
-                          </div>
+                        {showItemControls && typeof onQuantityChange === "function" && (
+                          <div className="flex items-center gap-3 shrink-0">
+                            {/* Qty pill */}
+                            <div className="flex items-center gap-2 bg-green-100 text-green-900 rounded-full px-3 py-1 text-[14px]">
+                              <button
+                                type="button"
+                                className="h-6 w-6 rounded-full border border-green-300 grid place-items-center hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={() => handleDecrement(it)}
+                                disabled={(it.quantity || 1) <= 1}
+                                aria-label="decrease quantity"
+                              >−</button>
+                              <span className="font-semibold">Qty: {it.quantity ?? 1}</span>
+                              <button
+                                type="button"
+                                className="h-6 w-6 rounded-full border border-green-300 grid place-items-center hover:bg-green-200"
+                                onClick={() => handleIncrement(it)}
+                                aria-label="increase quantity"
+                              >+</button>
+                            </div>
 
-                          {/* Edit button */}
-                          <button
-                            type="button"
-                            className="inline-flex items-center gap-2 rounded-xl border border-blue-500 text-blue-700 px-3 py-1.5 text-[14px] hover:bg-blue-50"
-                          >
-                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                            Edit
-                          </button>
-                        </div>
+                            {/* Edit button */}
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-2 rounded-xl border border-blue-500 text-blue-700 px-3 py-1.5 text-[14px] hover:bg-blue-50"
+                            >
+                              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                              Edit
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
 
