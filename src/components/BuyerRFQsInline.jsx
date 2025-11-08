@@ -7,6 +7,8 @@ import RFQCard from "./RFQCard";
 import RFQCardSkeleton from "./RFQCardSkeleton";
 import { listRFQsForCards } from "../services/rfqService/reads";
 import useDebouncedValue from "../hooks/useDebouncedValue";
+import ReviewStepReadOnly from "./rfq-form/ReviewStepReadOnly";
+
 
 export default function BuyerRFQsInline() {
   const { user } = useAuth();
@@ -25,6 +27,8 @@ export default function BuyerRFQsInline() {
   const [page, setPage] = useState(1);
   const pageSize = 20;
   const reqIdRef = useRef(0);
+
+  const [viewingRfq, setViewingRfq] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -116,6 +120,7 @@ export default function BuyerRFQsInline() {
                 key={rfq.id || rfq.publicId}
                 rfq={rfq}
                 audience="buyer"
+                onViewRequest={(r) => setViewingRfq(r)}
                 onSendQuote={(r) =>
                   navigate(`/buyer/rfq/${encodeURIComponent(r.id || r.publicId)}`)
                 }
@@ -147,6 +152,27 @@ export default function BuyerRFQsInline() {
       ) : (
         <div className="rounded-xl border bg-white p-8 text-center shadow-sm">
           <div className="text-slate-500">No RFQs yet.</div>
+        </div>
+      )}
+
+            {viewingRfq && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setViewingRfq(null)}
+              className="absolute right-4 top-4 rounded-full border px-3 py-1 text-sm hover:bg-slate-50"
+              aria-label="Close"
+            >
+              Close
+            </button>
+
+            <ReviewStepReadOnly rfq={viewingRfq} />
+          </div>
         </div>
       )}
     </div>

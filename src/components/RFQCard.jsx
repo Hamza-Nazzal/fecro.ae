@@ -25,7 +25,14 @@ const DEBUG_ITEMS = true;
  *  - audience: "buyer" | "seller" (default "buyer")
  *  - onSendQuote: (rfq) => void
  */
-export default function RFQCard({ rfq = null, dense = false, audience = "buyer", onSendQuote = () => {} }) {
+
+export default function RFQCard({ rfq = null, 
+                dense = false, 
+                audience = "buyer", 
+                onSendQuote = () => {}, 
+                onViewRequest = () => {}, 
+              }) 
+  {
   const safeRfq = rfq || {};
 
   // [SHARED] START
@@ -52,6 +59,7 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
   const sellerRfqId = safeRfq.sellerRfqId || null;
   const publicId = safeRfq.publicId || safeRfq.public_id || null;
   const isSeller = audience === "seller";
+  const isBuyer = audience === "buyer";
   
   // [SELLER ONLY] START
   const sellerHeaderIdText = sellerRfqId || publicId || safeRfq.title || "—";
@@ -91,6 +99,14 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
     e?.preventDefault();
     try {
       onSendQuote(safeRfq);
+    } catch {
+      /* no-op */
+    }
+  };
+  const handleViewRequest = (e) => {
+    e?.preventDefault();
+    try {
+      onViewRequest(safeRfq);
     } catch {
       /* no-op */
     }
@@ -281,7 +297,17 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
           <span>{statusCfg.label}</span>
         </div>
         
-        {/* Action button */}
+        {/* Action buttons */}
+        {isBuyer && (
+          <button
+            onClick={handleViewRequest}
+            aria-label={`View request for ${safeRfq.title || headerIdText || "RFQ"}`}
+            className="px-4 py-2 border rounded-md bg-white hover:bg-slate-50 text-sm transition-colors"
+          >
+            View request
+          </button>
+        )}
+
         <button
           onClick={handleSendQuote}
           aria-label={`${isSeller ? 'Send quote' : 'View quotations'} for ${safeRfq.title || headerIdText || "RFQ"}`}
