@@ -152,7 +152,11 @@ export default function SellerRFQsInline() {
                 rfq={rfq}
                 dense={dense}
                 audience="seller"
-                onSendQuote={(r) => navigate(`/seller/quote/${encodeURIComponent(r.id ?? "")}`)}
+                onSendQuote={(r) => {
+                // Prefer UUID id, but fallback to sellerRfqId if id is missing
+                const rfqId = r.id || r.sellerRfqId || "";
+                navigate(`/seller/quote/${encodeURIComponent(rfqId)}`);
+              }}
               />
             ))}
           </div>

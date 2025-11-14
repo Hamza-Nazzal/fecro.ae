@@ -1,17 +1,22 @@
 // hubgate-api/src/workerApi.js
 
-import { supabase } from "./backends/supabase";
+//import { supaGETWithUser } from "./lib/supabase.js";
 
 const API_BASE =
   process.env.REACT_APP_API_BASE ||
   (typeof window !== "undefined" ? "https://api.hubgate.ae" : "");
 
-// Get the current Supabase access token for the logged-in user
+// Get the current Supabase access token from browser storage
 export async function getAccessToken() {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) throw error;
-  const token = data?.session?.access_token || "";
+  const raw = localStorage.getItem("sb-session");
+  if (!raw) throw new Error("No Supabase session found");
+
+  let session;
+  try { session = JSON.parse(raw); } catch { session = {}; }
+
+  const token = session?.access_token;
   if (!token) throw new Error("Not signed in (no access token)");
+
   return token;
 }
 
@@ -36,7 +41,6 @@ export async function sellerListRFQs({ page = 1, pageSize = 20 } = {}) {
   }
 
   const json = await res.json();
-  // Normalize a minimal card shape the UI can render safely
   const rows = (json.rows || []).map((r) => ({
     id: r.id,
     publicId: r.public_id,
@@ -45,7 +49,6 @@ export async function sellerListRFQs({ page = 1, pageSize = 20 } = {}) {
     status: r.status,
     createdAt: r.created_at,
     itemsCount: Number(r.items_count || 0),
-    // safe fallbacks so existing cards don't crash if they reference missing fields
     title: r.title || r.public_id || "RFQ",
     first_category_path: r.first_category_path || null,
   }));

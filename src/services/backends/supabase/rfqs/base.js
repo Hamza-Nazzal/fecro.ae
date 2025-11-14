@@ -3,10 +3,41 @@ import { supabase } from "../../supabase.js";
 import { rfqDbToJs, rfqJsToDb } from "../../../../utils/mappers";
 import { makeUUID, ensureUniquePublicId } from "../../../ids";
 
-/** Fetch single RFQ row (DB shape) */
+/** Fetch single RFQ row (DB shape) - handles id, public_id, and seller_rfq_id */
+/** Uses v_rfqs_card view first (respects RLS), then fetches full row from rfqs table */
 export async function fetchRFQRow(id) {
-  const { data, error } = await supabase.from("rfqs").select("*").eq("id", id).single();
+  // First, try to get the RFQ from the view (respects RLS for sellers)
+  let { data: viewData, error: viewError } = await supabase
+    .from("v_rfqs_card")
+    .select("id")
+    .or(`id.eq.${id},public_id.eq.${id},seller_rfq_id.eq.${id}`)
+    .maybeSingle();
+  
+  // If found in view, use that id to fetch full row
+  if (viewData?.id && !viewError) {
+    const actualId = viewData.id;
+    const { data, error } = await supabase.from("rfqs").select("*").eq("id", actualId).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (data) return data;
+  }
+  
+  // Fallback: try direct lookup (might fail due to RLS, but worth trying)
+  let { data, error } = await supabase.from("rfqs").select("*").eq("id", id).maybeSingle();
+  
+  if (!data && !error) {
+    const result = await supabase.from("rfqs").select("*").eq("public_id", id).maybeSingle();
+    data = result.data;
+    error = result.error;
+  }
+  
+  if (!data && !error) {
+    const result = await supabase.from("rfqs").select("*").eq("seller_rfq_id", id).maybeSingle();
+    data = result.data;
+    error = result.error;
+  }
+  
   if (error) throw new Error(error.message);
+  if (!data) throw new Error(`RFQ not found: ${id}`);
   return data;
 }
 

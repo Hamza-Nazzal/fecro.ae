@@ -28,7 +28,14 @@ export async function listRFQsForCards({
     // --- existing implementation START (unchanged) ---
     let q = supabase.from("v_rfqs_card").select("*");
 
-    if (rfqId) q = q.or(`id.eq.${rfqId},public_id.eq.${rfqId}`);
+    if (rfqId) {
+      const lookup = [
+        `id.eq.${rfqId}`,
+        `public_id.eq.${rfqId}`,
+        `seller_rfq_id.eq.${rfqId}`,
+      ].join(",");
+      q = q.or(lookup);
+    }
     if (buyerId) q = q.eq("buyer_id", buyerId);
 
     if (onlyOpen) q = q.eq("status", "active");

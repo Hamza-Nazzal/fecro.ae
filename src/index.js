@@ -6,6 +6,11 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App";
 
+
+//import { supabase } from "./services/supabase";
+// window.supabase = supabase;
+
+
 const el = document.getElementById("root");
 createRoot(el).render(<App />);
 
