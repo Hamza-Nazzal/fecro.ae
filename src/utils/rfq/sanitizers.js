@@ -6,6 +6,33 @@ export function getSellerRfqId(row) {
 }
 
 // ---- sanitizeItemsPreview (exact) ----
+export function sanitizeItemsPreview(values) {
+  if (!Array.isArray(values)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const value of values) {
+    if (value == null) continue;
+    if (typeof value === "string") {
+      const str = value.trim();
+      if (!str || seen.has(str)) continue;
+      seen.add(str);
+      out.push(str);
+    } else if (typeof value === "object") {
+      const key = JSON.stringify(value);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(value);
+    } else {
+      const str = String(value).trim();
+      if (!str || seen.has(str)) continue;
+      seen.add(str);
+      out.push(str);
+    }
+  }
+  return out;
+}
+
+/*
 // Input: array-like; Output: unique trimmed strings (keeps order)
 export function sanitizeItemsPreview(values) {
   if (!Array.isArray(values)) return [];
@@ -20,7 +47,7 @@ export function sanitizeItemsPreview(values) {
   }
   return out;
 }
-
+*/
 // ---- sanitizeItemsSummary (exact) ----
 // Input: array of entries; Output: array of summaries with:
 // { name, qty?, categoryPath: string, specifications: { [label]: display } }

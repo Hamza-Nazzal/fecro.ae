@@ -38,3 +38,7 @@ safety.patch
 safety.patch # if not already there
 
 src.zip
+
+# hubgate-api local stuff
+hubgate-api/node_modules/
+hubgate-api/.dev.vars

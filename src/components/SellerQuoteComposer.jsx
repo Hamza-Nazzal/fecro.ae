@@ -21,6 +21,14 @@ export default function SellerQuoteComposer() {
   // RFQ + hydrated (seller-safe) data from your hook
   const { rfq, hydrated, loading, hydrating, error, hydrateError } = useSellerRFQ(rfqId, user?.id);
 
+
+
+  // TEMP DEBUG: expose RFQ and hydrated to window for console inspection
+if (typeof window !== "undefined") {
+  window.__rfq = rfq;
+  window.__hydrated = hydrated;
+}
+
   // Submit hook (existing business logic)
   const submitHook = useSubmitQuotation({ rfq: rfq || {}, seller: user || {} });
   const { form, setForm, updateLine, totals, submitting, errors, submit } = submitHook;
@@ -64,10 +72,11 @@ export default function SellerQuoteComposer() {
   }, [items]);
 
   // derive terms (read-only preview for now)
+  // Check hydrated first, then fall back to base RFQ fields
   const terms = {
-    payment: hydrated?.orderDetails?.payment,
-    incoterms: hydrated?.orderDetails?.incoterms ?? hydrated?.orderDetails?.deliveryTerms,
-    delivery: hydrated?.orderDetails?.deliveryTime ?? hydrated?.orderDetails?.deliveryTimelineLabel ?? "Standard",
+    payment: hydrated?.orderDetails?.payment ?? rfq?.payment ?? null,
+    incoterms: hydrated?.orderDetails?.incoterms ?? hydrated?.orderDetails?.deliveryTerms ?? rfq?.incoterms ?? null,
+    delivery: hydrated?.orderDetails?.deliveryTime ?? hydrated?.orderDetails?.deliveryTimelineLabel ?? rfq?.deliveryTime ?? rfq?.delivery ?? "Standard",
   };
 
   // Seed the submit form from RFQ items (once items are available)
@@ -104,10 +113,11 @@ export default function SellerQuoteComposer() {
     items.reduce((sum, it) => sum + Number(it?.quantity ?? 0), 0);
 
   // derive location similar to RFQ review (best-effort, non-breaking)
+  // Check hydrated first, then base RFQ, then buyer object
   const loc = hydrated?.location || rfq?.location || rfq?.buyer?.location || {};
-  const city = loc?.city ?? "—";
-  const emirate = loc?.emirate ?? loc?.state ?? "—";
-  const country = loc?.country ?? "—";
+  const city = loc?.city ?? rfq?.city ?? "—";
+  const emirate = loc?.emirate ?? loc?.state ?? rfq?.emirate ?? rfq?.state ?? "—";
+  const country = loc?.country ?? rfq?.country ?? "—";
 
   // ensure a default validity in form (1..60, default 7)
   React.useEffect(() => {

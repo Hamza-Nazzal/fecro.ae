@@ -3,7 +3,9 @@
 import { ok } from "./utils/response.js";
 import { corsHeaders, allowOrigin, unauthorized } from "./utils/cors.js";
 import { requireAdmin, inviteUserByEmail } from "./lib/auth.js";
-import { listSellerRFQs } from "./handlers/seller.js";
+//import { listSellerRFQs } from "./handlers/seller.js";
+import { listSellerRFQs, hydrateSellerRFQ } from "./handlers/seller.js";
+
 import {
   createCompany,
   inviteCompanyUser,
@@ -94,6 +96,9 @@ export default {
     if (url.pathname === "/seller/rfqs" && req.method === "GET") {
       return listSellerRFQs(req, env, acao);
     }
+    if (url.pathname === "/seller/rfq/hydrate" && req.method === "GET") {
+  return hydrateSellerRFQ(req, env, acao);
+}
 
     // --- Company ---
     if (url.pathname === "/company/create" && req.method === "POST") {
