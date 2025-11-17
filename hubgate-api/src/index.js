@@ -23,6 +23,8 @@ export default {
     const origin = req.headers.get("origin") || "";
     const acao = allowOrigin(origin, env);
 
+console.log("PATH=", url.pathname);
+
     // CORS preflight
     if (req.method === "OPTIONS") {
       return new Response(null, { headers: corsHeaders(acao) });
