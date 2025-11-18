@@ -1,6 +1,7 @@
 // src/pages/admin/adminLogin.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { setAdminSession, clearAdminSession } from '../../services/adminSession';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ const LoginPage = () => {
       if (response.success && response.user.role === 'SuperAdmin') {
           localStorage.setItem('user', JSON.stringify(response.user));
           localStorage.setItem('token', response.token);
+          setAdminSession({ user: response.user, token: response.token });
           
           setLoginSuccess(true);
           
@@ -40,11 +42,14 @@ const LoginPage = () => {
             navigate('/admin/dashboard');
           }, 500);
       } else if (response.success && response.user.role !== 'SuperAdmin') {
+        clearAdminSession();
         setError('Access denied. SuperAdmin privileges required.');
       } else {
+        clearAdminSession();
         setError(response.message || 'Invalid credentials');
       }
     } catch (err) {
+      clearAdminSession();
       setError('Login failed. Please try again.');
       console.error('Login error:', err);
     } finally {

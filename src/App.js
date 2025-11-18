@@ -17,6 +17,7 @@ import AdminLogin from './pages/admin/adminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminInvites from './pages/admin/AdminInvites';
 import AuthCallback from './pages/AuthCallback';
+import { getAdminSession, clearAdminSession } from './services/adminSession';
 
 // NEW
 import ToastProvider from "./components/Toasts.jsx";
@@ -64,13 +65,9 @@ function RequireAuth({ children }) {
 
 function RequireAdminAuth({ children }) {
   const location = useLocation();
-  const storedUser = localStorage.getItem('user');
-  const storedToken = localStorage.getItem('token');
-  if (!storedUser || !storedToken) return <Navigate to="/admin/login" replace state={{ from: location }} />;
-  try {
-    const user = JSON.parse(storedUser);
-    if (user.role !== 'SuperAdmin') return <Navigate to="/admin/login" replace state={{ from: location }} />;
-  } catch {
+  const session = getAdminSession();
+  if (!session || !session.user || session.user.role !== 'SuperAdmin') {
+    clearAdminSession();
     return <Navigate to="/admin/login" replace state={{ from: location }} />;
   }
   return children;
