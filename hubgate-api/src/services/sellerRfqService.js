@@ -2,6 +2,7 @@
 import { supaGETWithUser } from "../lib/supabase.js";
 import { mapSellerRfqCard } from "../mappers/sellerRfqCardMapper.js";
 import { enrichRfqCardRows } from "../enrichment/enrichRfqCardRows.js";
+import { mapSellerHydrate } from "../mappers/sellerHydrateMapper.js";
 
 export async function fetchSellerRfqList(env, bearerToken, queryString) {
   try {
@@ -54,5 +55,8 @@ export async function hydrateSellerRfq(env, bearer, rfqId, sellerId) {
     return { error: { status: res.status, body: json } };
   }
 
-  return { data: json };
+  // Map the RPC response to ensure location field is normalized
+  const mapped = mapSellerHydrate(json);
+
+  return { data: mapped };
 }

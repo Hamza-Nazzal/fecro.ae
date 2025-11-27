@@ -3,6 +3,7 @@ import React from "react";
 import { ArrowLeft, ShoppingCart, Package } from "lucide-react";
 import ReviewStep from "./ReviewStep";             
 import { formatDMY, addDays } from "../../utils/date";
+import { normalizeLocation } from "../../utils/location/normalizeLocation";
 
 import useRFQForm from "./useRFQForm";
 import StepHeader from "./StepHeader";
@@ -13,6 +14,8 @@ import MobileCartSheet from "./MobileCartSheet";
 import OrderDetailsForm from "./OrderDetailsForm";
 import SuccessScreen from "./SuccessScreen";
 import VariantMatrixModal from "./VariantMatrixModal";
+import useCompanyLocation from "../../hooks/useCompanyLocation";
+
 
 
 export default function RequestForm() {
@@ -37,13 +40,18 @@ export default function RequestForm() {
     // validators
     isBasicsValid, canSaveItem, canProceedStep1, canProceedStep2,
 
-    // submission
-    //submitRFQ,
+    // submission submitRFQ
     submitRFQ, submitting, submitError,
 
     // misc
     recommendedFor,
   } = useRFQForm();
+
+
+
+  const companyLocation = useCompanyLocation();
+  console.debug("[RFQ REVIEW] companyLocation =", companyLocation);
+
 
   // --- Mappings for ReviewStep props (read-only) ---
   // items → [{ id, name, quantity, categoryPath, specs[] }]
@@ -89,7 +97,7 @@ const RFQ_VALID_LABELS = {
   const orderDetailsMapped = {
   // raw codes (kept for backend/use)
   deliveryTimeline: orderDetails?.deliveryTimeline || "standard",
-  incoterms:        orderDetails?.incoterms || "",
+  incoterms:        orderDetails?.incoterms || "CP",
   paymentTerms:     orderDetails?.paymentTerms || "DUR",
   quoteDeadline:    orderDetails?.quoteDeadline || "",
   customDate:       orderDetails?.customDate,
@@ -99,26 +107,38 @@ const RFQ_VALID_LABELS = {
     orderDetails?.deliveryTimeline === "custom"
       ? `${DELIVERY_TIMELINE_LABELS.custom}${orderDetails?.customDate ? ` — ${formatDMY(orderDetails.customDate)}` : ""}`
       : (DELIVERY_TIMELINE_LABELS[orderDetails?.deliveryTimeline] || orderDetails?.deliveryTimeline || "Standard"),
-  deliveryTermsLabel: DELIVERY_TERMS_LABELS[orderDetails?.incoterms] || orderDetails?.incoterms || "",
-  incotermsLabel:     DELIVERY_TERMS_LABELS[orderDetails?.incoterms] || orderDetails?.incoterms || "",
+  deliveryTermsLabel: DELIVERY_TERMS_LABELS[orderDetails?.incoterms || "CP"] || DELIVERY_TERMS_LABELS["CP"] || "Customer Pickup",
+  incotermsLabel:     DELIVERY_TERMS_LABELS[orderDetails?.incoterms || "CP"] || DELIVERY_TERMS_LABELS["CP"] || "Customer Pickup",
   paymentTermsLabel:  PAYMENT_TERMS_LABELS[orderDetails?.paymentTerms || "DUR"] || orderDetails?.paymentTerms || "DUR",
   rfqValidLabel:      RFQ_VALID_LABELS[orderDetails?.quoteDeadline] || orderDetails?.quoteDeadline || "",
 };
 
-  // Parse '7-days' / '14-days' → integer; leave undefined for non-day strings
+    // Parse '7-days' / '14-days' → integer; leave undefined for non-day strings
   const validDaysFromDeadline = (() => {
     const m = /^([0-9]+)-days$/.exec(orderDetails?.quoteDeadline || "");
     return m ? Number(m[1]) : undefined;
   })();
+
+  // Resolve location with fallback priority:
+  // 1) orderDetails.location (if we ever let user override)
+  // 2) company location from DB (useCompanyLocation)
+  // 3) item-level location (future use)
+  const resolvedLocation = normalizeLocation(
+    orderDetails?.location ||
+    companyLocation ||
+    items?.[0]?.location ||
+    {}
+  );
 
   // meta for ReviewStep header & deadline
   const metaSource = {
     publicId: rfqId,
     issuedAt: new Date(),       // replace with backend createdAt when available
     validDays: validDaysFromDeadline,
-    location: {},               // no location fields in state yet
+    location: resolvedLocation,
   };
 
+  
   // Quantity change handler for ReviewStep
   const handleQuantityChange = (itemId, newQuantity) => {
     setItems(prevItems => 

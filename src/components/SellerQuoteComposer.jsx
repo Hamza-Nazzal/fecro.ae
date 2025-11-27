@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 // data loaders (existing app logic)
 import { useSellerRFQ } from "./quote/useSellerRFQ"; // you already created this file earlier
 import useSubmitQuotation from "../hooks/useSubmitQuotation";
+import { normalizeLocation } from "../utils/location/normalizeLocation";
 
 // optional: your shared CSS for quote visuals
 import "./quote/seller-quote.css";
@@ -112,12 +113,24 @@ if (typeof window !== "undefined") {
     (hydrated?.qtyTotal) ??
     items.reduce((sum, it) => sum + Number(it?.quantity ?? 0), 0);
 
-  // derive location similar to RFQ review (best-effort, non-breaking)
-  // Check hydrated first, then base RFQ, then buyer object
-  const loc = hydrated?.location || rfq?.location || rfq?.buyer?.location || {};
-  const city = loc?.city ?? rfq?.city ?? "—";
-  const emirate = loc?.emirate ?? loc?.state ?? rfq?.emirate ?? rfq?.state ?? "—";
-  const country = loc?.country ?? rfq?.country ?? "—";
+  // derive location with fallback priority: hydrated.location → rfq.location → rfq.buyer.location → rfq.companyLocation
+  const resolvedLocationRaw = 
+    hydrated?.location ||
+    rfq?.location ||
+    rfq?.buyer?.location ||
+    rfq?.companyLocation ||
+    {};
+  
+  // Normalize location to ensure canonical shape
+  const normalizedLocation = normalizeLocation(resolvedLocationRaw);
+  
+  const locationDisplay = (() => {
+    const parts = [normalizedLocation.city, normalizedLocation.state, normalizedLocation.country].filter(
+      (value) => value != null && typeof value === "string" && value.trim().length > 0
+    );
+    if (parts.length) return parts.join(", ");
+    return "—";
+  })();
 
   // ensure a default validity in form (1..60, default 7)
   React.useEffect(() => {
@@ -182,10 +195,10 @@ if (typeof window !== "undefined") {
                   </div>
                   <div className="px-4 py-3">
                     <div className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-1">
-                      Location
+                      Company location
                     </div>
                     <div className="text-sm font-semibold text-gray-900">
-                      {city}{(emirate !== "—" || country !== "—") ? `, ${emirate}, ${country}` : ""}
+                      {locationDisplay}
                     </div>
                   </div>
                   <div className="px-4 py-3">

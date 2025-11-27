@@ -3,17 +3,34 @@
 
 import { API_BASE, getAuthToken } from "./workerClient";
 
-export async function createCompany({ name }) {
+export async function createCompany({
+  name,
+  legalName,
+  tradeLicenseNo,
+  country,
+  city,
+  phone,
+}) {
   const token = await getAuthToken();
   const headers = {
     "Content-Type": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),
   };
 
+  // Build payload with fallbacks
+  const payload = {
+    name: name.trim(),
+    legalName: legalName?.trim() || name.trim(), // fallback to name if empty
+    tradeLicenseNo: tradeLicenseNo?.trim() || null,
+    country: country?.trim() || null, // UI defaults "UAE", but don't hard-code in worker
+    city: city || null,
+    phone: phone?.trim() || null,
+  };
+
   const res = await fetch(`${API_BASE}/company/create`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
@@ -77,5 +94,53 @@ export async function acceptCompanyInvite({ token: inviteToken }) {
     return text ? JSON.parse(text) : null;
   } catch {
     throw new Error("acceptCompanyInvite: invalid JSON response from worker");
+  }
+}
+
+// Get current user info with company_id
+export async function getMe() {
+  const token = await getAuthToken();
+  const headers = {
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+
+  const res = await fetch(`${API_BASE}/me`, {
+    method: "GET",
+    headers,
+  });
+
+  const text = await res.text().catch(() => "");
+
+  if (!res.ok) {
+    throw new Error(`getMe failed ${res.status}: ${text}`);
+  }
+
+  try {
+    return text ? JSON.parse(text) : null;
+  } catch {
+    throw new Error("getMe: invalid JSON response from worker");
+  }
+}
+
+// Get invite details by token (public endpoint, no auth required)
+export async function getCompanyInvite({ token }) {
+  const res = await fetch(`${API_BASE}/company/invite/${encodeURIComponent(token)}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  const text = await res.text().catch(() => "");
+
+  if (!res.ok) {
+    throw new Error(`getCompanyInvite failed ${res.status}: ${text}`);
+  }
+
+  try {
+    return text ? JSON.parse(text) : null;
+  } catch {
+    throw new Error("getCompanyInvite: invalid JSON response from worker");
   }
 }

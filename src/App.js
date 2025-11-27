@@ -18,6 +18,10 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminInvites from './pages/admin/AdminInvites';
 import AuthCallback from './pages/AuthCallback';
 import { getAdminSession, clearAdminSession } from './services/adminSession';
+import Signup from './pages/Signup';
+import AcceptInvite from './pages/AcceptInvite';
+import CompanyOnboarding from './pages/CompanyOnboarding';
+import { getMe } from './services/worker/workerCompany';
 
 // NEW
 import ToastProvider from "./components/Toasts.jsx";
@@ -44,8 +48,41 @@ console.log(process.env.REACT_APP_SELLER_HYDRATE_ENABLED); // should log "true"
 
 
 function AfterLoginRedirect() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const [checkingCompany, setCheckingCompany] = React.useState(true);
+  const [hasCompany, setHasCompany] = React.useState(null);
+
+  React.useEffect(() => {
+    if (!user || loading) {
+      if (!user && !loading) {
+        setCheckingCompany(false);
+      }
+      return;
+    }
+
+    // Check company_id via /me endpoint
+    getMe()
+      .then((data) => {
+        setHasCompany(data?.company_id ? true : false);
+      })
+      .catch(() => {
+        setHasCompany(false);
+      })
+      .finally(() => {
+        setCheckingCompany(false);
+      });
+  }, [user, loading]);
+
+  if (loading || checkingCompany) {
+    return <div>Loading...</div>;
+  }
+
   if (!user) return <Navigate to="/login" replace />;
+
+  // Check company_id first
+  if (hasCompany === false) {
+    return <Navigate to="/onboarding/company" replace />;
+  }
 
   const roles = Array.isArray(user.roles) ? user.roles : [];
 
@@ -83,8 +120,18 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Navigate to="/start" replace />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/accept-invite" element={<AcceptInvite />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/start" element={<AfterLoginRedirect />} />
+              <Route
+                path="/onboarding/company"
+                element={
+                  <RequireAuth>
+                    <CompanyOnboarding />
+                  </RequireAuth>
+                }
+              />
               <Route path="/__diag" element={<Diag />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route

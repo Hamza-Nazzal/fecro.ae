@@ -1,4 +1,5 @@
 // src/utils/mappers/sellerHydrateMapper.js
+import { normalizeLocation } from "../location/normalizeLocation";
 
 // Normalizes specifications into array form.
 // Supports:
@@ -61,7 +62,6 @@ function mapItem(it = {}) {
   const rawSpecs = Array.isArray(rawSpecsSource)
     ? rawSpecsSource
     : normalizeSpecsAny(rawSpecsSource);
-
   const buyerSpecsArr = Array.isArray(it.buyerSpecifications)
     ? it.buyerSpecifications
     : Array.isArray(it.buyer_specifications)
@@ -85,6 +85,16 @@ function mapItem(it = {}) {
 function getSellerRfqIdFromHydrate(dto) {
   if (!dto) return null;
   return readAny(dto, ["sellerRfqId", "seller_rfq_id", "seller_rfqs_id"]) ?? null;
+}
+
+function hasLocationValue(loc) {
+  if (!loc || typeof loc !== "object") return false;
+  return ["city", "state", "country"].some((key) => {
+    const value = loc[key];
+    if (value == null) return false;
+    if (typeof value === "string") return value.trim().length > 0;
+    return true;
+  });
 }
 
 export function mapSellerHydrate(dto, rfqId) {
@@ -116,6 +126,75 @@ export function mapSellerHydrate(dto, rfqId) {
   const itemsSrc = Array.isArray(safe.items) ? safe.items : [];
   const items = itemsSrc.map(mapItem);
 
+  const buyerCompanyId = readAny(safe, ["buyerCompanyId", "buyer_company_id"]);
+  const buyerId = readAny(safe, ["buyerId", "buyer_id"]);
+
+  // Normalize company location from raw DTO fields
+  const companyLocationRaw = normalizeLocation({
+    city: readAny(safe, [
+      "buyerCompanyCity",
+      "buyer_company_city",
+      "company_city",
+    ]),
+    country: readAny(safe, [
+      "buyerCompanyCountry",
+      "buyer_company_country",
+      "company_country",
+    ]),
+    state: readAny(safe, [
+      "buyerCompanyState",
+      "buyer_company_state",
+      "company_state",
+      "buyerCompanyEmirate",
+      "buyer_company_emirate",
+      "company_emirate",
+    ]),
+  });
+  const companyLocation = hasLocationValue(companyLocationRaw) ? companyLocationRaw : null;
+
+  // Normalize RFQ-level location from raw DTO fields
+  const rfqLocationRaw = normalizeLocation({
+    city: readAny(safe, [
+      "locationCity",
+      "location_city",
+      "rfq_city",
+      "city",
+    ]),
+    country: readAny(safe, [
+      "locationCountry",
+      "location_country",
+      "rfq_country",
+      "country",
+    ]),
+    state: readAny(safe, [
+      "locationState",
+      "location_state",
+      "rfq_state",
+      "state",
+      "locationEmirate",
+      "location_emirate",
+      "rfq_emirate",
+      "emirate",
+    ]),
+  });
+
+  // Resolve location with fallback: RFQ-level → Buyer company → null
+  const resolvedLocationRaw = normalizeLocation({
+    city: rfqLocationRaw.city ?? companyLocationRaw.city ?? null,
+    state: rfqLocationRaw.state ?? companyLocationRaw.state ?? null,
+    country: rfqLocationRaw.country ?? companyLocationRaw.country ?? null,
+  });
+  const resolvedLocation = hasLocationValue(resolvedLocationRaw) ? resolvedLocationRaw : null;
+
+  const buyer =
+    buyerId || buyerCompanyId || companyLocation
+      ? {
+          ...(buyerId ? { id: buyerId } : {}),
+          ...(buyerCompanyId ? { companyId: buyerCompanyId } : {}),
+          ...(companyLocation ? { location: companyLocation } : {}),
+        }
+      : null;
+
   return {
     id,
     publicId,
@@ -128,5 +207,8 @@ export function mapSellerHydrate(dto, rfqId) {
     categoryPathLast,
     orderDetails,
     items,
+    buyer,
+    companyLocation,
+    location: resolvedLocation,
   };
 }

@@ -6,6 +6,7 @@ import {
   sanitizeQuotationsCount,
   getSellerRfqId,
 } from '../../utils/rfq/sanitizers';
+import { normalizeLocation } from "../../utils/location/normalizeLocation";
 
 // Normalizes specifications into array form.
 // Supports:
@@ -104,8 +105,7 @@ export function mapRFQRow(row = {}) {
 
 export function rfqCardDbToJs(row) {
   const sellerRfqId = getSellerRfqId(row);
-  
-  return {
+  const base = {
     id: row?.id,
     publicId: row?.public_id ?? row?.id,
     sellerRfqId: sellerRfqId,
@@ -140,4 +140,60 @@ export function rfqCardDbToJs(row) {
     notes: null,
     qtyTotal: row?.qty_total ?? null,
   };
+
+  // Normalize RFQ-level location
+  const rfqLocation = normalizeLocation({
+    city: row?.rfq_city ?? row?.location_city ?? row?.city,
+    country: row?.rfq_country ?? row?.location_country ?? row?.country,
+    state: row?.state ?? row?.rfq_state ?? row?.location_state ??
+           row?.rfq_emirate ?? row?.location_emirate ?? row?.emirate,
+  });
+
+  // Normalize company location
+  const companyLocation = normalizeLocation({
+    city: row?.company_city ?? row?.buyer_company_city ?? row?.companyCity ?? row?.buyerCompanyCity,
+    country: row?.company_country ?? row?.buyer_company_country ?? row?.companyCountry ?? row?.buyerCompanyCountry,
+    state: row?.company_state ?? row?.buyer_company_state ?? row?.companyState ?? row?.buyerCompanyState ??
+           row?.company_emirate ?? row?.buyer_company_emirate ?? row?.companyEmirate ?? row?.buyerCompanyEmirate,
+  });
+
+  // Resolve location with fallback: RFQ-level → Buyer company
+  const resolvedLocation = normalizeLocation({
+    city: rfqLocation.city ?? companyLocation.city ?? null,
+    state: rfqLocation.state ?? companyLocation.state ?? null,
+    country: rfqLocation.country ?? companyLocation.country ?? null,
+  });
+
+  // Always set location object (never null)
+  base.location = resolvedLocation;
+
+  // Set companyLocation if it has any values
+  if (companyLocation.city || companyLocation.state || companyLocation.country) {
+    base.companyLocation = companyLocation;
+  }
+
+  const buyerCompanyId = row?.buyer_company_id ?? null;
+  const buyerId = row?.buyer_id ?? null;
+  const buyerBase =
+    typeof base.buyer === "object" && base.buyer !== null ? { ...base.buyer } : {};
+
+  if (buyerId) {
+    buyerBase.id = buyerId;
+  }
+  if (buyerCompanyId) {
+    buyerBase.companyId = buyerCompanyId;
+  }
+  if (base.companyLocation && (base.companyLocation.city || base.companyLocation.state || base.companyLocation.country)) {
+    buyerBase.location = normalizeLocation({
+      city: buyerBase.location?.city ?? base.companyLocation.city ?? null,
+      state: buyerBase.location?.state ?? base.companyLocation.state ?? null,
+      country: buyerBase.location?.country ?? base.companyLocation.country ?? null,
+    });
+  }
+
+  if (Object.keys(buyerBase).length) {
+    base.buyer = buyerBase;
+  }
+
+  return base;
 }

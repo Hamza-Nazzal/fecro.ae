@@ -1,6 +1,7 @@
 // src/components/CompanyGate.jsx
 
 import React, { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { supabase } from "../services/backends/supabase";
 
 function useCompanyMembership() {
@@ -82,44 +83,12 @@ export default function CompanyGate({ children }) {
     return <>{children}</>;
   }
 
-  return (
-    <>
-      {!hasCompany && !error && (
-        <div
-          style={{
-            margin: "0.75rem 0",
-            padding: "0.75rem 1rem",
-            borderRadius: "0.5rem",
-            backgroundColor: "#FFF7E6",
-            border: "1px solid #FACC15",
-            color: "#92400E",
-            fontSize: "0.875rem",
-          }}
-        >
-          You’re logged in but not attached to any company yet. In a later
-          phase, this screen will guide you to create a company or accept an
-          invite.
-        </div>
-      )}
+  // Hard redirect if no company membership
+  if (!hasCompany && !error) {
+    return <Navigate to="/onboarding/company" replace />;
+  }
 
-      {error && (
-        <div
-          style={{
-            margin: "0.75rem 0",
-            padding: "0.75rem 1rem",
-            borderRadius: "0.5rem",
-            backgroundColor: "#FEF2F2",
-            border: "1px solid #FCA5A5",
-            color: "#B91C1C",
-            fontSize: "0.875rem",
-          }}
-        >
-          Couldn’t check your company membership right now. You can continue
-          using the app, but some features may not behave as expected.
-        </div>
-      )}
-
-      {children}
-    </>
-  );
+  // If error, still allow access but could show error banner if needed
+  // For now, just render children
+  return <>{children}</>;
 }

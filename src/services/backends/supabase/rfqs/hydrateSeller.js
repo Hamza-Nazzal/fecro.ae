@@ -7,6 +7,8 @@ export async function hydrateRFQForSeller(rfqId, sellerId) {
     _rfq_id: rfqId,
     _seller_id: sellerId,
   });
+  console.log("🔥 RAW HYDRATE SELLER FROM API:", data);
+
   if (error) throw new Error(error.message);
   
   // TEMP debug (REMOVE AFTER AUDIT)

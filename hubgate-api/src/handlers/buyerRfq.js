@@ -32,6 +32,9 @@ export async function listBuyerRFQs(req, env, acao) {
       "first_category_path",
       "items_count",
       "items_preview",
+      "company_city",
+      "company_state",
+      "company_country",
     ].join(",");
 
     const qp = new URLSearchParams();
@@ -107,6 +110,9 @@ export async function getBuyerRFQ(req, env, acao) {
       "first_category_path",
       "items_count",
       "items_preview",
+      "company_city",
+      "company_state",
+      "company_country",
     ].join(",");
 
     const qp = new URLSearchParams();

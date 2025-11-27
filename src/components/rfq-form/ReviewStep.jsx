@@ -2,6 +2,7 @@
 import React from "react";
 import "./review-step.css";
 import { formatDMY, addDays } from "../../utils/date";
+import { normalizeLocation } from "../../utils/location/normalizeLocation";
 
 export default function ReviewStep({
   items = [],
@@ -15,9 +16,22 @@ export default function ReviewStep({
   const validDays = Number(meta.validDays ?? 14);
   const deadline = addDays(issuedAt, validDays);
 
-  const city = meta.location?.city || "—";
-  const emirate = meta.location?.emirate || "—"; // UI label: Emirate
-  const country = meta.location?.country || "—";
+  // Normalize location to ensure canonical shape
+//  const normalizedLocation = normalizeLocation(meta.location || {});
+//  const city = normalizedLocation.city || "—";
+//  const state = normalizedLocation.state || "—"; // UI label: State
+//  const country = normalizedLocation.country || "—";
+// if location is fetched at login we can uncomment the above and remove the hardcode below
+// also fix ui to add comma "," between inputs 
+
+
+  // the following is to bypass the fetching issue // we will hard code location for now
+  const normalizedLocation = normalizeLocation(meta.location || {});
+  const city = "";  // or hardcode a city if needed
+  const state = "";  // or hardcode a state/emirate if needed
+  const country = "UAE";  // Hardcoded
+
+
 
   const rfqId = meta.publicId || meta.rfqId || "RFQ-—";
 
@@ -28,7 +42,7 @@ export default function ReviewStep({
     (orderDetails.deliveryTermsLabel ??
       orderDetails.incotermsLabel ??
       orderDetails.deliveryTerms ??
-      orderDetails.incoterms) ?? "—";
+      orderDetails.incoterms) ?? "Customer Pickup";
   const paymentTerms =
     (orderDetails.paymentTermsLabel ?? orderDetails.paymentTerms) ?? "Net-30";
 
@@ -62,7 +76,7 @@ export default function ReviewStep({
 
   return (
     <div className="rfq-review paper">
-      {/* v6-style header */}
+      {/* v6-style header once location is fitched we should changed to cite,state,country... so basically add ,*/}
       <header className="header text-center mb-7">
         <h1 className="title">REQUEST FOR QUOTATION (RFQ)</h1>
         <div className="muted">
@@ -85,7 +99,7 @@ export default function ReviewStep({
           <tr>
             <th>Location</th>
             <td>
-              {city}, {emirate}, {country}
+              {city}{state}{country}
             </td>
           </tr>
           <tr>
@@ -276,7 +290,7 @@ export default function ReviewStep({
       <p className="mb-8">
         Please submit your quotation before{" "}
         <strong>{formatDMY(deadline)}</strong> on{" "}
-        <strong>fecro.ae</strong>.
+        <strong>HubGate.ae</strong>.
       </p>
     </div>
   );

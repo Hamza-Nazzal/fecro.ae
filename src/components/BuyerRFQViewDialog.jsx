@@ -8,60 +8,17 @@ import ReviewStepReadOnly from "./rfq-form/ReviewStepReadOnly";
  * Props:
  *  - open: boolean
  *  - onClose: () => void
- *  - rfq: {
- *      id?,
- *      publicId?,
- *      issuedAt?,
- *      validDays?,
- *      location?: { city?, emirate?, country? },
- *      orderDetails?: {...},
- *      items?: [...],
- *      // also supports some snake_case fallbacks from DB
- *    }
+ *  - rfq: RFQ card / RFQ object as used across the app
  */
 export default function BuyerRFQViewDialog({ open, onClose, rfq }) {
   if (!open || !rfq) return null;
 
-  // Try to be tolerant to both camelCase and snake_case inputs
-  const {
-    publicId,
-    public_id,
-    createdAt,
-    created_at,
-    issuedAt,
-    validDays,
-    location,
-    orderDetails,
-    items,
-  } = rfq;
-
-  const meta = {
-    publicId: publicId || public_id || rfq.rfqCode || rfq.rfqId,
-    issuedAt: issuedAt || createdAt || created_at || rfq.postedTime,
-    validDays: validDays ?? rfq.validDays,
-    location: location || {
-      city: rfq.city,
-      emirate: rfq.emirate,
-      country: rfq.country,
-    },
-  };
-
-  const od = orderDetails || rfq.orderDetails || {
-    deliveryTimeline: rfq.deliveryTimeline,
-    deliveryTimelineLabel: rfq.deliveryTimelineLabel,
-    deliveryTerms: rfq.deliveryTerms,
-    incoterms: rfq.incoterms,
-    incotermsLabel: rfq.incotermsLabel,
-    paymentTerms: rfq.paymentTerms,
-    paymentTermsLabel: rfq.paymentTermsLabel,
-    rfqValidLabel: rfq.rfqValidLabel,
-  };
-
-  const itemsArr = Array.isArray(items)
-    ? items
-    : Array.isArray(rfq.items)
-    ? rfq.items
-    : [];
+  const headerPublicId =
+    rfq.publicId ||
+    rfq.public_id ||
+    rfq.rfqCode ||
+    rfq.rfqId ||
+    "RFQ";
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50">
@@ -82,7 +39,7 @@ export default function BuyerRFQViewDialog({ open, onClose, rfq }) {
               RFQ DETAILS
             </span>
             <span className="text-sm text-slate-700">
-              {meta.publicId || "RFQ"}
+              {headerPublicId}
             </span>
           </div>
           <button
@@ -97,12 +54,7 @@ export default function BuyerRFQViewDialog({ open, onClose, rfq }) {
         {/* Scrollable content */}
         <div className="flex-1 overflow-auto px-6 py-4 bg-slate-50">
           <div className="mx-auto max-w-4xl">
-            <ReviewStepReadOnly
-              items={itemsArr}
-              orderDetails={od}
-              meta={meta}
-              groupByCategory={false}
-            />
+            <ReviewStepReadOnly rfq={rfq} />
           </div>
         </div>
       </div>

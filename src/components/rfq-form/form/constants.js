@@ -11,8 +11,17 @@ export const BLANK_ITEM = {
 };
 
 export const BLANK_ORDER = {
-  deliveryTimeline: "standard", customDate: "", incoterms: "-",
-  paymentTerms: "net-30", quoteDeadline: "", internalRef: "",
+  deliveryTimeline: "standard",
+  customDate: "",
+  incoterms: "CP",
+  paymentTerms: "net-30",
+  quoteDeadline: "",
+  internalRef: "",
+  location: {
+    city: "",
+    state: "",
+    country: "",
+  },
 };
 
 export const defaultRecommended = (category = "") => {

@@ -32,6 +32,9 @@ export async function listSellerRFQs(req, env, acao) {
       "title",
       "first_category_path",
       "items_count",
+      "company_city",
+      "company_state",
+      "company_country",
     ].join(",");
 
     // Build query string (URLSearchParams, not object)

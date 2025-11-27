@@ -10,6 +10,8 @@ import {
   createCompany,
   inviteCompanyUser,
   acceptCompanyInvite,
+  getMe,
+  getCompanyInvite,
 } from "./handlers/company.js";
 import {
   listBuyerRFQs,
@@ -111,6 +113,14 @@ console.log("PATH=", url.pathname);
     }
     if (url.pathname === "/company/accept" && req.method === "POST") {
       return acceptCompanyInvite(req, env, acao);
+    }
+    if (url.pathname.startsWith("/company/invite/") && req.method === "GET") {
+      return getCompanyInvite(req, env, acao);
+    }
+
+    // --- User ---
+    if (url.pathname === "/me" && req.method === "GET") {
+      return getMe(req, env, acao);
     }
 
     // Fallback

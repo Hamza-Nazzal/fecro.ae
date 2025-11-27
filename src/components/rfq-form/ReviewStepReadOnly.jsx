@@ -2,6 +2,41 @@
 import React from "react";
 import ReviewStep from "./ReviewStep";
 import { normalizeSpecsInput } from "../../utils/rfq/rfqSpecs";
+import { normalizeLocation } from "../../utils/location/normalizeLocation";
+
+function hasLocationValue(loc) {
+  if (!loc || typeof loc !== "object") return false;
+  return ["city", "state", "country"].some((key) => {
+    const value = loc[key];
+    if (value == null) return false;
+    if (typeof value === "string") return value.trim().length > 0;
+    return true;
+  });
+}
+
+function resolveRfqLocation(rfq = {}) {
+  // Priority: rfq.location → rfq.buyer.location → rfq.companyLocation → top-level fallbacks
+  let resolved = null;
+  
+  if (hasLocationValue(rfq.location)) {
+    resolved = normalizeLocation(rfq.location);
+  } else if (hasLocationValue(rfq.buyer?.location)) {
+    resolved = normalizeLocation(rfq.buyer.location);
+  } else if (hasLocationValue(rfq.companyLocation)) {
+    resolved = normalizeLocation(rfq.companyLocation);
+  } else {
+    // Fallback to top-level fields
+    const fallbackRaw = {
+      city: rfq.city,
+      state: rfq.state,
+      country: rfq.country,
+    };
+    resolved = normalizeLocation(fallbackRaw);
+  }
+  
+  // Return normalized location if it has any values, otherwise null
+  return hasLocationValue(resolved) ? resolved : null;
+}
 
 /**
  * Map RFQ card object (from listRFQsForCards) into
@@ -61,20 +96,33 @@ function mapItemsFromRfq(rfq = {}) {
 }
 
 function mapMetaFromRfq(rfq = {}) {
-  const issuedAtRaw = rfq.postedAt || rfq.posted_time || rfq.created_at;
+  const issuedAtRaw =
+    rfq.postedAt ||
+    rfq.posted_time ||
+    rfq.created_at;
+
   const issuedAt = issuedAtRaw ? new Date(issuedAtRaw) : new Date();
 
+  // 1) Prefer RFQ-level location → fallback to buyer.companyLocation
+  const rawLoc =
+    rfq.location ||
+    rfq.companyLocation ||
+    rfq.buyer?.location ||
+    {};
+
+  // 2) Normalize shape always → ensures .city / .state / .country exist
+  const normalized = normalizeLocation(rawLoc);
+
   return {
-    publicId: rfq.publicId || rfq.public_id || rfq.sellerRfqId || "RFQ-—",
+    publicId:
+      rfq.publicId ||
+      rfq.public_id ||
+      rfq.sellerRfqId ||
+      "RFQ-—",
     rfqId: rfq.id,
     issuedAt,
     validDays: rfq.validDays ?? 14,
-    // We don’t yet have structured location on RFQ cards, so keep defaults.
-    location: rfq.location || {
-      city: "—",
-      emirate: "—",
-      country: "—",
-    },
+    location: normalized,       // <-- ALWAYS correct now
   };
 }
 

@@ -1,6 +1,7 @@
 // src/services/backends/supabase.js
 import { createClient } from "@supabase/supabase-js";
 
+
 // CRA / Vite / Next-public envs (non-throwing)
 const ie = (typeof import.meta !== "undefined" && import.meta.env) || {};
 export const SB_PROJECT_URL =

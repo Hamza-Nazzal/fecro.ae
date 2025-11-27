@@ -2,11 +2,35 @@
 import { supabase } from "../backends/supabase";
 import { rfqCardDbToJs } from "./mapping";
 import { enrichRfqCardRows } from "./enrichment";
+import { normalizeLocation } from "../../utils/location/normalizeLocation";
 
 // Coalesce identical concurrent calls by params signature
 const __inflight = new Map(); // key -> Promise
 function __keyFor(params) {
   try { return JSON.stringify(params || {}); } catch { return 'default'; }
+}
+
+function normalizeCompanyLocation(row) {
+  if (!row || typeof row !== "object") return row;
+  
+  const normalized = normalizeLocation({
+    city: row.company_city ?? row.buyer_company_city ?? row.companyCity ?? row.buyerCompanyCity,
+    country: row.company_country ?? row.buyer_company_country ?? row.companyCountry ?? row.buyerCompanyCountry,
+    state: row.company_state ?? row.buyer_company_state ?? row.companyState ?? row.buyerCompanyState ?? 
+           row.company_emirate ?? row.buyer_company_emirate ?? row.companyEmirate ?? row.buyerCompanyEmirate,
+  });
+
+  // Only add normalized fields if at least one has a value
+  if (normalized.city == null && normalized.state == null && normalized.country == null) {
+    return row;
+  }
+
+  return {
+    ...row,
+    company_city: normalized.city,
+    company_country: normalized.country,
+    company_state: normalized.state,
+  };
 }
 
 
@@ -73,7 +97,8 @@ export async function listRFQsForCards({
     const { data, error } = await q;
     if (error) throw new Error(error.message);
 
-    const enriched = await enrichRfqCardRows(data || []);
+    const normalizedRows = (data || []).map(normalizeCompanyLocation);
+    const enriched = await enrichRfqCardRows(normalizedRows);
     return enriched.map(rfqCardDbToJs);
     // --- existing implementation END ---
   })();
@@ -95,7 +120,7 @@ export async function getRFQById(rfqId) {
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) return null;
-  const [enriched] = await enrichRfqCardRows([data]);
+  const [enriched] = await enrichRfqCardRows([normalizeCompanyLocation(data)]);
   return rfqCardDbToJs(enriched || data);
 }
 
