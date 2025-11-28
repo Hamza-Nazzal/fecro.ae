@@ -151,6 +151,58 @@ Useful for testing auth.uid()-based RLS policies.
 
 ⸻
 
+A7) Audit & Event Logs
+
+10. User role audit log
+	•	Table: public.user_role_audit_log
+	•	Purpose: Track every change to auth.users.raw_user_meta_data.roles (buyer/seller flips).
+	•	Objects:
+	•	function public.log_user_role_change()
+	•	trigger trg_log_user_role_change on auth.users
+	•	Behavior:
+	•	After UPDATE on auth.users, if NEW.raw_user_meta_data-&gt;'roles' differs from OLD, insert a row with:
+	•	user_id, email, old_roles, new_roles, changed_at.
+	•	Security:
+	•	RLS enabled; policy allows SELECT/INSERT/UPDATE/DELETE only for auth.role() = 'service_role'.
+	•	Triggers run as SECURITY DEFINER and are not blocked by RLS.
+
+11. Company membership audit log
+	•	Table: public.company_membership_audit_log
+	•	Purpose: Track changes to a user’s company membership and membership role.
+	•	Objects:
+	•	function public.log_company_membership_change()
+	•	trigger trg_log_company_membership_change on public.company_memberships
+	•	Behavior:
+	•	After UPDATE on company_memberships, if company_id or role changes, insert a row with:
+	•	user_id, old_company_id, new_company_id, old_role, new_role, changed_at.
+	•	Security:
+	•	RLS enabled; policy allows SELECT/INSERT/UPDATE/DELETE only for auth.role() = 'service_role'.
+
+12. RFQ event log
+	•	Table: public.rfq_event_log
+	•	Purpose: Capture an immutable timeline of RFQ row changes (for debugging, audits, dispute support).
+	•	Objects:
+	•	function public.log_rfq_change()
+	•	trigger trg_log_rfq_change on public.rfqs
+	•	Behavior:
+	•	After INSERT/UPDATE/DELETE on rfqs, insert a row with:
+	•	rfq_id, action (TG_OP), old_row (jsonb), new_row (jsonb), changed_at.
+	•	Security:
+	•	RLS enabled; policy allows SELECT/INSERT/UPDATE/DELETE only for auth.role() = 'service_role'.
+
+13. Quotation event log
+	•	Table: public.quotation_event_log
+	•	Purpose: Capture an immutable timeline of quotation row changes (submitted/updated/accepted/etc).
+	•	Objects:
+	•	function public.log_quotation_change()
+	•	trigger trg_log_quotation_change on public.quotations
+	•	Behavior:
+	•	After INSERT/UPDATE/DELETE on quotations, insert a row with:
+	•	quotation_id, action (TG_OP), old_row (jsonb), new_row (jsonb), changed_at.
+	•	Security:
+	•	RLS enabled; policy allows SELECT/INSERT/UPDATE/DELETE only for auth.role() = 'service_role'.
+
+
 Part 1 — Products & Categories (Taxonomy)
 
 We maintain two taxonomies in one table (public.categories):
@@ -466,6 +518,7 @@ Part 4 — Supabase Security Hardening (Oct 2025)
 	•	RLS enabled everywhere that touches user data.
 	•	Grants tightened (no PUBLIC, no anon except where explicitly intended).
 	•	Service-role–only paths are routed through the Cloudflare Worker.
+	•	Append-only audit/event tables added (user_role_audit_log, company_membership_audit_log, rfq_event_log, quotation_event_log) with RLS enabled and service_role-only access.
 
 1) Views
 
@@ -473,6 +526,9 @@ Examples:
 	•	v_rfqs_admin → SELECT for service_role only.
 	•	v_rfqs_card → SELECT for authenticated + service_role.
 	•	Other app-facing views → SECURITY INVOKER + RLS.
+
+Note:
+	•	v_rfqs_card is currently defined as SECURITY DEFINER and is still flagged by the Supabase linter. It continues to work as-is for RFQ cards, and is scheduled for a future hardening pass to align with the SECURITY INVOKER + RLS pattern.
 
 2) Key RLS policies (high-level)
 	•	rfqs:

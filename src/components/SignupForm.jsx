@@ -1,16 +1,30 @@
 // src/components/SignupForm.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "../services/backends/supabase";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function SignupForm({ initialEmail = "", onSuccess, showEmailField = true }) {
+  const { setRoles } = useAuth();
+  const [searchParams] = useSearchParams();
+  const roleFromUrl = searchParams.get("role"); // buyer or seller
+  
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
+  const [role, setRole] = useState("");
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Auto-select role from URL parameter
+  useEffect(() => {
+    if (roleFromUrl === "buyer" || roleFromUrl === "seller") {
+      setRole(roleFromUrl);
+    }
+  }, [roleFromUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,6 +49,10 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
     }
     if (!phone.trim()) {
       setError("Phone is required");
+      return;
+    }
+    if (!role) {
+      setError("Please select your role (Buyer or Seller)");
       return;
     }
     if (!agreeToTerms) {
@@ -66,6 +84,16 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
         throw new Error("Sign up failed - no user returned");
       }
 
+      // Set the role after successful signup
+      if (role) {
+        try {
+          await setRoles([role]);
+        } catch (roleError) {
+          console.error("Failed to set role:", roleError);
+          // Continue anyway - user can set role later via RoleChooser
+        }
+      }
+
       // Call onSuccess callback with user
       if (onSuccess) {
         await onSuccess(data.user);
@@ -77,8 +105,71 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
     }
   };
 
+  const isFormDisabled = !role;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Role Selection - At the top, side by side */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          I am a <span className="text-red-500">*</span>
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label
+            className={`flex flex-col p-4 border-2 rounded-lg cursor-pointer transition-all ${
+              role === "buyer"
+                ? "border-blue-600 bg-blue-50"
+                : "border-gray-300 bg-gray-50"
+            } ${!role ? "hover:border-gray-400" : ""}`}
+          >
+            <div className="flex items-center mb-2">
+              <input
+                type="radio"
+                name="role"
+                value="buyer"
+                checked={role === "buyer"}
+                onChange={(e) => setRole(e.target.value)}
+                className="mr-2"
+                required
+              />
+              <div className={`font-medium ${role === "buyer" ? "text-gray-900" : "text-gray-500"}`}>
+                Buyer
+              </div>
+            </div>
+            <div className={`text-sm ${role === "buyer" ? "text-gray-700" : "text-gray-400"}`}>
+              I want to create RFQs and receive quotations
+            </div>
+          </label>
+          <label
+            className={`flex flex-col p-4 border-2 rounded-lg cursor-pointer transition-all ${
+              role === "seller"
+                ? "border-blue-600 bg-blue-50"
+                : "border-gray-300 bg-gray-50"
+            } ${!role ? "hover:border-gray-400" : ""}`}
+          >
+            <div className="flex items-center mb-2">
+              <input
+                type="radio"
+                name="role"
+                value="seller"
+                checked={role === "seller"}
+                onChange={(e) => setRole(e.target.value)}
+                className="mr-2"
+                required
+              />
+              <div className={`font-medium ${role === "seller" ? "text-gray-900" : "text-gray-500"}`}>
+                Seller
+              </div>
+            </div>
+            <div className={`text-sm ${role === "seller" ? "text-gray-700" : "text-gray-400"}`}>
+              I want to browse RFQs and send quotations
+            </div>
+          </label>
+        </div>
+      </div>
+
+      {/* Rest of the form - disabled until role is selected */}
+      <div className={isFormDisabled ? "opacity-50 pointer-events-none" : ""}>
       {showEmailField && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -90,7 +181,8 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={isFormDisabled}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             placeholder="you@example.com"
           />
         </div>
@@ -120,7 +212,8 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={isFormDisabled}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder="••••••••"
           minLength={6}
         />
@@ -136,7 +229,8 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
           required
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={isFormDisabled}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder="John"
         />
       </div>
@@ -151,7 +245,8 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
           required
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={isFormDisabled}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder="Doe"
         />
       </div>
@@ -166,7 +261,8 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
           required
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={isFormDisabled}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder="+1234567890"
         />
       </div>
@@ -177,19 +273,21 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
           id="agreeToTerms"
           checked={agreeToTerms}
           onChange={(e) => setAgreeToTerms(e.target.checked)}
-          className="mt-1 mr-2"
+            disabled={isFormDisabled}
+            className="mt-1 mr-2 disabled:cursor-not-allowed"
           required
         />
-        <label htmlFor="agreeToTerms" className="text-sm text-gray-700">
+          <label htmlFor="agreeToTerms" className={`text-sm ${isFormDisabled ? "text-gray-400" : "text-gray-700"}`}>
           I agree to the terms and conditions
         </label>
+        </div>
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || isFormDisabled}
         className="w-full rounded-lg bg-blue-600 text-white py-2 font-medium hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {loading ? "Creating account..." : "Sign up"}

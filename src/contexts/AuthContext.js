@@ -66,6 +66,8 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
+    // Redirect immediately to prevent flash of login page
+    window.location.href = '/';
     
     try { await authSignOut(); } catch (e) { console.warn("signOut failed:", e); }
 

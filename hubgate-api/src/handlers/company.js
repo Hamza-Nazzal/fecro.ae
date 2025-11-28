@@ -47,7 +47,7 @@ export async function createCompany(req, env, acao) {
       company_id: company.id,
       user_id: user.id,
       track: "procurement",
-      role_level: 30,
+      role_level: 10,
     });
 
     return ok(

@@ -9,7 +9,16 @@ export async function listSellerRFQs(req, env, acao) {
   // Auth check (same pattern as buyerRfq.js)
   const authCheck = await requireUser(req, env);
   if (!authCheck.ok) return authCheck.res;
-  const sellerCompanyId = authCheck.user.app_metadata.company_id;
+  const sellerCompanyId = authCheck.user.company_id;
+
+  // Validate that sellerCompanyId exists
+  if (!sellerCompanyId) {
+    return jsonResponse(
+      { error: "missing_company_id", message: "User must be associated with a company" },
+      403,
+      acao
+    );
+  }
 
   const url = new URL(req.url);
 
