@@ -22,6 +22,7 @@ import Signup from './pages/Signup';
 import AcceptInvite from './pages/AcceptInvite';
 import CompanyOnboarding from './pages/CompanyOnboarding';
 import { getMe } from './services/worker/workerCompany';
+import HomePage from './pages/HomePage';
 
 // NEW
 import ToastProvider from "./components/Toasts.jsx";
@@ -118,7 +119,7 @@ export default function App() {
           <ToastProvider>
             <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Navigate to="/start" replace />} />
+              <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/accept-invite" element={<AcceptInvite />} />

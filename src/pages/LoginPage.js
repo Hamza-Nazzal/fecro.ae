@@ -19,7 +19,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(email.trim(), password);
-      navigate("/");
+      navigate("/start");
     } catch (e) {
       setErr(e?.message || "Sign-in failed");
     } finally {
