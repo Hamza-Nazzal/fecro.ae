@@ -72,6 +72,7 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
             first_name: firstName.trim(),
             last_name: lastName.trim(),
             phone: phone.trim(),
+            ...(role ? { roles: [role] } : {}),
           },
         },
       });
@@ -80,11 +81,24 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
         throw signUpError;
       }
 
-      if (!data?.user) {
+      const user = data?.user ?? null;
+      const session = data?.session ?? null;
+
+      if (!user) {
         throw new Error("Sign up failed - no user returned");
       }
 
-      // Set the role after successful signup
+      // If no session, email confirmation is required
+      if (!session) {
+        // Email confirmation is required: account is created but no session yet.
+        // Do NOT try to set roles or call onSuccess here.
+        setError(
+          "Account created. Please check your email to confirm your address, then log in from the login page."
+        );
+        return; // let finally { setLoading(false) } run
+      }
+
+      // Set the role after successful signup (only if we have a session)
       if (role) {
         try {
           await setRoles([role]);
@@ -94,9 +108,9 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
         }
       }
 
-      // Call onSuccess callback with user
+      // Call onSuccess callback with user (only if we have a session)
       if (onSuccess) {
-        await onSuccess(data.user);
+        await onSuccess(user);
       }
     } catch (err) {
       setError(err?.message || "Sign up failed. Please try again.");

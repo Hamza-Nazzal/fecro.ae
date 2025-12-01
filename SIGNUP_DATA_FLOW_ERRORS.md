@@ -248,6 +248,107 @@ const handleSignupSuccess = async (user) => {
 
 This confirms the issue is **not role-specific** but affects **all signup flows** due to the session timing race condition.
 
+---
+
+## Retest Results (Second Round)
+
+### Buyer Signup Flow - Retest
+- **Tested on**: http://localhost:3000/signup?role=buyer
+- **Test Data**: testbuyer2@example.com
+- **Date**: 2025-01-27 (Retest)
+- **Errors Found**: ✅ Errors persist but with different messages
+
+**Error Messages (Retest)**:
+```
+[ERROR] Failed to set role: Error: No active session after waiting
+[ERROR] Error fetching session for worker API: Error: No active session after waiting
+[ERROR] Error checking company after signup: Error: No active session after waiting
+```
+
+**Analysis**: 
+- Error messages changed from `AuthSessionMissingError` to `No active session after waiting`
+- This suggests retry logic was added, but it's still failing
+- The root cause remains the same: session not available immediately after signup
+- Final redirect: `/login` (same as before)
+
+### Seller Signup Flow - Retest
+- **Tested on**: http://localhost:3000/signup?role=seller
+- **Test Data**: testseller2@example.com
+- **Date**: 2025-01-27 (Retest)
+- **Status**: ⚠️ Signup appears to hang on "Creating account..." state
+- **Errors Found**: No console errors visible (may be stuck in processing)
+
+**Analysis**:
+- Seller signup did not complete within observation window
+- Possible causes:
+  - Email already exists from previous test
+  - Network timeout
+  - Different error handling path
+- Needs further investigation
+
+**Conclusion (Retest)**:
+- Buyer flow: Errors persist with improved error messages (retry logic visible)
+- Seller flow: Incomplete test - signup appears stuck
+- **Root cause unchanged**: Session timing race condition still exists
+- Code may have been updated to add retry logic, but fundamental issue remains
+
+---
+
+## Third Test Round - ✅ SUCCESS!
+
+### Buyer Signup Flow - Third Test
+- **Tested on**: http://localhost:3000/signup?role=buyer
+- **Test Data**: testbuyer3@example.com
+- **Date**: 2025-01-27 (Third Test)
+- **Status**: ✅ **SUCCESS - NO ERRORS**
+
+**Results**:
+- ✅ Signup completed successfully
+- ✅ No console errors
+- ✅ Success message displayed: "Account created. Please check your email to confirm your address, then log in from the login page."
+- ✅ No `AuthSessionMissingError`
+- ✅ No `401 missing_bearer` errors
+- ✅ Clean console output
+
+**Analysis**: 
+- The signup flow now handles email confirmation properly
+- Code appears to have been updated to defer role setting and company checks until after email confirmation
+- User is shown appropriate message to check email for confirmation
+
+### Seller Signup Flow - Third Test
+- **Tested on**: http://localhost:3000/signup?role=seller
+- **Test Data**: testseller3@example.com
+- **Date**: 2025-01-27 (Third Test)
+- **Status**: ✅ **SUCCESS - NO ERRORS**
+
+**Results**:
+- ✅ Signup completed successfully
+- ✅ No console errors
+- ✅ Success message displayed: "Account created. Please check your email to confirm your address, then log in from the login page."
+- ✅ No `AuthSessionMissingError`
+- ✅ No `401 missing_bearer` errors
+- ✅ Clean console output
+
+**Analysis**:
+- Seller flow now works identically to buyer flow
+- No role-specific issues
+- Proper handling of email confirmation requirement
+
+**Conclusion (Third Test)**:
+- ✅ **Both buyer and seller signup flows now work correctly**
+- ✅ **No errors in console or network requests**
+- ✅ **Proper email confirmation flow implemented**
+- ✅ **Issues from previous tests appear to be resolved**
+
+**What Changed**:
+The codebase appears to have been updated to:
+1. Handle email confirmation requirement properly
+2. Defer role setting until after email confirmation
+3. Defer company checks until after email confirmation
+4. Show appropriate user messaging for email confirmation flow
+
+---
+
 ## Next Steps
 
 1. Implement Fix 3 (Auth State Change Listener) - most robust
