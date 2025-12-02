@@ -365,13 +365,19 @@ const RFQ_VALID_LABELS = {
             {currentStep === 1 && (
               <button
                 onClick={addOrUpdateItem}
-                disabled={!canSaveItem()}
+                disabled={!canSaveItem() || items.length >= 50}
                 className={`px-6 py-3 border-2 rounded-lg font-medium transition-colors ${
-                  canSaveItem()
+                  canSaveItem() && items.length < 50
                     ? "border-blue-600 text-blue-600 hover:bg-blue-50"
                     : "border-gray-300 text-gray-400 cursor-not-allowed"
                 }`}
-                title={!canSaveItem() ? "Add name, select category, and quantity" : ""}
+                title={
+                  !canSaveItem() 
+                    ? "Add name, select category, and quantity" 
+                    : items.length >= 50 
+                    ? "Maximum of 50 items allowed per RFQ" 
+                    : ""
+                }
               >
                 Save & Add Another
               </button>

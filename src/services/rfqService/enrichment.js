@@ -12,6 +12,8 @@ import {
   buildSummaryEntry,
 } from "../../utils/rfq/sanitizers";
 
+const MAX_RFQ_ITEMS = 50; // Maximum items stored in itemsSummary per RFQ
+
 // Coalesce identical concurrent calls by params signature (same as reads.js)
 const __inflight = new Map(); // key -> Promise
 function __keyFor(params) {
@@ -107,7 +109,7 @@ function __keyFor(params) {
       const summaryEntry = buildSummaryEntry(item, specEntries);
       if (summaryEntry) {
         const summary = summaryMap.get(rfqId) || [];
-        if (summary.length < 5) {
+        if (summary.length < MAX_RFQ_ITEMS) {
           summary.push(summaryEntry);
           summaryMap.set(rfqId, summary);
         }

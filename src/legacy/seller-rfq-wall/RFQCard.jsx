@@ -190,10 +190,10 @@ export default function RFQCard({ rfq = null, dense = false, audience = "buyer",
                 const catPath = itemCat || rfqCat; // fallback to RFQ-level path
                 const categoryTail = catPath ? catPath.split(" > ").pop() : "";
 
-                // Specs formatting (limit to first two entries)
+                // Specs formatting (limit to first 10 entries)
                 const specsList = normalizeSpecsInput(it?.specifications);
                 const specsText = specsList
-                  .slice(0, 2)
+                  .slice(0, 10)
                   .map((spec) => {
                     const label = (spec.key_label || spec.key_norm || "").trim();
                     const value = (spec.value ?? "").toString().trim();

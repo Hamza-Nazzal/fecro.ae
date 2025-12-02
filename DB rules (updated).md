@@ -203,6 +203,103 @@ A7) Audit & Event Logs
 	•	RLS enabled; policy allows SELECT/INSERT/UPDATE/DELETE only for auth.role() = 'service_role'.
 
 
+A8) Quotations & Items — Tables & Views
+
+14. Quotations core tables
+
+	•	quotations
+		•	Identity & links:
+			•	id uuid primary key
+			•	rfq_id uuid references public.rfqs(id)
+			•	seller_id uuid references auth.users(id)
+			•	seller_company_id uuid references public.companies(id)
+			•	created_by_membership_id uuid references public.company_memberships(id)
+		•	Commercials:
+			•	currency text default 'AED'
+			•	total_price numeric not null
+			•	delivery_timeline_days integer
+			•	validity_days integer
+			•	payment_terms text
+			•	shipping_terms text
+			•	notes text
+			•	internal_reference text (seller’s internal code, optional)
+			•	seller_company text (denormalized name for display)
+		•	Status & timeline:
+			•	status text default 'draft'  -- e.g. 'draft', 'submitted', 'accepted', 'rejected', 'withdrawn', 'expired'
+			•	submitted_at timestamptz
+			•	expires_at timestamptz
+			•	created_at timestamptz default now()
+			•	updated_at timestamptz default now()
+		•	Indexes:
+			•	quotations_pkey on (id)
+			•	idx_quotations_rfq_id on (rfq_id)
+			•	idx_quotations_seller_id / quotations_seller_id_idx on (seller_id)
+			•	idx_quotes_seller_company on (seller_company_id)
+			•	idx_quotes_created_by_membership on (created_by_membership_id)
+			•	quotations_status_idx on (status)
+			•	quotations_rfq_updated_idx on (rfq_id, updated_at desc)
+		•	Lifecycle (current behavior):
+			•	status is a plain text field with no DB-enforced state machine.
+			•	No trigger currently auto-closes RFQs when a quotation is accepted.
+			•	No trigger currently auto-expires quotations when expires_at passes.
+			•	These transitions are driven by the app/service layer (or are not yet implemented).
+
+	•	quotation_items
+		•	Links:
+			•	id uuid primary key
+			•	quotation_id uuid not null references public.quotations(id)
+			•	rfq_item_id uuid references public.rfq_items(id)
+		•	Commercials per item:
+			•	unit_price numeric not null
+			•	unit text not null
+			•	qty_offer numeric not null
+			•	discount_type text
+			•	discount_value numeric default 0
+			•	warranty_months integer default 0
+			•	created_at timestamptz default now()
+			•	updated_at timestamptz default now()
+		•	Usage:
+			•	One row per RFQ item quoted.
+			•	Used to reconstruct line items in the buyer/seller quotation views.
+
+	•	quotation_item_specs
+		•	Links:
+			•	id uuid primary key
+			•	quotation_id uuid not null references public.quotations(id)
+			•	rfq_item_id uuid references public.rfq_items(id)
+			•	rfq_spec_id uuid references public.rfq_item_specs(id)
+		•	Spec fields:
+			•	key_norm text not null
+			•	key_label text not null
+			•	value text not null
+			•	unit text null
+			•	source text not null (enum-type: buyer/seller/etc.)
+			•	decision text not null (enum-type: included/excluded/custom/etc.)
+			•	sort_order integer
+		•	Audit:
+			•	created_at timestamptz default now()
+			•	updated_at timestamptz default now()
+			•	created_by uuid
+			•	unique_key text (optional safety belt for idempotency)
+
+15. Quotation spec views
+
+	•	public.v_quotation_item_specs_included
+		•	Projection:
+			•	quotation_id, rfq_item_id, key_norm, key_label, value, unit, source
+		•	Purpose:
+			•	Read-only view of “included” quotation specs, used when showing confirmed or included specs to buyers/sellers.
+			•	SECURITY INVOKER; inherits RLS from underlying tables.
+
+	•	public.v_quotation_item_specs_seller
+		•	Projection:
+			•	quotation_id, rfq_item_id, rfq_spec_id, key_norm, key_label, value, unit, source, decision
+		•	Purpose:
+			•	Seller-side view of specs, including decision flags (e.g. included/excluded/alternative).
+			•	SECURITY INVOKER; inherits RLS from underlying tables.
+
+⸻
+
 Part 1 — Products & Categories (Taxonomy)
 
 We maintain two taxonomies in one table (public.categories):
@@ -538,6 +635,15 @@ Note:
 	•	Visibility derived from rfqs via FK and RLS.
 	•	rfq_item_specs:
 	•	Inherits visibility via rfq_items.
+	•	quotations:
+	•	Sellers: full CUD (INSERT/UPDATE/DELETE) restricted to seller_id = auth.uid() via quotations_cud_owner.
+	•	Buyers: SELECT via quotations_select_parties, which allows access when rfqs.user_id = auth.uid() (buyer sees only quotations for RFQs they own).
+	•	Inserts: guarded by quotations_insert_not_same_company to ensure rfqs.buyer_company_id IS DISTINCT FROM quotations.seller_company_id (no self-quoting).
+	•	quotation_items:
+	•	Sellers: SELECT/INSERT/UPDATE/DELETE allowed only when the parent quotation.seller_id = auth.uid() via qi_seller_* policies.
+	•	Buyers: SELECT allowed via qi_buyer_select, which checks that the parent RFQ is owned by auth.uid() through rfqs.user_id.
+	•	quotation_item_specs:
+	•	Exposed via SECURITY INVOKER views (v_quotation_item_specs_included, v_quotation_item_specs_seller) that inherit RLS from quotations/quotation_items and the RFQ ownership rules.
 	•	companies, company_memberships, company_invites:
 	•	Writes restricted to service_role via Worker endpoints.
 	•	SELECT for end-users is either minimal or proxied through Worker, depending on feature needs.

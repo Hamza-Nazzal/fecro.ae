@@ -86,12 +86,25 @@ export default function RFQCard({ rfq = null,
   const itemsSummary = Array.isArray(safeRfq.itemsSummary) ? safeRfq.itemsSummary : null;
   const itemsPreview = Array.isArray(safeRfq.itemsPreview) ? safeRfq.itemsPreview : [];
 
-  const maxItems = 2; // show up to 2 items per card
-  const shownSummary = itemsSummary ? itemsSummary.slice(0, maxItems) : [];
-  const shownPreview = !itemsSummary ? itemsPreview.slice(0, maxItems) : [];
+  const CARD_PREVIEW_LIMIT = 10; // UI preview limit: show only first 10 items in card
+  const allItems = itemsSummary || itemsPreview;
+  const previewItems = allItems.slice(0, CARD_PREVIEW_LIMIT);
+  
+  // Use backend overflow count if available, otherwise calculate from array length
+  const backendOverflowCount = typeof safeRfq.itemsOverflowCount === "number" 
+    ? safeRfq.itemsOverflowCount 
+    : typeof safeRfq.items_overflow_count === "number"
+    ? safeRfq.items_overflow_count
+    : null;
+  const extraCount = backendOverflowCount !== null 
+    ? backendOverflowCount 
+    : Math.max(0, allItems.length - CARD_PREVIEW_LIMIT);
+  
+  // For backward compatibility with existing rendering logic
+  const shownSummary = itemsSummary ? itemsSummary.slice(0, CARD_PREVIEW_LIMIT) : [];
+  const shownPreview = !itemsSummary ? itemsPreview.slice(0, CARD_PREVIEW_LIMIT) : [];
   const totalItems = itemsSummary ? itemsSummary.length : itemsPreview.length;
-  const overflowCount =
-    Math.max(0, totalItems - (itemsSummary ? shownSummary.length : shownPreview.length));
+  const overflowCount = extraCount;
   // [SHARED] END
 
   // [SHARED] START
@@ -204,20 +217,19 @@ export default function RFQCard({ rfq = null,
                             ? it.quantity
                             : null;
 
-                        // Specs formatting (limit to first two entries)
+                        // Specs formatting (limit to first 10 entries)
                         const specsList = normalizeSpecsInput(it?.specifications);
-                        const specsText = specsList
-                          .slice(0, 2)
+                        const specPairs = specsList
+                          .slice(0, 10)
                           .map((spec) => {
                             const label = (spec.key_label || spec.key_norm || "").trim();
                             const value = (spec.value ?? "").toString().trim();
                             const unit = (spec.unit ?? "").toString().trim();
                             if (!label || !value) return null;
                             const display = unit ? `${value} ${unit}`.trim() : value;
-                            return display ? `${label}=${display}` : null;
+                            return display ? `${label}: ${display}` : null;
                           })
-                          .filter(Boolean)
-                          .join(" | ");
+                          .filter(Boolean);
 
                         return (
                           <div key={`item-sum-${it.originalIndex}`} className="relative">
@@ -237,9 +249,19 @@ export default function RFQCard({ rfq = null,
                                 </div>
                               )}
 
-                              {/* Line 3: Specs (up to 2 pairs) */}
-                              {!!specsText && (
-                                <div className="text-xs text-slate-600 mt-1">Specs: {specsText}</div>
+                              {/* Line 3: Specs as pills (up to 10 pairs) */}
+                              {specPairs.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                  {specPairs.map((txt, i) => (
+                                    <span
+                                      key={`spec-${it.originalIndex}-${i}`}
+                                      className="inline-block bg-slate-100 border border-slate-200 rounded-full px-2 py-0.5 text-xs text-slate-700"
+                                      title={txt}
+                                    >
+                                      {txt}
+                                    </span>
+                                  ))}
+                                </div>
                               )}
                             </div>
                           </div>
@@ -251,7 +273,11 @@ export default function RFQCard({ rfq = null,
               })()}
 
               {overflowCount > 0 && (
-                <div className="text-xs text-slate-500 italic mt-2">+{overflowCount} more items</div>
+                <div className="mt-2">
+                  <span className="inline-block bg-blue-100 border border-blue-300 rounded-full px-3 py-1 text-xs font-bold text-blue-700">
+                    +{overflowCount} more items
+                  </span>
+                </div>
               )}
             </div>
           )
@@ -275,8 +301,8 @@ export default function RFQCard({ rfq = null,
                   );
                 })}
                 {overflowCount > 0 && (
-                  <span className="inline-block px-2 py-1 text-xs text-slate-500 bg-slate-100 border rounded">
-                    +{overflowCount} more
+                  <span className="inline-block bg-blue-100 border border-blue-300 rounded-full px-3 py-1 text-xs font-bold text-blue-700">
+                    +{overflowCount} more items
                   </span>
                 )}
               </div>

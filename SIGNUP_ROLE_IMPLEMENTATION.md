@@ -66,3 +66,4 @@ await onSuccess(data.user);
 - The role will be stored in `user_metadata.roles` just like the current RoleChooser does
 - Existing routing logic in `App.js` will automatically use the role
 
+

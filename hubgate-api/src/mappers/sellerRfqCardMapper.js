@@ -25,6 +25,8 @@ export function mapSellerRfqCard(row = {}) {
     itemsCount: Number(row.items_count ?? 0),
     itemsPreview: Array.isArray(row.items_preview) ? row.items_preview : [],
     itemsSummary: Array.isArray(row.items_summary) ? row.items_summary : [],
+    itemsTotalCount: typeof row.items_total_count === "number" ? row.items_total_count : null,
+    itemsOverflowCount: typeof row.items_overflow_count === "number" ? row.items_overflow_count : null,
     // Pass through raw fields for backward compatibility
     company_city: companyCity,
     company_state: companyState,

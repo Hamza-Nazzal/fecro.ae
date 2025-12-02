@@ -1,5 +1,9 @@
 // src/utils/rfq/sanitizers.js
 
+import { normalizeSpecsInput } from "./rfqSpecs";
+
+const MAX_RFQ_ITEMS = 50; // Maximum items kept when sanitizing RFQ items
+
 // ---- getSellerRfqId (exact) ----
 export function getSellerRfqId(row) {
   return row?.seller_rfq_id || null;
@@ -54,7 +58,7 @@ export function sanitizeItemsPreview(values) {
 // - name fallback: entry.name/title/productName/item → "Item"
 // - qty: numeric > 0 only
 // - categoryPath: entry.categoryPath/category_path/category OR fallback param
-// - specifications: object map of up to 2 normalized specs (label → "value unit?")
+// - specifications: object map of up to 10 normalized specs (label → "value unit?")
 export function sanitizeItemsSummary(entries, fallbackCategoryPath = "") {
   if (!Array.isArray(entries)) return [];
   const out = [];
@@ -64,7 +68,7 @@ export function sanitizeItemsSummary(entries, fallbackCategoryPath = "") {
       : String(fallbackCategoryPath ?? "").trim();
 
   for (const entry of entries) {
-    if (!entry || out.length >= 5) break;
+    if (!entry || out.length >= MAX_RFQ_ITEMS) break;
 
     const nameCandidates = [entry?.name, entry?.title, entry?.productName, entry?.item];
     let name = nameCandidates
@@ -87,7 +91,7 @@ export function sanitizeItemsSummary(entries, fallbackCategoryPath = "") {
 
     const specsList = normalizeSpecsInput(entry?.specifications);
     const normalizedSpecs = {};
-    for (const spec of specsList.slice(0, 2)) {
+    for (const spec of specsList.slice(0, 10)) {
       const label = (spec.key_label ?? spec.key_norm ?? "").toString().trim();
       const value = (spec.value ?? "").toString().trim();
       if (!label || !value) continue;
@@ -100,12 +104,6 @@ export function sanitizeItemsSummary(entries, fallbackCategoryPath = "") {
     out.push(summary);
   }
   return out;
-}
-
-// Helper used by sanitizeItemsSummary (exact semantics)
-function normalizeSpecsInput(specsMaybeArray) {
-  const arr = Array.isArray(specsMaybeArray) ? specsMaybeArray : [];
-  return arr.filter(Boolean);
 }
 
 // ---- sanitizeQuotationsCount (exact) ----
@@ -153,8 +151,8 @@ export function toSpecEntries(source = []) {
 }
 
 // ---- buildSpecRecord (exact) ----
-// Takes entries (or rows), returns object map of up to 2 specs: { label: value }
-export function buildSpecRecord(entries = [], limit = 2) {
+// Takes entries (or rows), returns object map of up to 10 specs: { label: value }
+export function buildSpecRecord(entries = [], limit = 10) {
   const record = {};
   let count = 0;
   for (const entry of toSpecEntries(entries)) {

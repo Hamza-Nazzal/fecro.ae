@@ -43,7 +43,13 @@ function resolveRfqLocation(rfq = {}) {
  * { items, orderDetails, meta } for ReviewStep.
  */
 function mapItemsFromRfq(rfq = {}) {
-  const summary = Array.isArray(rfq.itemsSummary) ? rfq.itemsSummary : [];
+  // Prefer rfq.items if it exists and has length, otherwise fall back to itemsSummary
+  const itemsSource =
+    rfq.items && rfq.items.length > 0
+      ? rfq.items
+      : rfq.itemsSummary || rfq.itemsPreview || [];
+  
+  const summary = Array.isArray(itemsSource) ? itemsSource : [];
 
   if (!summary.length) {
     return [];
@@ -59,6 +65,7 @@ function mapItemsFromRfq(rfq = {}) {
 
     const name =
       it.name ||
+      it.productName ||
       it.title ||
       it.item_name ||
       (typeof it === "string" ? it : "Product");
@@ -71,6 +78,7 @@ function mapItemsFromRfq(rfq = {}) {
         : 1;
 
     // Specs → { label, value }[]
+    // Handle both array format (from rfq.items) and object format (from itemsSummary)
     const specsList = normalizeSpecsInput(it.specifications);
     const specs =
       specsList

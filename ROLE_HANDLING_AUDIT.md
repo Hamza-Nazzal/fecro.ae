@@ -150,3 +150,4 @@ Based on the bug report (`1@1.com` has `"roles": ["seller"]` but should be buyer
 5. **`src/pages/RoleChooser.jsx`** – Check if user could have manually selected wrong role
 6. **`src/App.js`** – Verify routing logic doesn't have bugs in role checking
 
+

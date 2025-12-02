@@ -54,8 +54,9 @@ export default function MiniCart({ items, onEdit, onDuplicate, onRemove }) {
                   </button>
                   <button
                     onClick={() => onDuplicate(item.id)}
-                    className="text-gray-600 hover:text-gray-800"
-                    title="Duplicate"
+                    disabled={items.length >= 50}
+                    className={items.length >= 50 ? "text-gray-300 cursor-not-allowed" : "text-gray-600 hover:text-gray-800"}
+                    title={items.length >= 50 ? "Maximum of 50 items allowed per RFQ" : "Duplicate"}
                   >
                     <Copy className="h-3 w-3" />
                   </button>

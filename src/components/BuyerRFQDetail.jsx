@@ -9,6 +9,7 @@ import {
   listQuotationsForRFQ, acceptQuotation, rejectQuotation,
 } from "../services/quotationsService";
 import { useToast } from "./Toasts.jsx";
+import { normalizeSpecsInput } from "../utils/rfq/rfqSpecs";
 
 function Chip({ icon: Icon, children }) {
   return <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs bg-slate-100 text-slate-700">{Icon ? <Icon className="w-3 h-3" /> : null}{children}</span>;
@@ -22,12 +23,52 @@ function StatusBadge({ status }) {
   return status ? <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium uppercase ${map[status] || map.pending}`}>{String(status).toUpperCase()}</span> : null;
 }
 function ItemRow({ item }) {
+  // Normalize specs to array format (handles both object and array)
+  const specsList = normalizeSpecsInput(item?.specifications);
+  
   return (
-    <div className="grid grid-cols-12 items-center gap-3 rounded-lg border border-slate-100 bg-white p-2">
-      <div className="col-span-5 flex items-center gap-2 truncate"><Package className="w-4 h-4 text-slate-500" /><span className="truncate font-medium">{item.name}</span></div>
-      <div className="col-span-2 text-slate-700"><span className="font-medium">{item.quantity}</span><span className="ml-1 text-slate-500">{item.unit}</span></div>
-      <div className="col-span-4 truncate text-slate-600">{item.categoryPath || "—"}</div>
-      <div className="col-span-1 flex justify-end"><Chip icon={Tag}>{item.attrsCount ?? 0}</Chip></div>
+    <div className="rounded-lg border border-slate-100 bg-white p-2">
+      <div className="grid grid-cols-12 items-center gap-3">
+        <div className="col-span-5 flex items-center gap-2 truncate">
+          <Package className="w-4 h-4 text-slate-500" />
+          <span className="truncate font-medium">{item.name || item.productName || "—"}</span>
+        </div>
+        <div className="col-span-2 text-slate-700">
+          <span className="font-medium">{item.quantity || item.qty || "—"}</span>
+          {item.unit && <span className="ml-1 text-slate-500">{item.unit}</span>}
+        </div>
+        <div className="col-span-4 truncate text-slate-600">{item.categoryPath || item.category_path || "—"}</div>
+        <div className="col-span-1 flex justify-end">
+          {specsList.length > 0 ? (
+            <Chip icon={Tag}>{specsList.length}</Chip>
+          ) : (
+            <Chip icon={Tag}>0</Chip>
+          )}
+        </div>
+      </div>
+      {/* Spec chips (same style as RFQCard pattern) */}
+      {specsList.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {specsList.map((attr, idx) => {
+            const label = attr.key_label || attr.keyLabel || attr.key_norm || "";
+            const value = attr.value || "";
+            const unit = attr.unit || "";
+            if (!label || !value) return null;
+            return (
+              <span
+                key={attr.key_norm || idx}
+                className="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 border border-slate-200"
+              >
+                <span className="font-medium">{label}:</span>
+                <span className="ml-1">
+                  {value}
+                  {unit ? ` ${unit}` : ""}
+                </span>
+              </span>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -130,7 +171,31 @@ export default function BuyerRFQDetail() {
             <div className="grid grid-cols-12 items-center gap-3 text-xs uppercase tracking-wide text-slate-500">
               <div className="col-span-5">Item</div><div className="col-span-2">Qty</div><div className="col-span-4">Category</div><div className="col-span-1 text-right">Specs</div>
             </div>
-            <div className="mt-2 space-y-2">{(rfq.items || []).map((it, i) => <ItemRow key={i} item={it} />)}</div>
+            {(() => {
+              // Prefer rfq.items if it exists and has length, otherwise fall back to itemsSummary
+              const itemsSource =
+                rfq.items && rfq.items.length > 0
+                  ? rfq.items
+                  : rfq.itemsSummary || rfq.itemsPreview || [];
+              const allItems = itemsSource || [];
+              const MAX_ITEMS = 50;
+              const shownItems = allItems.slice(0, MAX_ITEMS);
+              const overflowCount = Math.max(0, allItems.length - MAX_ITEMS);
+              return (
+                <>
+                  <div className="mt-2 space-y-2">
+                    {shownItems.map((it, i) => (
+                      <ItemRow key={it.id || it.originalIndex || i} item={it} />
+                    ))}
+                  </div>
+                  {overflowCount > 0 && (
+                    <div className="mt-2 text-xs text-slate-500 italic text-center py-2">
+                      +{overflowCount} more item{overflowCount === 1 ? "" : "s"} (showing first {MAX_ITEMS} of {allItems.length})
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </section>
 
           {rfq.notes && (

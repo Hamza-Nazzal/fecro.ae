@@ -684,3 +684,4 @@ await supabase.auth.signUp({
 - Queue/defer `setRoles` and `getMe` until session is confirmed ready
 - Use event-driven approach with polling fallback for reliability
 
+

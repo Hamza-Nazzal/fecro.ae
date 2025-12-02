@@ -62,7 +62,16 @@ async function fetchItemsPreviewData(env, rfqIds = []) {
     // Build preview and summary maps
     const previewMap = new Map();
     const summaryMap = new Map();
+    const itemsCountMap = new Map(); // Track total items per RFQ
 
+    // First pass: count total items per RFQ
+    for (const item of items) {
+      if (!item?.rfq_id) continue;
+      const rfqId = item.rfq_id;
+      itemsCountMap.set(rfqId, (itemsCountMap.get(rfqId) || 0) + 1);
+    }
+
+    // Second pass: build preview and summary (limit to 10 items)
     for (const item of items) {
       if (!item?.rfq_id) continue;
       const rfqId = item.rfq_id;
@@ -84,8 +93,8 @@ async function fetchItemsPreviewData(env, rfqIds = []) {
         specifications: {},
       };
       
-      // Add first 2 specs
-      for (const spec of specRows.slice(0, 2)) {
+      // Add first 10 specs
+      for (const spec of specRows.slice(0, 10)) {
         const label = (spec.key_label || spec.key_norm || "").trim();
         const value = (spec.value || "").toString().trim();
         if (label && value) {
@@ -95,13 +104,13 @@ async function fetchItemsPreviewData(env, rfqIds = []) {
       }
 
       const summary = summaryMap.get(rfqId) || [];
-      if (summary.length < 5) {
+      if (summary.length < 10) {
         summary.push(summaryEntry);
         summaryMap.set(rfqId, summary);
       }
     }
 
-    return { previewMap, summaryMap };
+    return { previewMap, summaryMap, itemsCountMap };
   } catch {
     return { previewMap: new Map(), summaryMap: new Map() };
   }
@@ -134,6 +143,7 @@ export async function enrichRfqCardRows(env, rows = []) {
 
   const previewMap = itemsData?.previewMap instanceof Map ? itemsData.previewMap : new Map();
   const summaryMap = itemsData?.summaryMap instanceof Map ? itemsData.summaryMap : new Map();
+  const itemsCountMap = itemsData?.itemsCountMap instanceof Map ? itemsData.itemsCountMap : new Map();
 
   // Enrich each row
   return rows.map((row) => {
@@ -163,6 +173,18 @@ export async function enrichRfqCardRows(env, rows = []) {
       }));
       
       next.items_summary = enriched;
+    }
+
+    // Add items_total_count and items_overflow_count if we have item count data
+    if (id && itemsCountMap.has(id)) {
+      const totalItems = itemsCountMap.get(id);
+      const shownItems = Array.isArray(next.items_summary) ? next.items_summary.length : 0;
+      const overflowCount = Math.max(0, totalItems - shownItems);
+      
+      next.items_total_count = totalItems;
+      if (overflowCount > 0) {
+        next.items_overflow_count = overflowCount;
+      }
     }
 
     return next;
