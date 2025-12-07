@@ -1,10 +1,16 @@
 // src/components/BuyerQuotationsViewer.jsx
-//src/components/BuyerQuotationsViewer.jsx
-import React, { useState } from "react";
+// This component is used to display the quotations for a given RFQ.
+// It is used in the BuyerRFQDetail component.
+// It is used to display the quotations for a given RFQ.
+// It is used in the BuyerRFQDetail component.
+
+import React, { useState, useMemo, useCallback } from "react";
 import { useOnceEffect } from "../hooks/useOnceEffect";
 import { X, AlertCircle, DollarSign, Clock, Package } from "lucide-react";
-import { listQuotations, updateQuotation } from "../services/quotationsService";
+import { listQuotationsForRFQ, updateQuotation } from "../services/quotationsService";
+import { quotationDbToJs } from "../utils/mappers";
 import QuotationViewer from "./QuotationViewer";
+import BuyerRFQQuotationsPreview from "./BuyerRFQQuotationsPreview";
 
 // ---------- Quotation Card ----------
 function QuotationCard({ quotation, onView, onAccept, onReject }) {
@@ -108,8 +114,21 @@ export default function BuyerQuotationsViewer({ rfq, onClose }) {
   const [error, setError] = useState("");
   const [viewingQuotation, setViewingQuotation] = useState(null);
 
-  const loadQuotations = async () => {
-    if (!rfq?.id) {
+  // Resolve RFQ identifier in the same way we use it when navigating
+  // in BuyerRFQsInline (id || publicId)
+  const rfqId = useMemo(
+    () =>
+      rfq?.id ??
+      rfq?.rfqId ??
+      rfq?.rfq_id ??
+      rfq?.publicId ??
+      rfq?.public_id ??
+      null,
+    [rfq?.id, rfq?.rfqId, rfq?.rfq_id, rfq?.publicId, rfq?.public_id]
+  );
+
+  const loadQuotations = useCallback(async () => {
+    if (!rfqId) {
       setQuotations([]);
       setLoading(false);
       return;
@@ -118,20 +137,20 @@ export default function BuyerQuotationsViewer({ rfq, onClose }) {
     setLoading(true);
     setError("");
     try {
-      // Fetch only quotations for this RFQ (faster, less memory)
-      const data = await listQuotations({ rfq_id: rfq.id });
+      const rows = await listQuotationsForRFQ(rfqId);
+      const data = (rows || []).map(quotationDbToJs);
       setQuotations(data || []);
     } catch (e) {
       setError(e?.message || "Failed to load quotations");
     } finally {
       setLoading(false);
     }
-  };
+  }, [rfqId]);
 
   // StrictMode-safe effect (fires once per deps change in dev)
   useOnceEffect(() => {
     loadQuotations();
-  }, [rfq?.id]);
+  }, [loadQuotations]);
 
   const handleView = (quotation) => setViewingQuotation(quotation);
 
@@ -195,6 +214,14 @@ export default function BuyerQuotationsViewer({ rfq, onClose }) {
                 </button>
               </div>
 
+              {/* Quotations preview block */}
+              <BuyerRFQQuotationsPreview
+                rfq={rfq}
+                quotations={quotations}
+                onViewQuotation={(quotation) => setViewingQuotation(quotation)}
+              />
+
+              {/* Existing cards list with Accept / Reject controls */}
               {quotations.map((quotation) => (
                 <QuotationCard
                   key={quotation.id}
@@ -211,7 +238,11 @@ export default function BuyerQuotationsViewer({ rfq, onClose }) {
 
       {/* Quotation Detail Viewer */}
       {viewingQuotation && (
-        <QuotationViewer quotation={viewingQuotation} onClose={() => setViewingQuotation(null)} />
+        <QuotationViewer
+          quotation={viewingQuotation}
+          onClose={() => setViewingQuotation(null)}
+          userRole="buyer"
+        />
       )}
     </div>
   );

@@ -1,10 +1,72 @@
 // src/components/QuotationViewer.jsx
 //src/components/QuotationViewer.jsx
 import React from "react";
-import { X, Calendar, Package, Truck, FileText } from "lucide-react";
+import { X, Calendar, Package, Truck, FileText, Check } from "lucide-react";
+import {
+  expressInterestInQuotation,
+  fetchBuyerInterestForQuotation,
+  fetchSellerInterestForQuotation,
+  updateQuotationInterestStatus,
+} from "../services/quotationsService";
 
-export default function QuotationViewer({ quotation, onClose }) {
-  if (!quotation) return null;
+export default function QuotationViewer({ quotation, onClose, userRole }) {
+  // Buyer interest state (only used when userRole === "buyer")
+  const [interest, setInterest] = React.useState(null);
+  // interest shape: { status: "pending" | "approved" | "rejected" | ..., ... }
+  const [interestLoading, setInterestLoading] = React.useState(false);
+  const [interestError, setInterestError] = React.useState("");
+
+  // Seller interest state (only used when userRole === "seller")
+  const [sellerInterest, setSellerInterest] = React.useState(null);
+  const [sellerInterestLoading, setSellerInterestLoading] = React.useState(false);
+  const [sellerInterestError, setSellerInterestError] = React.useState("");
+
+  // Load current interest when viewer opens (buyer only)
+  React.useEffect(() => {
+    if (userRole !== "buyer") return;
+    if (!quotation?.id) return;
+
+    const rfqId = quotation?.rfqId || quotation?.rfq?.id || quotation?.rfq_id || null;
+
+    setInterestLoading(true);
+    setInterestError("");
+
+    fetchBuyerInterestForQuotation({
+      rfqId,
+      quotationId: quotation.id,
+    })
+      .then((result) => {
+        setInterest(result || null);
+      })
+      .catch((e) => {
+        setInterestError(e.message || "Failed to load interest state");
+      })
+      .finally(() => {
+        setInterestLoading(false);
+      });
+  }, [userRole, quotation?.id, quotation?.rfqId, quotation?.rfq?.id, quotation?.rfq_id]);
+
+  // Load seller interest when viewer opens (seller only)
+  React.useEffect(() => {
+    if (userRole !== "seller") return;
+    if (!quotation?.id) return;
+
+    setSellerInterestLoading(true);
+    setSellerInterestError("");
+
+    fetchSellerInterestForQuotation({
+      quotationId: quotation.id,
+    })
+      .then((result) => {
+        setSellerInterest(result || null);
+      })
+      .catch((e) => {
+        setSellerInterestError(e.message || "Failed to load buyer interest");
+      })
+      .finally(() => {
+        setSellerInterestLoading(false);
+      });
+  }, [userRole, quotation?.id]);
 
   const formatCurrency = (amount, currency = "AED") => {
     const numAmount = Number(amount) || 0;
@@ -21,6 +83,103 @@ export default function QuotationViewer({ quotation, onClose }) {
       minute: "2-digit",
     });
   };
+
+  const isAccepted = (quotation?.status || "").toLowerCase() === "accepted";
+
+  if (!quotation) {
+    return null;
+  }
+
+  // Handler for expressing interest
+  async function handleExpressInterest() {
+    if (userRole !== "buyer" || !quotation?.id) return;
+
+    setInterestLoading(true);
+    setInterestError("");
+
+    try {
+      const rfqId = quotation?.rfqId || quotation?.rfq?.id || quotation?.rfq_id || null;
+
+      const interestRow = await expressInterestInQuotation({
+        rfqId,
+        quotationId: quotation.id,
+      });
+
+      // After expressing interest, normalize into our local shape
+      if (interestRow) {
+        setInterest({
+          id: interestRow.id,
+          status: interestRow.status,
+          rfqId: interestRow.rfq_id || rfqId || null,
+          quotationId: interestRow.quotation_id || quotation.id,
+          createdAt: interestRow.created_at,
+          updatedAt: interestRow.updated_at,
+        });
+        // Dispatch event to notify other components of the interest update
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("quotationInterest:updated", { 
+            detail: { rfqId, quotationId: quotation.id } 
+          }));
+        }
+      }
+    } catch (e) {
+      setInterestError(e.message || "Failed to express interest");
+    } finally {
+      setInterestLoading(false);
+    }
+  }
+
+  // Handler for seller to approve interest
+  async function handleApproveInterest() {
+    if (!sellerInterest?.id) return;
+
+    setSellerInterestLoading(true);
+    setSellerInterestError("");
+
+    try {
+      const updated = await updateQuotationInterestStatus({
+        id: sellerInterest.id,
+        status: "approved",
+        resolutionNote: null,
+      });
+
+      setSellerInterest(updated);
+      // Dispatch event to notify other components of the interest update
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("quotationInterest:updated"));
+      }
+    } catch (e) {
+      setSellerInterestError(e.message || "Failed to approve interest");
+    } finally {
+      setSellerInterestLoading(false);
+    }
+  }
+
+  // Handler for seller to reject interest
+  async function handleRejectInterest() {
+    if (!sellerInterest?.id) return;
+
+    setSellerInterestLoading(true);
+    setSellerInterestError("");
+
+    try {
+      const updated = await updateQuotationInterestStatus({
+        id: sellerInterest.id,
+        status: "rejected",
+        resolutionNote: null,
+      });
+
+      setSellerInterest(updated);
+      // Dispatch event to notify other components of the interest update
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("quotationInterest:updated"));
+      }
+    } catch (e) {
+      setSellerInterestError(e.message || "Failed to reject interest");
+    } finally {
+      setSellerInterestLoading(false);
+    }
+  }
 
   const statusStyles = {
     draft: "bg-gray-100 text-gray-800",
@@ -41,6 +200,11 @@ export default function QuotationViewer({ quotation, onClose }) {
             <p className="text-sm text-gray-600 mt-1">
               {quotation.rfq?.sellerRfqId || "—"}
             </p>
+            {userRole === "seller" && quotation?.sellerQuoteRef && (
+              <p className="text-[11px] text-slate-500 mt-1">
+                Ref: {quotation.sellerQuoteRef}
+              </p>
+            )}
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
             <X size={20} />
@@ -68,6 +232,85 @@ export default function QuotationViewer({ quotation, onClose }) {
               <div className="text-sm text-gray-500">Total Price</div>
             </div>
           </div>
+
+          {/* Buyer Interest Block */}
+          {userRole === "buyer" && (
+            <div className="border-t pt-4">
+              {interestLoading ? (
+                <div className="text-xs text-gray-500">Checking interest…</div>
+              ) : interestError ? (
+                <div className="text-xs text-red-600">{interestError}</div>
+              ) : interest?.status === "pending" ? (
+                <div className="text-xs text-gray-600">
+                  You've requested to unlock this seller's contact details. Waiting for seller approval.
+                </div>
+              ) : interest?.status === "approved" ? (
+                <div className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-green-100 text-green-800">
+                  Contacts unlocked
+                </div>
+              ) : interest?.status === "rejected" ? (
+                <div className="text-xs text-gray-600">
+                  This seller declined to share contact details for this quotation.
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleExpressInterest}
+                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium border rounded-lg hover:bg-slate-50"
+                >
+                  I'm interested in this quotation
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Seller Interest Block */}
+          {userRole === "seller" && (
+            <div className="border-t pt-4">
+              {sellerInterestLoading ? (
+                <div className="text-xs text-gray-500">Checking buyer interest…</div>
+              ) : sellerInterestError ? (
+                <div className="text-xs text-red-600">{sellerInterestError}</div>
+              ) : !sellerInterest ? (
+                <div className="text-xs text-gray-500">
+                  No buyer interest requests yet for this quotation.
+                </div>
+              ) : sellerInterest.status === "pending" ? (
+                <div className="space-y-2">
+                  <div className="text-xs text-gray-600">
+                    A buyer is interested in this quotation and requested to unlock contact details.
+                  </div>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={handleApproveInterest}
+                      className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 mr-2"
+                    >
+                      Approve & unlock
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRejectInterest}
+                      className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              ) : sellerInterest.status === "approved" ? (
+                <div className="mt-3">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-100 text-green-800">
+                    <Check className="w-3 h-3 mr-1" />
+                    {isAccepted ? "Accepted · Contact buyer" : "Contact buyer"}
+                  </span>
+                </div>
+              ) : sellerInterest.status === "rejected" ? (
+                <div className="text-xs text-gray-600">
+                  You declined this buyer's interest request.
+                </div>
+              ) : null}
+            </div>
+          )}
 
           {/* RFQ Details */}
           {quotation.rfq && (

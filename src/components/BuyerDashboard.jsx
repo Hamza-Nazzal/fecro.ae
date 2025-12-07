@@ -2,10 +2,10 @@
 import React from "react";
 import BuyerRFQsInline from "./BuyerRFQsInline";
 
-export default function BuyerDashboard() {
+export default function BuyerDashboard({ onViewQuotations, ...rest }) {
   return (
     <div className="p-4">
-      <BuyerRFQsInline />
+      <BuyerRFQsInline onViewQuotations={onViewQuotations} />
     </div>
   );
 }

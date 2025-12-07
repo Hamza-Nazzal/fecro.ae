@@ -10,7 +10,7 @@ import useDebouncedValue from "../hooks/useDebouncedValue";
 import ReviewStepReadOnly from "./rfq-form/ReviewStepReadOnly";
 
 
-export default function BuyerRFQsInline() {
+export default function BuyerRFQsInline({ onViewQuotations }) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -121,9 +121,13 @@ export default function BuyerRFQsInline() {
                 rfq={rfq}
                 audience="buyer"
                 onViewRequest={(r) => setViewingRfq(r)}
-                onSendQuote={(r) =>
-                  navigate(`/buyer/rfq/${encodeURIComponent(r.id || r.publicId)}`)
-                }
+                onSendQuote={(r) => {
+                  if (typeof onViewQuotations === "function") {
+                    onViewQuotations(r);
+                  } else {
+                    navigate(`/buyer/rfq/${encodeURIComponent(r.id || r.publicId)}`);
+                  }
+                }}
               />
             ))}
           </div>

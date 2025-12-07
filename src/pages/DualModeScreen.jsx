@@ -9,6 +9,7 @@ import {
 import useRFQ from "../hooks/useRFQ";
 import BuyerQuotationsViewer from "../components/BuyerQuotationsViewer";
 import SavedProductsContainer from "../containers/SavedProductsContainer";
+import { listPendingInterestsForCurrentSeller } from "../services/quotationsService";
 
 // Imported new components
 import SideMenu from "../components/SideMenu.jsx";
@@ -42,6 +43,19 @@ export default function DualModeScreen({ initialMode = "buy", locked = false }) 
   const [sideMenuOpen, setSideMenuOpen] = useState(false);
   const topRef = useRef(null);
   const [viewingQuotations, setViewingQuotations] = useState(null);
+  const [hasPendingSellerInterests, setHasPendingSellerInterests] = useState(false);
+
+  async function loadSellerPendingInterestsOnce() {
+    try {
+      const interests = await listPendingInterestsForCurrentSeller();
+      const hasAny = (interests?.length ?? 0) > 0;
+      setHasPendingSellerInterests(hasAny);
+    } catch (e) {
+      // Silently fail – don't block UI if this fails
+      // eslint-disable-next-line no-console
+      console.error("Failed to load seller pending interests (top-level):", e);
+    }
+  }
 
   const userDisplayName = user?.name || user?.email || "User";
   const userRating = typeof user?.rating === "number" ? user.rating : 4.8;
@@ -76,6 +90,36 @@ export default function DualModeScreen({ initialMode = "buy", locked = false }) 
       window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
     }
   }, [activeTab]);
+
+  // Load pending interests on mount when seller is logged in
+  useEffect(() => {
+    if (!user?.id) return;
+    if (mode !== "sell") return;
+    loadSellerPendingInterestsOnce();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, mode]);
+
+  // Listen for seller pending interests changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    function handleSellerPendingChanged(event) {
+      const hasPending = !!event?.detail?.hasPending;
+      setHasPendingSellerInterests(hasPending);
+    }
+
+    window.addEventListener(
+      "sellerPendingInterests:changed",
+      handleSellerPendingChanged
+    );
+
+    return () => {
+      window.removeEventListener(
+        "sellerPendingInterests:changed",
+        handleSellerPendingChanged
+      );
+    };
+  }, []);
 
   if (!user) {
     // Screen expects an authenticated user; router should handle redirect to /login
@@ -160,11 +204,14 @@ export default function DualModeScreen({ initialMode = "buy", locked = false }) 
                 setNewRequest(prev => prev ?? { ...INITIAL_NEW_REQUEST });
                 setActiveTab("create");
               }}
-              className={`py-2 px-3 rounded-md font-medium text-xs flex-1 text-center transition-colors ${
+              className={`relative py-2 px-3 rounded-md font-medium text-xs flex-1 text-center transition-colors ${
                 activeTab === "create" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
               }`}
             >
               {mode === "buy" ? "Request For Quotation" : "My Quotations"}
+              {mode === "sell" && hasPendingSellerInterests && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              )}
             </button>
             <button
               onClick={() => setActiveTab("SavedProducts")}

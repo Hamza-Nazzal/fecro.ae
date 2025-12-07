@@ -17,4 +17,7 @@ export const QUOTATION_SCHEMA = {
   updatedAt: "updated_at",
   submittedAt: "submitted_at",
   expiresAt: "expires_at",
+  buyerQuoteRef: "buyer_quote_ref",
+  sellerQuoteRef: "seller_quote_ref",
+  contactsUnlocked: "contacts_unlocked",
 };

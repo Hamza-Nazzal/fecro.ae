@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useOnceEffect } from "../hooks/useOnceEffect";
 import { useAuth } from "../contexts/AuthContext";
-import { listQuotations } from "../services/quotationsService";
+import { listQuotations, listPendingInterestsForCurrentSeller } from "../services/quotationsService";
 import { Package } from "lucide-react";
 import QuotationViewer from "./QuotationViewer";
 import QuotationCard from "./QuotationCard"; // unified card
@@ -18,6 +18,8 @@ export default function SellerQuotationsTab() {
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("all"); // 'all' | 'draft' | 'submitted' | 'accepted' | 'rejected'
   const [viewingQuotation, setViewingQuotation] = useState(null);
+  const [pendingByQuoteId, setPendingByQuoteId] = useState(new Set());
+  const [hasPendingAny, setHasPendingAny] = useState(false);
 
   const inFlight = React.useRef(false);
   
@@ -37,14 +39,41 @@ export default function SellerQuotationsTab() {
     }
   }
 
+  // Load pending interests
+  async function loadPendingInterests() {
+    try {
+      const interests = await listPendingInterestsForCurrentSeller();
+      const quoteIds = new Set(interests.map((i) => i.quotationId).filter(Boolean));
+      setPendingByQuoteId(quoteIds);
+      const hasAny = quoteIds.size > 0;
+      setHasPendingAny(hasAny);
+      // NEW: broadcast to other parts of the app (e.g. top tab badge)
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("sellerPendingInterests:changed", {
+            detail: { hasPending: hasAny },
+          })
+        );
+      }
+    } catch (e) {
+      // Silently fail – don't block UI
+      // eslint-disable-next-line no-console
+      console.error("Failed to load pending interests:", e);
+    }
+  }
+
   // initial load
   useOnceEffect(() => {
     loadQuotations();
+    loadPendingInterests();
   }, []);
 
   // reload if the user changes (e.g., sign-out/in)
   useEffect(() => {
-    if (user?.id) loadQuotations();
+    if (user?.id) {
+      loadQuotations();
+      loadPendingInterests();
+    }
   }, [user?.id]);
 
   // refresh when a quotation is submitted elsewhere
@@ -52,6 +81,14 @@ export default function SellerQuotationsTab() {
     const onSubmitted = () => loadQuotations();
     window.addEventListener("quotation:submitted", onSubmitted);
     return () => window.removeEventListener("quotation:submitted", onSubmitted);
+  }, []);
+
+  // refresh pending interests when seller approves/rejects interest
+  useEffect(() => {
+    const onInterestUpdated = () => loadPendingInterests();
+    window.addEventListener("quotationInterest:updated", onInterestUpdated);
+    return () => window.removeEventListener("quotationInterest:updated", onInterestUpdated);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleView = (quotation) => setViewingQuotation(quotation);
@@ -85,7 +122,12 @@ export default function SellerQuotationsTab() {
     <div className="space-y-4">
       {/* Header + Filters */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-900">My Quotations</h2>
+        <div className="flex items-center">
+          <h2 className="text-xl font-semibold text-gray-900">My Quotations</h2>
+          {hasPendingAny && (
+            <span className="ml-2 inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <label className="text-sm text-gray-600">Status:</label>
           <select
@@ -131,6 +173,7 @@ export default function SellerQuotationsTab() {
               rfq={quotation.rfq}
               currentUserId={user?.id}
               userRole="seller"
+              hasPendingInterest={pendingByQuoteId.has(quotation.id)}
               onView={() => handleView(quotation)}
               onEdit={handleEdit}
               onWithdraw={handleWithdraw}
@@ -144,6 +187,7 @@ export default function SellerQuotationsTab() {
         <QuotationViewer
           quotation={viewingQuotation}
           onClose={() => setViewingQuotation(null)}
+          userRole="seller"
         />
       )}
     </div>
