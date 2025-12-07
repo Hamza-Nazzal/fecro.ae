@@ -8,6 +8,7 @@ import {
   fetchSellerInterestForQuotation,
   updateQuotationInterestStatus,
 } from "../services/quotationsService";
+import { supabase } from "../services/backends/supabase";
 
 export default function QuotationViewer({ quotation, onClose, userRole }) {
   // Buyer interest state (only used when userRole === "buyer")
@@ -20,6 +21,11 @@ export default function QuotationViewer({ quotation, onClose, userRole }) {
   const [sellerInterest, setSellerInterest] = React.useState(null);
   const [sellerInterestLoading, setSellerInterestLoading] = React.useState(false);
   const [sellerInterestError, setSellerInterestError] = React.useState("");
+
+  // Contact details state
+  const [sellerContact, setSellerContact] = React.useState(null);
+  const [buyerContact, setBuyerContact] = React.useState(null);
+  const [contactLoading, setContactLoading] = React.useState(false);
 
   // Load current interest when viewer opens (buyer only)
   React.useEffect(() => {
@@ -68,6 +74,57 @@ export default function QuotationViewer({ quotation, onClose, userRole }) {
       });
   }, [userRole, quotation?.id]);
 
+  // Load contact details when contacts are unlocked
+  React.useEffect(() => {
+    if (!quotation?.id) return;
+
+    const isContactsUnlocked = quotation.contactsUnlocked === true;
+
+    // Buyer view: fetch seller contact when unlocked
+    if (userRole === "buyer" && isContactsUnlocked && interest?.status === "approved") {
+      setContactLoading(true);
+      supabase
+        .rpc('quotation_get_contact', { p_quotation_id: quotation.id })
+        .then(({ data, error }) => {
+          if (error) {
+            console.error("Failed to fetch seller contact:", error);
+            setSellerContact(null);
+          } else {
+            setSellerContact(data);
+          }
+        })
+        .catch((e) => {
+          console.error("Failed to fetch seller contact:", e);
+          setSellerContact(null);
+        })
+        .finally(() => {
+          setContactLoading(false);
+        });
+    }
+
+    // Seller view: fetch buyer contact when unlocked
+    if (userRole === "seller" && isContactsUnlocked && sellerInterest?.status === "approved") {
+      setContactLoading(true);
+      supabase
+        .rpc('quotation_get_contact', { p_quotation_id: quotation.id })
+        .then(({ data, error }) => {
+          if (error) {
+            console.error("Failed to fetch buyer contact:", error);
+            setBuyerContact(null);
+          } else {
+            setBuyerContact(data);
+          }
+        })
+        .catch((e) => {
+          console.error("Failed to fetch buyer contact:", e);
+          setBuyerContact(null);
+        })
+        .finally(() => {
+          setContactLoading(false);
+        });
+    }
+  }, [userRole, quotation?.id, quotation?.contactsUnlocked, interest?.status, sellerInterest?.status]);
+
   const formatCurrency = (amount, currency = "AED") => {
     const numAmount = Number(amount) || 0;
     return `${currency} ${numAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
@@ -85,6 +142,34 @@ export default function QuotationViewer({ quotation, onClose, userRole }) {
   };
 
   const isAccepted = (quotation?.status || "").toLowerCase() === "accepted";
+
+  // Extract contact from array if needed
+  const sellerC = Array.isArray(sellerContact) ? sellerContact[0] : sellerContact;
+  const buyerC = Array.isArray(buyerContact) ? buyerContact[0] : buyerContact;
+
+  // Helper to check if there's any contact info
+  const hasSellerContactInfo = (contact) => {
+    if (!contact) return false;
+    return !!(
+      contact.company_name ||
+      contact.company_phone ||
+      contact.city ||
+      contact.country
+    );
+  };
+
+  const hasBuyerContactInfo = (contact) => {
+    if (!contact) return false;
+    return !!(
+      contact.company_name ||
+      contact.company_phone ||
+      contact.city ||
+      contact.country
+    );
+  };
+
+  const sellerHasInfo = sellerC && hasSellerContactInfo(sellerC);
+  const buyerHasInfo = buyerC && hasBuyerContactInfo(buyerC);
 
   if (!quotation) {
     return null;
@@ -246,6 +331,7 @@ export default function QuotationViewer({ quotation, onClose, userRole }) {
                 </div>
               ) : interest?.status === "approved" ? (
                 <div className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-green-100 text-green-800">
+                  <Check className="w-3 h-3 mr-1" />
                   Contacts unlocked
                 </div>
               ) : interest?.status === "rejected" ? (
@@ -429,6 +515,78 @@ export default function QuotationViewer({ quotation, onClose, userRole }) {
               </div>
             </div>
           )}
+
+          {/* Seller Contact Panel (Buyer View) */}
+          {userRole === "buyer" &&
+            interest?.status === "approved" &&
+            quotation.contactsUnlocked === true &&
+            sellerHasInfo && (
+              <div className="mt-4">
+                <h3 className="font-semibold text-gray-900 mb-3">Seller Contact</h3>
+                <div className="space-y-2 text-sm">
+                  {sellerC.company_name && (
+                    <div>
+                      <span className="text-gray-600">Company:</span>
+                      <span className="ml-2 font-medium text-gray-800">{sellerC.company_name}</span>
+                    </div>
+                  )}
+                  {sellerC.company_phone && (
+                    <div>
+                      <span className="text-gray-600">Phone:</span>
+                      <span className="ml-2 font-medium text-gray-800">{sellerC.company_phone}</span>
+                    </div>
+                  )}
+                  {sellerC.city && (
+                    <div>
+                      <span className="text-gray-600">City:</span>
+                      <span className="ml-2 font-medium text-gray-800">{sellerC.city}</span>
+                    </div>
+                  )}
+                  {sellerC.country && (
+                    <div>
+                      <span className="text-gray-600">Country:</span>
+                      <span className="ml-2 font-medium text-gray-800">{sellerC.country}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+          {/* Buyer Contact Panel (Seller View) */}
+          {userRole === "seller" &&
+            sellerInterest?.status === "approved" &&
+            quotation.contactsUnlocked === true &&
+            buyerHasInfo && (
+              <div className="mt-4">
+                <h3 className="font-semibold text-gray-900 mb-3">Buyer Contact</h3>
+                <div className="space-y-2 text-sm">
+                  {buyerC.company_name && (
+                    <div>
+                      <span className="text-gray-600">Company:</span>
+                      <span className="ml-2 font-medium text-gray-800">{buyerC.company_name}</span>
+                    </div>
+                  )}
+                  {buyerC.company_phone && (
+                    <div>
+                      <span className="text-gray-600">Phone:</span>
+                      <span className="ml-2 font-medium text-gray-800">{buyerC.company_phone}</span>
+                    </div>
+                  )}
+                  {buyerC.city && (
+                    <div>
+                      <span className="text-gray-600">City:</span>
+                      <span className="ml-2 font-medium text-gray-800">{buyerC.city}</span>
+                    </div>
+                  )}
+                  {buyerC.country && (
+                    <div>
+                      <span className="text-gray-600">Country:</span>
+                      <span className="ml-2 font-medium text-gray-800">{buyerC.country}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
         </div>
 
         {/* Footer */}

@@ -355,3 +355,137 @@ export async function hasPendingInterestsForCurrentSeller() {
   const interests = await listPendingInterestsForCurrentSeller();
   return interests.length > 0;
 }
+
+/**
+ * Fetch seller contact details for a quotation (buyer view only, when contacts unlocked).
+ * Uses quotation seller_id to fetch company and user info.
+ * @param {string} quotationId - The quotation ID
+ * @returns {Promise<{companyName: string|null, companyPhone: string|null, city: string|null, state: string|null, country: string|null, name: string|null, email: string|null, phone: string|null}|null>}
+ */
+export async function fetchSellerContactForQuotation(quotationId) {
+  if (!quotationId) return null;
+
+  try {
+    // Get quotation to find seller_id
+    const { data: quotation, error: qError } = await supabase
+      .from("quotations")
+      .select("seller_id")
+      .eq("id", quotationId)
+      .single();
+
+    if (qError || !quotation?.seller_id) {
+      return null;
+    }
+
+    const sellerId = quotation.seller_id;
+
+    // Fetch seller's company via membership
+    const { data: membership, error: memError } = await supabase
+      .from("company_memberships")
+      .select("company_id, companies(name, phone, city, state, country)")
+      .eq("user_id", sellerId)
+      .limit(1)
+      .single();
+
+    if (memError || !membership) {
+      console.warn("Could not fetch seller company membership:", memError);
+      // Don't early-return, let fields be null
+    }
+
+    const companyName = membership?.companies?.name || null;
+    const companyPhone = membership?.companies?.phone || null;
+    const city = membership?.companies?.city || null;
+    const state = membership?.companies?.state || null;
+    const country = membership?.companies?.country || null;
+
+    // TODO: Fetch user email/name from auth.users via RPC function or view
+    // Example RPC: quotation_get_seller_contact(quotation_id) 
+    // or use a view that joins company_memberships with user contact info
+    // For now, user-level fields remain null
+    const name = null; // Requires RPC or view to get from auth.users
+    const email = null; // Requires RPC or view to get from auth.users  
+    const phone = null; // May be in user_metadata.phone if available via RPC
+
+    return {
+      companyName,
+      companyPhone,
+      city,
+      state,
+      country,
+      name,
+      email,
+      phone,
+    };
+  } catch (error) {
+    console.error("Error fetching seller contact:", error);
+    return null;
+  }
+}
+
+/**
+ * Fetch buyer contact details for a quotation (seller view only, when contacts unlocked).
+ * Uses quotation_interest buyer_id to fetch company and user info.
+ * @param {string} quotationId - The quotation ID
+ * @returns {Promise<{companyName: string|null, companyPhone: string|null, city: string|null, state: string|null, country: string|null, name: string|null, email: string|null, phone: string|null}|null>}
+ */
+export async function fetchBuyerContactForQuotation(quotationId) {
+  if (!quotationId) return null;
+
+  try {
+    // Get interest record to find buyer_id
+    const { data: interest, error: iError } = await supabase
+      .from("quotation_interest")
+      .select("buyer_id")
+      .eq("quotation_id", quotationId)
+      .eq("status", "approved")
+      .limit(1)
+      .single();
+
+    if (iError || !interest?.buyer_id) {
+      return null;
+    }
+
+    const buyerId = interest.buyer_id;
+
+    // Fetch buyer's company via membership
+    const { data: membership, error: memError } = await supabase
+      .from("company_memberships")
+      .select("company_id, companies(name, phone, city, state, country)")
+      .eq("user_id", buyerId)
+      .limit(1)
+      .single();
+
+    if (memError || !membership) {
+      console.warn("Could not fetch buyer company membership:", memError);
+      // Don't early-return, let fields be null
+    }
+
+    const companyName = membership?.companies?.name || null;
+    const companyPhone = membership?.companies?.phone || null;
+    const city = membership?.companies?.city || null;
+    const state = membership?.companies?.state || null;
+    const country = membership?.companies?.country || null;
+
+    // TODO: Fetch user email/name from auth.users via RPC function or view
+    // Example RPC: quotation_get_buyer_contact(quotation_id)
+    // or use a view that joins company_memberships with user contact info
+    // For now, user-level fields remain null
+    const name = null; // Requires RPC or view to get from auth.users
+    const email = null; // Requires RPC or view to get from auth.users
+    const phone = null; // May be in user_metadata.phone if available via RPC
+
+    return {
+      companyName,
+      companyPhone,
+      city,
+      state,
+      country,
+      name,
+      email,
+      phone,
+    };
+  } catch (error) {
+    console.error("Error fetching buyer contact:", error);
+    return null;
+  }
+}
