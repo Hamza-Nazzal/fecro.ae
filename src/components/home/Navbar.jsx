@@ -1,3 +1,5 @@
+//src/components/home/Navbar.jsx
+
 import React from "react";
 import { navLinks } from "../../data/homeData";
 
@@ -16,17 +18,11 @@ export function Navbar({ isScrolled }) {
       >
         {/* Logo */}
         <a href="#top" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white font-semibold shadow-md">
-            HG
-          </div>
-          <span className="text-lg font-semibold tracking-tight">
-            <span className="bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent">
-              HubGate
-            </span>
-            <span className={isScrolled ? "text-slate-500" : "text-slate-300"}>
-              .ae
-            </span>
-          </span>
+          <img 
+            src="/logo/V2.svg" 
+            alt="HubGate logo" 
+            className="h-8 sm:h-10 w-auto"
+          />
         </a>
 
         {/* Links + CTAs */}

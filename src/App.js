@@ -21,8 +21,8 @@ import { getAdminSession, clearAdminSession } from './services/adminSession';
 import Signup from './pages/Signup';
 import AcceptInvite from './pages/AcceptInvite';
 import CompanyOnboarding from './pages/CompanyOnboarding';
-import { getMe } from './services/worker/workerCompany';
 import HomePage from './pages/HomePage';
+import StartScreen from './pages/StartScreen';
 
 // NEW
 import ToastProvider from "./components/Toasts.jsx";
@@ -48,51 +48,6 @@ export default function App() {
 console.log(process.env.REACT_APP_SELLER_HYDRATE_ENABLED); // should log "true"
 
 
-function AfterLoginRedirect() {
-  const { user, loading } = useAuth();
-  const [checkingCompany, setCheckingCompany] = React.useState(true);
-  const [hasCompany, setHasCompany] = React.useState(null);
-
-  React.useEffect(() => {
-    if (!user || loading) {
-      if (!user && !loading) {
-        setCheckingCompany(false);
-      }
-      return;
-    }
-
-    // Check company_id via /me endpoint
-    getMe()
-      .then((data) => {
-        setHasCompany(data?.company_id ? true : false);
-      })
-      .catch(() => {
-        setHasCompany(false);
-      })
-      .finally(() => {
-        setCheckingCompany(false);
-      });
-  }, [user, loading]);
-
-  if (loading || checkingCompany) {
-    return <div>Loading...</div>;
-  }
-
-  if (!user) return <Navigate to="/login" replace />;
-
-  // Check company_id first
-  if (hasCompany === false) {
-    return <Navigate to="/onboarding/company" replace />;
-  }
-
-  const roles = Array.isArray(user.roles) ? user.roles : [];
-
-  if (roles.length === 0) return <Navigate to="/choose-role" replace />;
-  if (roles.includes("buyer")) return <Navigate to="/buyer" replace />;
-  if (roles.includes("seller")) return <Navigate to="/seller" replace />;
-
-  return <Navigate to="/choose-role" replace />;
-}
 
 function RequireAuth({ children }) {
   const { user } = useAuth();
@@ -119,12 +74,13 @@ export default function App() {
           <ToastProvider>
             <BrowserRouter>
             <Routes>
-              <Route path="/" element={<HomePage />} />
+              <Route path="/" element={<Navigate to="/home" replace />} />
+              <Route path="/home" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/accept-invite" element={<AcceptInvite />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/start" element={<AfterLoginRedirect />} />
+              <Route path="/start" element={<StartScreen />} />
               <Route
                 path="/onboarding/company"
                 element={
@@ -219,7 +175,7 @@ export default function App() {
                 }
               />
 
-              <Route path="*" element={<Navigate to="/start" replace />} />
+              <Route path="*" element={<Navigate to="/home" replace />} />
             </Routes>
             <PreviewToggle />
           </BrowserRouter>

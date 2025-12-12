@@ -1,8 +1,10 @@
-// src/pages/LoginPage.js
+//src/pages/LoginPage.js
 
 import React, { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import AuthLayout from "../layouts/AuthLayout";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -10,6 +12,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
@@ -28,52 +31,104 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white border rounded-2xl shadow-sm p-6">
-        <h1 className="text-xl font-semibold text-gray-900 mb-4">Sign in</h1>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="you@fecro.ae"
-            />
-          </div>
+    <AuthLayout title="Sign in">
+      <form onSubmit={onSubmit} className="space-y-5">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            Email
+          </label>
+          <input
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full rounded-xl border border-gray-300 
+              px-3 py-2.5 text-gray-900
+              focus:outline-none focus:ring-2 focus:ring-blue-500/40
+              focus:border-blue-500 transition"
+            placeholder="Enter your email"
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            Password
+          </label>
+          <div className="relative">
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-gray-300 
+                px-3 py-2.5 pr-10 text-gray-900
+                focus:outline-none focus:ring-2 focus:ring-blue-500/40
+                focus:border-blue-500 transition"
               placeholder="••••••••"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 
+                text-gray-400 hover:text-gray-600"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
           </div>
+        </div>
 
-          {err ? <p className="text-sm text-red-600">{err}</p> : null}
+        {err && (
+          <p className="text-sm text-red-600 mt-1">
+            {err}
+          </p>
+        )}
 
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-xl bg-blue-600 text-white py-2.5 
+            font-medium shadow-sm hover:bg-blue-700
+            active:scale-[0.98] transition-all
+            disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {loading ? "Signing in..." : "Sign in"}
+        </button>
+
+        <div className="text-center">
+          <span className="text-sm text-gray-600">
+            Don’t have an account?{" "}
+            <Link to="/signup" className="text-blue-600 hover:underline">
+              Sign up
+            </Link>
+          </span>
+        </div>
+
+        <div className="flex justify-end -mt-1">
           <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-blue-600 text-white py-2 font-medium hover:bg-blue-700 disabled:opacity-60"
+            type="button"
+            className="text-sm text-blue-600 hover:underline"
           >
-            {loading ? "Signing in..." : "Sign in"}
+            Forgot password?
           </button>
-          <button 
-            onClick={() => navigate('/admin/login')}
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl">
+        </div>
+
+        <div className="pt-4 flex justify-center">
+          <button
+            onClick={() => navigate("/admin/login")}
+            type="button"
+            className="text-sm text-gray-500 hover:text-gray-700 hover:underline"
+          >
             Admin Login
           </button>
-        </form>
-      </div>
-    </div>
+        </div>
+      </form>
+    </AuthLayout>
   );
 }

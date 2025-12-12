@@ -1,4 +1,4 @@
-// src/contexts/AuthContext.js
+//src/contexts/AuthContext.js
 
 
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
@@ -7,6 +7,7 @@ import { getCurrentUserCached, signIn as authSignIn, signOut as authSignOut, ens
 
 const AuthContext = createContext({
   user: null,
+  roles: [],
   loading: true,
   login: async (_email, _password) => {},
   logout: async () => {},
@@ -27,6 +28,7 @@ function toAppUser(u) {
 export function AuthProvider({ children }) {
   const [sessionUser, setSessionUser] = useState(null);
   const [session, setSession] = useState(null);
+  const [roles, setRolesState] = useState([]);
   const [loading, setLoading] = useState(true);
   const mountedOnce = useRef(false);
 
@@ -42,8 +44,10 @@ export function AuthProvider({ children }) {
         supabase.auth.getSession()
       ]);
       if (alive) {
-        setSessionUser(u);
+        const roles = data?.session?.user?.user_metadata?.roles || [];
+        setSessionUser(data?.session?.user ?? u);
         setSession(data?.session ?? null);
+        setRolesState(roles);
       }
     } finally {
       if (alive) setLoading(false);
@@ -51,8 +55,10 @@ export function AuthProvider({ children }) {
   })();
 
   const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+    const roles = session?.user?.user_metadata?.roles || [];
     setSessionUser(session?.user ?? null);
     setSession(session ?? null);
+    setRolesState(roles);
   });
 
   return () => {
@@ -62,24 +68,41 @@ export function AuthProvider({ children }) {
 }, []);
 
 
-  const login = async (email, password) => {
-    try{
-    const data = await authSignIn({ email, password }); 
+  // AuthContext.js (inside login)
+const login = async (email, password) => {
+  try {
+    const data = await authSignIn({ email, password });
+
     setSessionUser(data?.user ?? null);
+
+    // Immediately refresh session + roles so StartScreen makes correct decisions
+    const { data: fresh, error: freshErr } = await supabase.auth.getSession();
+    if (!freshErr) {
+      setSession(fresh?.session ?? null);
+      setRolesState(fresh?.session?.user?.user_metadata?.roles || []);
+      setSessionUser(fresh?.session?.user ?? data?.user ?? null);
+    }
+
     return data?.user ?? null;
   } catch (error) {
-  
     throw error;
-    }
-  };
+  }
+};
 
   const logout = async () => {
-    // Redirect immediately to prevent flash of login page
-    window.location.href = '/';
-    
-    try { await authSignOut(); } catch (e) { console.warn("signOut failed:", e); }
-
-    setSessionUser(null);
+    // Sign out from Supabase, but never redirect before cleanup.
+    try {
+      await authSignOut();
+    } catch (e) {
+      console.warn("signOut failed:", e);
+    } finally {
+      // Always clear local auth state.
+      setSession(null);
+      setSessionUser(null);
+      setRolesState([]);
+      // Keep existing post-logout destination.
+      window.location.replace("/home");
+    }
   };
 
   const setRoles = async (roles) => {
@@ -100,12 +123,22 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.auth.updateUser({ data: { roles: clean } });
     if (error) throw error;
 
-    setSessionUser(data.user ?? null);
-    return data.user ?? null;
+    // After updating metadata, always refresh the latest session so roles are accurate
+    const { data: fresh, error: freshErr } = await supabase.auth.getSession();
+
+    if (freshErr) console.warn("Failed to refresh session after role update:", freshErr);
+
+    const freshUser = fresh?.session?.user ?? data.user ?? null;
+
+    setSessionUser(freshUser);
+    setRolesState(freshUser?.user_metadata?.roles || []);
+
+    return freshUser;
   };
 
   const value = useMemo(() => ({
       user: toAppUser(sessionUser),
+      roles,
       loading,
       session,
       sessionReady: !loading && !!session,
@@ -113,7 +146,7 @@ export function AuthProvider({ children }) {
       logout,
       setRoles,
     }),
-    [sessionUser, loading, session]
+    [sessionUser, roles, loading, session]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

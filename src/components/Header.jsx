@@ -9,7 +9,11 @@ export default function Header() {
     <header className="w-full border-b bg-white">
       <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="text-xl font-semibold">FECRO</div>
+          <img 
+            src="/logo/V2.svg" 
+            alt="HubGate briefcase logo" 
+            className="h-8 sm:h-10 w-auto"
+          />
           <nav className="flex items-center gap-3 text-sm">
                 <Link to="/products" className="px-3 py-2 rounded hover:bg-gray-100">
                   Products

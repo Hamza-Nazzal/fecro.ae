@@ -1,10 +1,9 @@
-// src/pages/DualModeScreen.jsx
 //src/pages/DualModeScreen.jsx
 
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import {
-  Package, ShoppingCart, Building2, Star, Menu
+  Package, ShoppingCart, Menu
 } from "lucide-react";
 import useRFQ from "../hooks/useRFQ";
 import BuyerQuotationsViewer from "../components/BuyerQuotationsViewer";
@@ -38,6 +37,15 @@ const INITIAL_NEW_REQUEST = {
 
 export default function DualModeScreen({ initialMode = "buy", locked = false }) {
   const { user, logout } = useAuth();               // pulled from AuthContext; router should protect this screen
+  
+  useEffect(() => {
+    if (!user) return;
+    const roles = user.roles || [];
+    if (roles.length === 0) {
+      window.location.href = "/choose-role";
+    }
+  }, [user]);
+  
   const [mode, setMode] = useState(initialMode);    // lockable
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sideMenuOpen, setSideMenuOpen] = useState(false);
@@ -58,7 +66,6 @@ export default function DualModeScreen({ initialMode = "buy", locked = false }) 
   }
 
   const userDisplayName = user?.name || user?.email || "User";
-  const userRating = typeof user?.rating === "number" ? user.rating : 4.8;
 
   // Hook (always call; it doesn't require user)
   const {
@@ -136,27 +143,38 @@ export default function DualModeScreen({ initialMode = "buy", locked = false }) 
       />
 
       {/* Header */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-40">
+      <header className="bg-white shadow-sm border-b sticky top-0 z-40 backdrop-blur-sm bg-white/95">
         <div className="px-4 py-3">
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex items-center">
-              <button onClick={() => setSideMenuOpen(true)} className="mr-3 p-1 hover:bg-gray-100 rounded">
-                <Menu className="h-6 w-6 text-gray-600" />
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setSideMenuOpen(true)} 
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 active:scale-95"
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5 text-gray-700" />
               </button>
-              <Building2 className="h-6 w-6 text-blue-600 mr-2" />
-              <h1 className="text-lg font-bold text-gray-900">Fecro</h1>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center">
-                <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                <span className="text-sm text-gray-600">{userRating}</span>
+              
+              <div className="flex items-center gap-0.5">
+                <img
+                  src="/logo/V2 4k.svg"
+                  alt="HubGate logo"
+                  className="h-9 w-9 md:h-10 md:w-10 mr-1 shrink-0"
+                />
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                  HubGate
+                </h1>
               </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {/* right side actions */}
             </div>
           </div>
 
           {/* Mode Toggle (hidden if locked) */}
           {!locked && (
-            <div className="flex items-center space-x-1 bg-gray-100 p-1 rounded-lg w-full">
+            <div className="flex items-center space-x-1 bg-gray-100 p-1 rounded-lg w-full mt-3">
               <button
                 onClick={() => !locked && setMode("buy")}
                 className={`flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium transition-colors flex-1 ${

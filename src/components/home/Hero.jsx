@@ -1,3 +1,5 @@
+//src/components/home/Hero.jsx
+
 import React from "react";
 import { heroData } from "../../data/homeData";
 
