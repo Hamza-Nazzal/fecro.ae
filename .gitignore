@@ -42,3 +42,6 @@ src.zip
 # hubgate-api local stuff
 hubgate-api/node_modules/
 hubgate-api/.dev.vars
+
+# Wrangler artifacts
+hubgate-api/.wrangler/
