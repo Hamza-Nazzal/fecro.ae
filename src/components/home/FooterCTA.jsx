@@ -1,3 +1,5 @@
+//src/components/home/FooterCTA.jsx
+
 import React from "react";
 import { footerCtaData } from "../../data/homeData";
 
@@ -8,6 +10,13 @@ export function FooterCTA() {
       aria-labelledby="cta-heading"
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 text-center text-slate-50">
+        <div className="flex justify-center mb-6">
+          <img 
+            src="/logo/V2.svg" 
+            alt="HubGate briefcase logo" 
+            className="h-8 sm:h-10 w-auto"
+          />
+        </div>
         <h2
           id="cta-heading"
           className="text-2xl sm:text-3xl font-semibold tracking-tight mb-3"

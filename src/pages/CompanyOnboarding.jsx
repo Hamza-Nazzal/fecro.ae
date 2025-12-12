@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createCompany, acceptCompanyInvite, getMe } from "../services/worker/workerCompany";
+import { normalizePhoneNumber } from "../utils/phone";
+import AuthLayout from "../layouts/AuthLayout";
 
 export default function CompanyOnboarding() {
   const navigate = useNavigate();
@@ -18,17 +20,35 @@ export default function CompanyOnboarding() {
   const [error, setError] = useState("");
   const [isDuplicateCompany, setIsDuplicateCompany] = useState(false);
 
-  const validatePhone = (phoneValue) => {
-    if (!phoneValue.trim()) {
-      setPhoneError("");
-      return true;
+  // Format local UAE phone number (10 digits) for display with spacing
+  const formatLocalUaePhone = (value) => {
+    // Keep only digits, max 10
+    const digits = value.replace(/\D/g, "").slice(0, 10);
+    if (digits.length <= 3) {
+      // e.g. "055"
+      return digits;
+    } else if (digits.length <= 6) {
+      // e.g. "055 123"
+      return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+    } else {
+      // e.g. "055 123 4567"
+      return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
     }
-    if (!phoneValue.startsWith("+971") || phoneValue.trim().length <= 4) {
-      setPhoneError("Phone must start with +971 and have a valid length");
-      return false;
+  };
+
+  // Validate UAE phone number (10 digits, starts with 05)
+  const validateUaePhone = (value) => {
+    const digits = value.replace(/\D/g, "");
+    if (!digits) {
+      return "Phone number is required";
     }
-    setPhoneError("");
-    return true;
+    if (digits.length !== 10) {
+      return "Phone number must be exactly 10 digits";
+    }
+    if (!digits.startsWith("05")) {
+      return "UAE mobile numbers must start with 05";
+    }
+    return "";
   };
 
   const handleCreateCompany = async (e) => {
@@ -42,21 +62,27 @@ export default function CompanyOnboarding() {
       return;
     }
 
-    // Validate phone if provided
-    if (phone.trim() && !validatePhone(phone.trim())) {
+    // Validate company phone before submit
+    const companyPhoneValidationError = validateUaePhone(phone);
+    if (companyPhoneValidationError) {
+      setPhoneError(companyPhoneValidationError);
+      setError(companyPhoneValidationError);
       return;
     }
 
     setLoading(true);
 
     try {
+      // Normalize to E.164 before save
+      const normalizedCompanyPhone = normalizePhoneNumber(phone);
+
       await createCompany({
         name: companyName.trim(),
         legalName: legalName.trim() || companyName.trim(),
         tradeLicenseNo: tradeLicenseNo.trim() || null,
         country: country.trim() || null,
         city: city || null,
-        phone: phone.trim() || null,
+        phone: normalizedCompanyPhone,
       });
 
       // Wait a moment for membership to be created
@@ -128,272 +154,288 @@ export default function CompanyOnboarding() {
 
   if (mode === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="w-full max-w-md bg-white border rounded-2xl shadow-sm p-6">
-          <h1 className="text-xl font-semibold text-gray-900 mb-4">
-            Join or Create Company
-          </h1>
-          <p className="text-gray-600 mb-6">
-            You need to be part of a company to use this app.
-          </p>
+      <AuthLayout>
+        <h1 className="text-xl font-semibold text-gray-900 mb-4">
+          Join or Create Company
+        </h1>
+        <p className="text-gray-600 mb-6">
+          You need to be part of a company to use this app.
+        </p>
 
-          <div className="space-y-4">
-            <button
-              onClick={() => setMode("create")}
-              className="w-full rounded-lg bg-blue-600 text-white py-3 font-medium hover:bg-blue-700"
-            >
-              I'm the first from my company
-            </button>
+        <div className="space-y-4">
+          <button
+            onClick={() => setMode("create")}
+            className="w-full rounded-lg bg-blue-600 text-white py-3 font-medium hover:bg-blue-700"
+          >
+            I'm the first from my company
+          </button>
 
-            <button
-              onClick={() => setMode("invite")}
-              className="w-full rounded-lg border border-gray-300 bg-white text-gray-700 py-3 font-medium hover:bg-gray-50"
-            >
-              I already have an invite
-            </button>
-          </div>
+          <button
+            onClick={() => setMode("invite")}
+            className="w-full rounded-lg border border-gray-300 bg-white text-gray-700 py-3 font-medium hover:bg-gray-50"
+          >
+            I already have an invite
+          </button>
         </div>
-      </div>
+      </AuthLayout>
     );
   }
 
   if (mode === "create") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="w-full max-w-md bg-white border rounded-2xl shadow-sm p-6">
-          <h1 className="text-xl font-semibold text-gray-900 mb-4">
-            Create Company
-          </h1>
+      <AuthLayout>
+        <h1 className="text-xl font-semibold text-gray-900 mb-4">
+          Create Company
+        </h1>
 
-          {isDuplicateCompany ? (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <h2 className="text-lg font-semibold text-red-900 mb-2">
-                Company Already Registered
-              </h2>
-              <p className="text-sm text-red-700">
-                It looks like <strong>{companyName}</strong> is already registered on our platform.
-              </p>
-              <p className="text-sm text-red-700 mt-2">
-                If you are the authorized representative and cannot access the account, please contact our support team for assistance.
-              </p>
-            </div>
-          ) : error ? (
-            <p className="text-sm text-red-600 mb-4">{error}</p>
-          ) : null}
+        {isDuplicateCompany ? (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <h2 className="text-lg font-semibold text-red-900 mb-2">
+              Company Already Registered
+            </h2>
+            <p className="text-sm text-red-700">
+              It looks like <strong>{companyName}</strong> is already registered on our platform.
+            </p>
+            <p className="text-sm text-red-700 mt-2">
+              If you are the authorized representative and cannot access the account, please contact our support team for assistance.
+            </p>
+          </div>
+        ) : error ? (
+          <p className="text-sm text-red-600 mb-4">{error}</p>
+        ) : null}
 
-          <form onSubmit={handleCreateCompany} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Company Name
-              </label>
-              <input
-                type="text"
-                required
-                value={companyName}
-                onChange={(e) => {
-                  setCompanyName(e.target.value);
-                  setIsDuplicateCompany(false);
-                  setError("");
-                }}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter Official Company Name"
-                disabled={loading}
-              />
-            </div>
+        <form onSubmit={handleCreateCompany} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Company Name
+            </label>
+            <input
+              type="text"
+              required
+              value={companyName}
+              onChange={(e) => {
+                setCompanyName(e.target.value);
+                setIsDuplicateCompany(false);
+                setError("");
+              }}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter Official Company Name"
+              disabled={loading}
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Legal name
-              </label>
-              <input
-                type="text"
-                value={legalName}
-                onChange={(e) => {
-                  setLegalName(e.target.value);
-                  setError("");
-                }}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Legal name"
-                disabled={loading}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                If empty, we'll use the company name
-              </p>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Legal name
+            </label>
+            <input
+              type="text"
+              value={legalName}
+              onChange={(e) => {
+                setLegalName(e.target.value);
+                setError("");
+              }}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Legal name"
+              disabled={loading}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              If empty, we'll use the company name
+            </p>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Trade license number
-              </label>
-              <input
-                type="text"
-                value={tradeLicenseNo}
-                onChange={(e) => {
-                  setTradeLicenseNo(e.target.value);
-                  setError("");
-                }}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="TLZ-0000003"
-                disabled={loading}
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Trade license number
+            </label>
+            <input
+              type="text"
+              value={tradeLicenseNo}
+              onChange={(e) => {
+                setTradeLicenseNo(e.target.value);
+                setError("");
+              }}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="TLZ-0000003"
+              disabled={loading}
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Country
-              </label>
-              <input
-                type="text"
-                value={country}
-                onChange={(e) => {
-                  setCountry(e.target.value);
-                  setError("");
-                }}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Country"
-                disabled={loading}
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Country
+            </label>
+            <input
+              type="text"
+              value={country}
+              onChange={(e) => {
+                setCountry(e.target.value);
+                setError("");
+              }}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Country"
+              disabled={loading}
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                City
-              </label>
-              <select
-                value={city}
-                onChange={(e) => {
-                  setCity(e.target.value);
-                  setError("");
-                }}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={loading}
-              >
-                <option value="">Select a city</option>
-                <option value="Abu Dhabi">Abu Dhabi</option>
-                <option value="Dubai">Dubai</option>
-                <option value="Sharjah">Sharjah</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              City
+            </label>
+            <select
+              value={city}
+              onChange={(e) => {
+                setCity(e.target.value);
+                setError("");
+              }}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={loading}
+            >
+              <option value="">Select a city</option>
+              <option value="Abu Dhabi">Abu Dhabi</option>
+              <option value="Dubai">Dubai</option>
+              <option value="Sharjah">Sharjah</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Company phone
-              </label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => {
-                  setPhone(e.target.value);
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Company phone
+            </label>
+            <input
+              type="tel"
+              autoComplete="tel"
+              required
+              value={phone}
+              onChange={(e) => {
+                const rawValue = e.target.value;
+                const formatted = formatLocalUaePhone(rawValue);
+                setPhone(formatted);
+                if (phoneError) {
                   setPhoneError("");
+                }
+                if (error) {
                   setError("");
-                  // Validate on change
-                  if (e.target.value.trim()) {
-                    validatePhone(e.target.value.trim());
+                }
+                if (formatted) {
+                  const validationError = validateUaePhone(formatted);
+                  if (validationError) {
+                    setPhoneError(validationError);
+                  } else {
+                    setPhoneError("");
                   }
-                }}
-                className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  phoneError ? "border-red-300" : "border-gray-300"
-                }`}
-                placeholder="+971501234567"
-                disabled={loading}
-              />
-              {phoneError && (
-                <p className="text-xs text-red-600 mt-1">{phoneError}</p>
-              )}
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setMode(null);
-                  setIsDuplicateCompany(false);
-                  setError("");
-                  setCompanyName("");
-                  setLegalName("");
-                  setTradeLicenseNo("");
-                  setCountry("UAE");
-                  setCity("");
-                  setPhone("");
+                } else {
                   setPhoneError("");
-                }}
-                disabled={loading}
-                className="flex-1 rounded-lg border border-gray-300 bg-white text-gray-700 py-2 font-medium hover:bg-gray-50 disabled:opacity-60"
-              >
-                Back
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 rounded-lg bg-blue-600 text-white py-2 font-medium hover:bg-blue-700 disabled:opacity-60"
-              >
-                {loading ? "Creating..." : "Create Company"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+                }
+              }}
+              onBlur={() => {
+                if (phone) {
+                  const validationError = validateUaePhone(phone);
+                  setPhoneError(validationError);
+                }
+              }}
+              disabled={loading}
+              className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                phoneError ? "border-red-300" : "border-gray-300"
+              }`}
+              placeholder="055 123 4567"
+              inputMode="numeric"
+              maxLength={12}
+            />
+            {phoneError && (
+              <p className="text-xs text-red-600 mt-1">{phoneError}</p>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setMode(null);
+                setIsDuplicateCompany(false);
+                setError("");
+                setCompanyName("");
+                setLegalName("");
+                setTradeLicenseNo("");
+                setCountry("UAE");
+                setCity("");
+                setPhone("");
+                setPhoneError("");
+              }}
+              disabled={loading}
+              className="flex-1 rounded-lg border border-gray-300 bg-white text-gray-700 py-2 font-medium hover:bg-gray-50 disabled:opacity-60"
+            >
+              Back
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 rounded-lg bg-blue-600 text-white py-2 font-medium hover:bg-blue-700 disabled:opacity-60"
+            >
+              {loading ? "Creating..." : "Create Company"}
+            </button>
+          </div>
+        </form>
+      </AuthLayout>
     );
   }
 
   if (mode === "invite") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="w-full max-w-md bg-white border rounded-2xl shadow-sm p-6">
-          <h1 className="text-xl font-semibold text-gray-900 mb-4">
-            Accept Invite
-          </h1>
+      <AuthLayout>
+        <h1 className="text-xl font-semibold text-gray-900 mb-4">
+          Accept Invite
+        </h1>
 
-          <p className="text-gray-600 mb-4">
-            Enter your invite token or{" "}
-            <a
-              href="/accept-invite"
-              className="text-blue-600 hover:text-blue-700 underline"
+        <p className="text-gray-600 mb-4">
+          Enter your invite token or{" "}
+          <a
+            href="/accept-invite"
+            className="text-blue-600 hover:text-blue-700 underline"
+          >
+            use the invite link
+          </a>
+          .
+        </p>
+
+        {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+
+        <form onSubmit={handleAcceptInvite} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Invite Token
+            </label>
+            <input
+              type="text"
+              required
+              value={inviteToken}
+              onChange={(e) => setInviteToken(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter invite token"
+              disabled={loading}
+            />
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setMode(null)}
+              disabled={loading}
+              className="flex-1 rounded-lg border border-gray-300 bg-white text-gray-700 py-2 font-medium hover:bg-gray-50 disabled:opacity-60"
             >
-              use the invite link
-            </a>
-            .
-          </p>
-
-          {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
-
-          <form onSubmit={handleAcceptInvite} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Invite Token
-              </label>
-              <input
-                type="text"
-                required
-                value={inviteToken}
-                onChange={(e) => setInviteToken(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter invite token"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setMode(null)}
-                disabled={loading}
-                className="flex-1 rounded-lg border border-gray-300 bg-white text-gray-700 py-2 font-medium hover:bg-gray-50 disabled:opacity-60"
-              >
-                Back
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 rounded-lg bg-blue-600 text-white py-2 font-medium hover:bg-blue-700 disabled:opacity-60"
-              >
-                {loading ? "Joining..." : "Join Company"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+              Back
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 rounded-lg bg-blue-600 text-white py-2 font-medium hover:bg-blue-700 disabled:opacity-60"
+            >
+              {loading ? "Joining..." : "Join Company"}
+            </button>
+          </div>
+        </form>
+      </AuthLayout>
     );
   }
 

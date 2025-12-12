@@ -1,3 +1,5 @@
+//src/components/home/BenefitsTabs.jsx
+
 import React from "react";
 import { benefitsData } from "../../data/homeData";
 

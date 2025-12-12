@@ -3,6 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import SignupForm from "../components/SignupForm";
 import { getMe } from "../services/worker/workerCompany";
+import AuthLayout from "../layouts/AuthLayout";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -30,12 +31,9 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white border rounded-2xl shadow-sm p-6">
-        <h1 className="text-xl font-semibold text-gray-900 mb-4">Sign up</h1>
-        <SignupForm onSuccess={handleSignupSuccess} />
-      </div>
-    </div>
+    <AuthLayout title="Create your account">
+      <SignupForm onSuccess={handleSignupSuccess} />
+    </AuthLayout>
   );
 }
 

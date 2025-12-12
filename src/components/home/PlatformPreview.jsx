@@ -1,3 +1,5 @@
+//src/components/home/PlatformPreview.jsx
+
 import React from "react";
 import { platformPreviewScreens, benefitsData } from "../../data/homeData";
 

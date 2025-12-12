@@ -1,8 +1,10 @@
 // src/components/SignupForm.jsx
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "../services/backends/supabase";
 import { useAuth } from "../contexts/AuthContext";
+import { normalizePhoneNumber } from "../utils/phone";
 
 export default function SignupForm({ initialEmail = "", onSuccess, showEmailField = true }) {
   const { setRoles } = useAuth();
@@ -11,9 +13,11 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
   
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [role, setRole] = useState("");
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -26,6 +30,67 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
     }
   }, [roleFromUrl]);
 
+  // Format local UAE phone number (10 digits) for display with spacing
+  const formatLocalUaePhone = (value) => {
+    // Keep only digits, max 10
+    const digits = value.replace(/\D/g, "").slice(0, 10);
+    
+    if (digits.length <= 3) {
+      // e.g. "055"
+      return digits;
+    } else if (digits.length <= 6) {
+      // e.g. "055 123"
+      return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+    } else {
+      // e.g. "055 123 4567"
+      return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+    }
+  };
+
+  // Validate UAE phone number
+  const validateUaePhone = (value) => {
+    const digits = value.replace(/\D/g, "");
+    
+    if (!digits) {
+      return "Phone number is required";
+    }
+    
+    if (digits.length !== 10) {
+      return "Phone number must be exactly 10 digits";
+    }
+    
+    if (!digits.startsWith("05")) {
+      return "UAE mobile numbers must start with 05";
+    }
+    
+    return "";
+  };
+
+  // Handle phone input change
+  const handlePhoneChange = (e) => {
+    const rawValue = e.target.value;
+    const formatted = formatLocalUaePhone(rawValue);
+    setPhone(formatted);
+    
+    // Clear errors when user starts typing
+    if (phoneError) {
+      setPhoneError("");
+    }
+    if (error) {
+      setError("");
+    }
+    
+    // Validate on change (only if there's a value)
+    if (formatted) {
+      const validationError = validateUaePhone(formatted);
+      if (validationError) {
+        setPhoneError(validationError);
+      } else {
+        setPhoneError("");
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -35,8 +100,8 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
       setError("Email is required");
       return;
     }
-    if (!password || password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (!password || password.length < 8) {
+      setError("Password must be at least 8 characters");
       return;
     }
     if (!firstName.trim()) {
@@ -47,8 +112,11 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
       setError("Last name is required");
       return;
     }
-    if (!phone.trim()) {
-      setError("Phone is required");
+    // Validate phone number
+    const phoneValidationError = validateUaePhone(phone);
+    if (phoneValidationError) {
+      setPhoneError(phoneValidationError);
+      setError(phoneValidationError);
       return;
     }
     if (!role) {
@@ -63,6 +131,9 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
     setLoading(true);
 
     try {
+      // Normalize phone number to E.164 format before storing
+      const normalizedPhone = normalizePhoneNumber(phone);
+      
       // Sign up with metadata in options.data
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
@@ -71,7 +142,7 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
           data: {
             first_name: firstName.trim(),
             last_name: lastName.trim(),
-            phone: phone.trim(),
+            phone: normalizedPhone,
             ...(role ? { roles: [role] } : {}),
           },
         },
@@ -125,7 +196,7 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Role Selection - At the top, side by side */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
           I am a <span className="text-red-500">*</span>
         </label>
         <div className="grid grid-cols-2 gap-3">
@@ -186,7 +257,7 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
       <div className={isFormDisabled ? "opacity-50 pointer-events-none" : ""}>
       {showEmailField && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Email
           </label>
           <input
@@ -196,89 +267,120 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
             value={email}
             onChange={(e) => setEmail(e.target.value)}
               disabled={isFormDisabled}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-            placeholder="you@example.com"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+            placeholder="Enter your email"
           />
         </div>
       )}
 
       {!showEmailField && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Email
           </label>
           <input
             type="email"
             value={email}
             disabled
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 bg-gray-50 text-gray-600"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 bg-gray-50 text-gray-600 transition-all"
           />
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
           Password
         </label>
-        <input
-          type="password"
-          autoComplete="new-password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+        <div className="relative">
+          <input
+            type={showPassword ? "text" : "password"}
+            autoComplete="new-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             disabled={isFormDisabled}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          placeholder="••••••••"
-          minLength={6}
-        />
+            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+            placeholder="••••••••"
+            minLength={8}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+            disabled={isFormDisabled}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 mt-1">At least 8 characters</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            First Name
+          </label>
+          <input
+            type="text"
+            autoComplete="given-name"
+            required
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            disabled={isFormDisabled}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+            placeholder="First name"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            Last Name
+          </label>
+          <input
+            type="text"
+            autoComplete="family-name"
+            required
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            disabled={isFormDisabled}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+            placeholder="Last name"
+          />
+        </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          First Name
-        </label>
-        <input
-          type="text"
-          autoComplete="given-name"
-          required
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-            disabled={isFormDisabled}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          placeholder="John"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Last Name
-        </label>
-        <input
-          type="text"
-          autoComplete="family-name"
-          required
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-            disabled={isFormDisabled}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          placeholder="Doe"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Phone
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          Mobile Number 🇦🇪 (+971)
         </label>
         <input
           type="tel"
           autoComplete="tel"
           required
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-            disabled={isFormDisabled}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          placeholder="+1234567890"
+          onChange={handlePhoneChange}
+          onBlur={() => {
+            // Validate on blur if there's a value
+            if (phone) {
+              const validationError = validateUaePhone(phone);
+              setPhoneError(validationError);
+            }
+          }}
+          disabled={isFormDisabled}
+          className={`w-full rounded-lg border px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed ${
+            phoneError ? "border-red-300" : "border-gray-300"
+          }`}
+          placeholder="055 123 4567"
+          inputMode="numeric"
+          maxLength={12}
         />
+        {phoneError && (
+          <p className="text-sm text-red-600 mt-1">{phoneError}</p>
+        )}
       </div>
 
       <div className="flex items-start">
@@ -297,15 +399,50 @@ export default function SignupForm({ initialEmail = "", onSuccess, showEmailFiel
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
 
       <button
         type="submit"
         disabled={loading || isFormDisabled}
-        className="w-full rounded-lg bg-blue-600 text-white py-2 font-medium hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full rounded-lg bg-blue-600 text-white py-2.5 font-medium hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {loading ? "Creating account..." : "Sign up"}
+        {loading ? (
+          <div className="flex items-center justify-center gap-2">
+            <svg
+              className="animate-spin h-4 w-4 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
+              ></path>
+            </svg>
+            Creating account...
+          </div>
+        ) : (
+          "Sign up"
+        )}
       </button>
+
+      <div className="text-center pt-2">
+        <span className="text-sm text-gray-600">
+          Already have an account?{" "}
+          <Link to="/login" className="text-blue-600 hover:underline">
+            Sign in
+          </Link>
+        </span>
+      </div>
     </form>
   );
 }

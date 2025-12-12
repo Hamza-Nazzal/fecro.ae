@@ -1,3 +1,16 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* --- Global Layout Fix: Keep scrollbar space always --- */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow-y: scroll; /* force stable scrollbar */
+  scrollbar-gutter: stable; /* modern browsers */
+}

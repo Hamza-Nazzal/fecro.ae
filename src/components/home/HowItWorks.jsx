@@ -1,3 +1,5 @@
+//src/components/home/HowItWorks.jsx
+
 import React from "react";
 import { howItWorksSteps } from "../../data/homeData";
 

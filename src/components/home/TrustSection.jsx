@@ -1,3 +1,5 @@
+//src/components/home/TrustSection.jsx
+
 import React from "react";
 import { trustCards } from "../../data/homeData";
 
